@@ -1,5 +1,5 @@
 let y = 4 ;;
 
-let main () = 
-    y 
-;;
+let f = (fun (x -> x + 1) ;;
+
+f y ;;

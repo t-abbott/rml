@@ -1,11 +1,12 @@
-open Core
 open Rml
 
-let version = Rml.Version.version
+open Core
+
+let version = Version.version
 
 let main filename = 
   Parser.parse_file filename
-  |> Syntax.run
+  |> Syntax.Program.to_string 
   |> print_endline
 
 let filename_param =

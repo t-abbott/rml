@@ -1,108 +1,105 @@
 %{
-    open Syntax
+  open Syntax
 %}
 
-// Code structure
-%token LPAREN RPAREN
-%token SEMISEMI
-// %token SEMI
-%token EOF
-
-// Literals
-%token <string> IDENT
-%token TRUE FALSE
+%token ARROW
+%token <Syntax.ident> VAR
 %token <int> INT
-
-// Operators
-%token EQUALS NEQUALS
-%token PLUS MINUS
-%token LESS GREATER
-%token MULT DIV
+%token TRUE FALSE
+%token PLUS
+%token MINUS
+%token TIMES
+%token EQUAL LESS GREATER
 %token AND OR
-// %token NOT
-
-// Types
-// %token COLON
-// %token TBOOL
-// %token TINT
-
-// Terms
-%token FUN ARROW
-%token LET IN
 %token IF THEN ELSE
+%token FUN IS
+%token LPAREN RPAREN
+%token LET IN
+%token SEMISEMI
+%token EOF
 
 %start file
 %type <Syntax.program> file
 
+%nonassoc IS
 %nonassoc ELSE
-%nonassoc EQUALS LESS
+%nonassoc EQUAL LESS
 %left PLUS MINUS
-%left MULT
+%left TIMES
 %right ARROW
 
 %%
 
-// https://journal.stuffwithstuff.com/2008/12/28/fixing-ambiguities-in-yacc/ 
-
 file:
-| EOF
+  | EOF
     { [] }
-| d = letdef EOF
-    { [d] }
-| d = letdef SEMISEMI lst = file
-    { d :: lst }
+  | e = expr EOF
+    { [Expr e] }
+  | e = expr SEMISEMI lst = file
+    { Expr e :: lst }
+  | ds = nonempty_list(def) SEMISEMI lst = file
+    { ds @ lst }
+  | ds = nonempty_list(def) EOF
+    { ds }
 
-letdef:
-| LET name = IDENT EQUALS e = expr
-    { Defn.LetDefn (name, e) }
+def:
+  | LET x = VAR EQUAL e = expr
+    { Command.LetDef (x, e) }
 
 expr:
-| e = expr_app
+  | e = app_expr
     { e }
-| LET name = IDENT EQUALS e1 = expr IN e2 = expr
+  | MINUS n = INT
+    { Int (-n) }
+  | e1 = expr PLUS e2 = expr	
+    { Binop (Op.Plus, e1, e2) }
+  | e1 = expr MINUS e2 = expr
+    { Binop (Op.Minus, e1, e2) }
+  | e1 = expr TIMES e2 = expr
+    { Binop (Op.Times, e1, e2) }
+  | e1 = expr EQUAL e2 = expr
+    { Binop(Op.Equal, e1, e2) }
+  | e1 = expr LESS e2 = expr
+    { Binop (Op.Less, e1, e2) }
+  | e1 = expr GREATER e2 = expr 
+    { Binop (Op.Greater, e1, e2) }
+  | e1 = expr AND e2 = expr
+    { Binop (Op.And, e1, e2) }
+  | e1 = expr OR e2 = expr
+    { Binop (Op.Or, e1, e2) }
+  | IF e1 = expr THEN e2 = expr ELSE e3 = expr
+    { If (e1, e2, e3) }
+  | FUN arg = VAR ARROW body = expr 
+    { Fun (arg, body) }
+  | LET name = VAR EQUAL e1 = expr IN e2 = expr
     { LetIn (name, e1, e2) }
-| FUN arg = IDENT ARROW body = expr 
-    { Fun (arg, body) } 
-| IF cond = expr THEN if_t = expr ELSE if_f = expr 
-    { IfThen (cond, if_t, if_f) }
 
-// TODO: clean this up with Binop.of_string
-| l = expr EQUALS r = expr
-    { Binop (Op.Equals, l, r) }
-| l = expr NEQUALS r = expr 
-    { Binop (Op.Nequals, l, r) }
-| l = expr LESS r = expr 
-    { Binop (Op.Less, l, r) }
-| l = expr GREATER r = expr
-    { Binop (Op.Greater, l, r) }
-| l = expr PLUS r = expr 
-    { Binop (Op.Add, l, r) }
-| l = expr MINUS r = expr
-    { Binop (Op.Sub, l, r) }
-| l = expr MULT r = expr
-    { Binop (Op.Mult, l, r) }
-| l = expr DIV r = expr
-    { Binop (Op.Div, l, r) }
-| l = expr AND r = expr 
-    { Binop (Op.And, l, r) } 
-| l = expr OR r = expr 
-    { Binop (Op.Or, l, r) }
-
-expr_app:
-| e = expr_base
+app_expr:
+  | e = simple_expr
     { e }
-| e1 = expr_app e2 = expr_base
-    { App (e1, e2) }
+  | e1 = app_expr e2 = simple_expr
+    { Apply (e1, e2) }
 
-expr_base:
-| TRUE
-    { True }
-| FALSE 
-    { False }
-| i = INT 
-    { Int i }
-| name = IDENT 
-    { Var name }
-| LPAREN e = expr RPAREN
-    { e }
+simple_expr:
+  | x = VAR
+    { Var x }
+  | TRUE    
+    { Bool true }
+  | FALSE
+    { Bool false }
+  | n = INT
+    { Int n }
+  | LPAREN e = expr RPAREN	
+    { e }    
 
+// ty:
+//   | TBOOL
+//     { TBool }
+//   | TINT
+//     { TInt }
+//   | t1 = ty TARROW t2 = ty
+//     { TArrow (t1, t2) }
+//   | LPAREN t = ty RPAREN
+//     { t }
+
+%%

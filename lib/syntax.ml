@@ -1,92 +1,78 @@
+(* Abstract syntax. *)
+
 open Printf
 
+(* Variable names *)
 type ident = string
 
 module Op = struct
-  type t = 
-    | Equals
-    | Nequals 
-    | Less 
+  type t =
+    | Equal 
+    | Less
     | Greater
-    | Add
-    | Sub 
-    | Mult
-    | Div
+    | Plus 
+    | Minus
+    | Times 
     | And
-    | Or 
+    | Or
 
-  let ops = [ 
-    (Equals, "=");
-    (Nequals, "!=");
-    (Less, "<");
-    (Greater, ">");
-    (Add, "+");
-    (Sub, "-");
-    (Mult, "*");
-    (Div, "/");
-    (And, "&&");
-    (Or, "||");
-  ]
-  
-  let to_string op =
-    List.assoc op ops
-
-  let of_string s =
-    List.assoc s (Utils.inverse ops)
+    let to_string = function
+      | Equal -> "="
+      | Less -> "<"
+      | Greater -> ">"
+      | Plus -> "+"
+      | Minus -> "-"
+      | Times -> "*"
+      | And -> "&&"
+      | Or -> "||"
 end
 
-
-type term =  
-  | True
-  | False
-  | Int of int 
+(* Expressions *)
+type expr =
   | Var of ident
-  | Binop of Op.t * term * term
-  | IfThen of term * term * term
-  | LetIn of ident * term * term
-  | Fun of ident * term
-  | App of term * term
+  | Int of int
+  | Bool of bool
+  | Binop of Op.t * expr * expr
+  | If of expr * expr * expr
+  | LetIn of ident * expr * expr
+  | Fun of ident * expr
+  | Apply of expr * expr
 
 let rec to_string = function
-  | True -> "true"
-  | False -> "false"
   | Var v -> v
-  | IfThen (cond, ift, iff) ->
-      sprintf "if %s then %s else %s" (to_string cond) (to_string ift) (to_string iff)
   | Int i -> Int.to_string i
+  | Bool b -> if b then "true" else "false"
   | Binop (op, l, r) ->
-    sprintf "(%s %s %s)" (to_string l) (Op.to_string op) (to_string r)
-  | LetIn (v, e, body) ->
-    sprintf "let %s = %s in %s" v (to_string e) (to_string body)
+    sprintf "%s %s %s" (Op.to_string op) (to_string l) (to_string r)
+  | If (cond, if_t, if_f) ->
+    sprintf "(if %s then %s else %s)" (to_string cond) (to_string if_t) (to_string if_f)
+  | LetIn (name, e1, e2) ->
+    sprintf "(let %s = %s in %s)" name (to_string e1) (to_string e2)
   | Fun (arg, body) ->
     sprintf "(fun %s -> %s)" arg (to_string body)
-  | App (e1, e2) ->
-    sprintf "(%s %s)" (to_string e1) (to_string e2)
+  | Apply (e1, e2) ->
+    sprintf "%s %s" (to_string e1) (to_string e2)
 
-(** 
-  Represents a definition at the top level of a program.
-  Top-level definitions have public scope and are terminated
-  by a double semicolon [";;"] 
-*)
-module Defn = struct
-  type t = 
-    | TypeDefn of ident * unit
-    | LetDefn of ident * term    
-    | Expr of term
+module Command = struct
+  (** 
+    A top-level command in the program 
+  *)
+  type t =
+    | Expr of expr
+    | LetDef of ident * expr
 
   let to_string = function
-    | TypeDefn (name, _) -> 
-      sprintf "type %s = () ;;\n" name
-    | LetDefn (name, body) ->
-       sprintf "let %s = %s ;;\n" name (to_string body)
     | Expr e -> to_string e
+    | LetDef (name, body) ->
+      sprintf "let %s = %s ;;" name (to_string body)
 end
 
-(**
-  An `rml` program is a list of definitions.
-*)
-type program = Defn.t list
+module Program = struct
+  type t = Command.t list
 
-let run prog = 
-  List.map Defn.to_string prog
-  |> String.concat ""
+  let to_string prog = 
+      List.map Command.to_string prog
+      |> String.concat "\n"
+end
+
+type program = Command.t list
