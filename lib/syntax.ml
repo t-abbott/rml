@@ -43,7 +43,7 @@ let rec to_string = function
   | Int i -> Int.to_string i
   | Bool b -> if b then "true" else "false"
   | Binop (op, l, r) ->
-    sprintf "%s %s %s" (Op.to_string op) (to_string l) (to_string r)
+    sprintf "%s %s %s" (to_string l) (Op.to_string op) (to_string r)
   | If (cond, if_t, if_f) ->
     sprintf "(if %s then %s else %s)" (to_string cond) (to_string if_t) (to_string if_f)
   | LetIn (name, e1, e2) ->
