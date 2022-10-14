@@ -4,7 +4,9 @@ open Rml
 let version = Rml.Version.version
 
 let main filename = 
-  Parser.parse_string filename
+  Parser.parse_file filename
+  |> Syntax.run
+  |> print_endline
 
 let filename_param =
   let open Command.Param in 

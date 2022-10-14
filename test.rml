@@ -1,0 +1,5 @@
+let y = 4 ;;
+
+let main () = 
+    y 
+;;

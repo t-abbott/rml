@@ -1,0 +1,38 @@
+(**
+    
+*)
+
+(**  *)
+type name = string
+
+(**  *)
+module Binop : sig
+  type t = 
+    | Equals
+    | Nequals 
+    | Add
+    | Sub 
+    | Mult
+    | Div
+    | And
+    | Or 
+
+
+  (** Converts a [Binop.t] to a [string] *)
+  val to_string: t -> string
+
+  (** Converts a [string] to the corresponding [Binop.t] *)
+  val of_string: string -> t
+end
+
+(** Represents an expression in the initial language *)
+type expr = 
+    | Int of int
+    | Var of name
+    | BinOp of expr * Binop.t * expr    
+    | LetIn of name * expr * expr
+    | Fun of name * expr
+    | App of expr * expr
+
+(** Converts an expression to a prettiefied string *)
+val to_string : expr -> string 
