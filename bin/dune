@@ -1,4 +1,4 @@
 (executable
  (public_name rml)
  (name main)
- (libraries rml core core_unix.command_unix))
+ (libraries core core_unix.command_unix rml parsing))

@@ -1,5 +1,0 @@
-let y = 4 ;;
-
-let f = (fun (x -> x + 1) ;;
-
-f y ;;

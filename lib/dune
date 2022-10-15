@@ -1,9 +1,3 @@
 (library
  (name rml)
  (libraries base))
-
-(ocamllex
- (modules lex))
-
-(menhir
- (modules parse))

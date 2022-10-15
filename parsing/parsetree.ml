@@ -1,9 +1,12 @@
-(* Abstract syntax. *)
-
 open Printf
 
 (* Variable names *)
 type ident = string
+
+type ty =
+  | TBool
+  | TInt 
+  | TArrow of ty * ty
 
 module Op = struct
   type t =
@@ -27,18 +30,20 @@ module Op = struct
       | Or -> "||"
 end
 
-(* Expressions *)
-type expr =
+
+type t =
   | Var of ident
   | Int of int
   | Bool of bool
-  | Binop of Op.t * expr * expr
-  | If of expr * expr * expr
-  | LetIn of ident * expr * expr
-  | Fun of ident * expr
-  | Apply of expr * expr
+  | Binop of Op.t * t * t
+  | If of t * t * t
+  | LetIn of ident * t * t
+  | Fun of ident * t
+  | Apply of t * t
 
-let rec to_string = function
+
+let rec to_string pt =
+  match pt with
   | Var v -> v
   | Int i -> Int.to_string i
   | Bool b -> if b then "true" else "false"
@@ -53,26 +58,20 @@ let rec to_string = function
   | Apply (e1, e2) ->
     sprintf "%s %s" (to_string e1) (to_string e2)
 
-module Command = struct
-  (** 
-    A top-level command in the program 
-  *)
-  type t =
-    | Expr of expr
-    | LetDef of ident * expr
+(** 
+  A top-level command in the program 
+*)
+type command =
+  | Expr of t
+  | LetDef of ident * t
 
-  let to_string = function
-    | Expr e -> to_string e
-    | LetDef (name, body) ->
-      sprintf "let %s = %s ;;" name (to_string body)
-end
+let command_to_string = function
+  | Expr e -> to_string e
+  | LetDef (name, body) ->
+    sprintf "let %s = %s ;;" name (to_string body)
 
-module Program = struct
-  type t = Command.t list
+type program = command list
 
-  let to_string prog = 
-      List.map Command.to_string prog
-      |> String.concat "\n"
-end
-
-type program = Command.t list
+let program_to_string prog = 
+  List.map command_to_string prog
+  |> String.concat "\n"

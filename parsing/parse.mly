@@ -1,9 +1,9 @@
 %{
-  open Syntax
+  open Parsetree
 %}
 
 %token ARROW
-%token <Syntax.ident> VAR
+%token <Parsetree.ident> VAR
 %token <int> INT
 %token TRUE FALSE
 %token PLUS
@@ -12,21 +12,21 @@
 %token EQUAL LESS GREATER
 %token AND OR
 %token IF THEN ELSE
-%token FUN IS
+%token FUN
 %token LPAREN RPAREN
 %token LET IN
 %token SEMISEMI
 %token EOF
 
 %start file
-%type <Syntax.program> file
+%type <Parsetree.program> file
 
-%nonassoc IS
+
+%right ARROW
 %nonassoc ELSE
 %nonassoc EQUAL LESS
 %left PLUS MINUS
 %left TIMES
-%right ARROW
 
 %%
 
@@ -44,7 +44,7 @@ file:
 
 def:
   | LET x = VAR EQUAL e = expr
-    { Command.LetDef (x, e) }
+    { LetDef (x, e) }
 
 expr:
   | e = app_expr

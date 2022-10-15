@@ -20,7 +20,6 @@ rule token = parse
   | "true"          { TRUE }
   | "false"         { FALSE }
   | "fun"           { FUN }
-  | "is"            { IS }
   | "if"            { IF }
   | "then"          { THEN }
   | "else"          { ELSE }
