@@ -6,4 +6,5 @@
  (modules lex))
 
 (menhir
- (modules parse))
+ (modules parse)
+ (infer true))

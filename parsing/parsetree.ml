@@ -30,25 +30,31 @@ module Op = struct
       | Or -> "||"
 end
 
+(* type 'a treenode = {
+  loc: Location.t;
+  body: 'a
+} *)
 
-type t =
+(* let treenode_from loc body = { loc; body } *)
+
+type t = t_body Location.located
+and t_body =
   | Var of ident
-  | Int of int
-  | Bool of bool
+  | Integer of int
+  | Boolean of bool
   | Binop of Op.t * t * t
   | If of t * t * t
   | LetIn of ident * t * t
   | Fun of ident * t
   | Apply of t * t
 
-
-let rec to_string pt =
-  match pt with
+let rec to_string (pt: t) =
+  match pt.body with
   | Var v -> v
-  | Int i -> Int.to_string i
-  | Bool b -> if b then "true" else "false"
+  | Integer i -> Int.to_string i
+  | Boolean b -> if b then "true" else "false"
   | Binop (op, l, r) ->
-    sprintf "%s %s %s" (to_string l) (Op.to_string op) (to_string r)
+    sprintf "(%s %s %s)" (to_string l) (Op.to_string op) (to_string r)
   | If (cond, if_t, if_f) ->
     sprintf "(if %s then %s else %s)" (to_string cond) (to_string if_t) (to_string if_f)
   | LetIn (name, e1, e2) ->
@@ -61,17 +67,19 @@ let rec to_string pt =
 (** 
   A top-level command in the program 
 *)
-type command =
+type command = command_body Location.located
+and command_body =
   | Expr of t
   | LetDef of ident * t
 
-let command_to_string = function
+let command_to_string (cmd: command) =
+  match cmd.body with
   | Expr e -> to_string e
   | LetDef (name, body) ->
     sprintf "let %s = %s ;;" name (to_string body)
 
 type program = command list
 
-let program_to_string prog = 
+let program_to_string (prog: program) = 
   List.map command_to_string prog
   |> String.concat "\n"

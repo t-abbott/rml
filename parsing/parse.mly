@@ -33,24 +33,31 @@
 file:
   | EOF
     { [] }
-  | e = expr EOF
-    { [Expr e] }
-  | e = expr SEMISEMI lst = file
-    { Expr e :: lst }
-  | ds = nonempty_list(def) SEMISEMI lst = file
+  | e = topexpr EOF
+    { [e] }
+  | e = topexpr SEMISEMI lst = file
+    { e :: lst }
+  | ds = nonempty_list(topdef) SEMISEMI lst = file
     { ds @ lst }
-  | ds = nonempty_list(def) EOF
+  | ds = nonempty_list(topdef) EOF
     { ds }
 
-def:
+topdef: mark_location(topdef_unmarked) { $1 }
+topdef_unmarked:   
   | LET x = VAR EQUAL e = expr
     { LetDef (x, e) }
 
-expr:
-  | e = app_expr
+topexpr: mark_location(topexpr_unmarked) { $1 }
+topexpr_unmarked:
+| e = expr
+    { Expr e }
+
+expr: mark_location(expr_unmarked) { $1 }
+expr_unmarked:
+  | e = app_expr_unmarked
     { e }
   | MINUS n = INT
-    { Int (-n) }
+    { Integer (-n) }
   | e1 = expr PLUS e2 = expr	
     { Binop (Op.Plus, e1, e2) }
   | e1 = expr MINUS e2 = expr
@@ -74,22 +81,24 @@ expr:
   | LET name = VAR EQUAL e1 = expr IN e2 = expr
     { LetIn (name, e1, e2) }
 
-app_expr:
-  | e = simple_expr
+app_expr: mark_location(app_expr_unmarked) { $1 }
+app_expr_unmarked:
+  | e = simple_expr_unmarked
     { e }
   | e1 = app_expr e2 = simple_expr
     { Apply (e1, e2) }
 
-simple_expr:
+simple_expr: mark_location(simple_expr_unmarked) { $1 }
+simple_expr_unmarked:
   | x = VAR
     { Var x }
   | TRUE    
-    { Bool true }
+    { Boolean true }
   | FALSE
-    { Bool false }
+    { Boolean false }
   | n = INT
-    { Int n }
-  | LPAREN e = expr RPAREN	
+    { (Integer n) }
+  | LPAREN e = expr_unmarked RPAREN	
     { e }    
 
 // ty:
@@ -97,9 +106,13 @@ simple_expr:
 //     { TBool }
 //   | TINT
 //     { TInt }
-//   | t1 = ty TARROW t2 = ty
+//   | t1 = ty ARROW t2 = ty
 //     { TArrow (t1, t2) }
 //   | LPAREN t = ty RPAREN
 //     { t }
+
+mark_location(X):
+    x = X
+    { Location.locate (Location.from $startpos $endpos) x }
 
 %%
