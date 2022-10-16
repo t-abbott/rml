@@ -1,8 +1,5 @@
 open Printf
 
-(*
-  TODO: do we need to track multiple lines?  
-*)
 type t = {
   line_start: int;
   line_end: int;

@@ -1,12 +1,13 @@
 open Rml
-open Parsing
+open Parser
+open Parser.Api
 
 open Core
 
 let version = Version.version
 
 let main filename = 
-  Parser.parse_file filename
+  parse_file filename
   |> Parsetree.program_to_string
   |> print_endline
 

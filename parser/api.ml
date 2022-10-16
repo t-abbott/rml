@@ -1,3 +1,11 @@
+(*
+  [Api] sucks as a module name but dune doesn't handle nested libraries,
+  [Parsing] already exists in the stdlib, and there are only so many things
+  you can call variants of [Parse]/[Parser] until you need to start renaming
+  stuff. TODO rename this if I can figure out how to make dune work or come
+  up with something better.  
+*)
+
 open Stdlib
 
 let lex_and_parse lexbuf = 
