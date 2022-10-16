@@ -1,12 +1,20 @@
 open Printf
 
-(* Variable names *)
 type ident = string
 
-type ty =
-  | TBool
-  | TInt 
-  | TArrow of ty * ty
+module Ty = struct
+  type t = t_body Location.located
+  and t_body = 
+    | TBool
+    | TInt 
+    | TArrow of t * t
+
+  let rec to_string (typ: t) = 
+    match typ.body with
+    | TBool -> "bool"
+    | TInt -> "int"
+    | TArrow (t1, t2) -> (to_string t1) ^ " -> " ^ (to_string t2)
+end
 
 module Op = struct
   type t =
@@ -30,15 +38,11 @@ module Op = struct
       | Or -> "||"
 end
 
-(* type 'a treenode = {
-  loc: Location.t;
-  body: 'a
-} *)
-
-(* let treenode_from loc body = { loc; body } *)
+type ty = Empty
 
 type t = t_body Location.located
 and t_body =
+  | Annotated of t * Ty.t
   | Var of ident
   | Integer of int
   | Boolean of bool
@@ -50,6 +54,8 @@ and t_body =
 
 let rec to_string (pt: t) =
   match pt.body with
+  | Annotated (term, annot) ->
+    sprintf "(%s: %s)" (to_string term) (Ty.to_string annot) 
   | Var v -> v
   | Integer i -> Int.to_string i
   | Boolean b -> if b then "true" else "false"
@@ -63,10 +69,7 @@ let rec to_string (pt: t) =
     sprintf "(fun %s -> %s)" arg (to_string body)
   | Apply (e1, e2) ->
     sprintf "%s %s" (to_string e1) (to_string e2)
-
-(** 
-  A top-level command in the program 
-*)
+    
 type command = command_body Location.located
 and command_body =
   | Expr of t
