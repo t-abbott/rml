@@ -1,11 +1,13 @@
 (** Represents a location in some source file *)
-type t = {
-  line_start: int;
-  line_end: int;
-  char_start: int;
-  char_end: int;
-  filename: string option
-}
+type t = 
+  | Loc of {
+      line_start: int;
+      line_end: int;
+      char_start: int;
+      char_end: int;
+      filename: string option
+    }
+  | Nowhere
 
 (** Represents value [body] of type ['a] tagged with a source
     location [loc]    
@@ -19,6 +21,9 @@ type 'a located = {
     of type ['a]    
 *)
 val locate : t -> 'a -> 'a located 
+
+(**  *)
+val unlocated : 'a -> 'a located
 
 (** Creates a location spanning two [Lexing.position]s *)
 val from : Lexing.position -> Lexing.position -> t

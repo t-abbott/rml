@@ -1,12 +1,14 @@
 open Printf
 
-type t = {
-  line_start: int;
-  line_end: int;
-  char_start: int;
-  char_end: int;
-  filename: string option
-}
+type t = 
+  | Loc of {
+      line_start: int;
+      line_end: int;
+      char_start: int;
+      char_end: int;
+      filename: string option
+    }
+  | Nowhere
 
 type 'a located = {
   loc: t;
@@ -15,6 +17,8 @@ type 'a located = {
 
 let locate loc body = { loc; body }
 
+let unlocated body = { loc=Nowhere; body}
+
 (* TODO: check for multi-line spans  *)
 let from start_pos end_pos =
   let line_start = start_pos.Lexing.pos_lnum in 
@@ -22,10 +26,12 @@ let from start_pos end_pos =
   let char_start = start_pos.Lexing.pos_cnum - start_pos.Lexing.pos_bol in
   let char_end = end_pos.Lexing.pos_cnum - end_pos.Lexing.pos_cnum in 
   let filename = Some start_pos.Lexing.pos_fname in
-  { line_start; line_end; char_start; char_end; filename }
+  Loc { line_start; line_end; char_start; char_end; filename }
 
-let to_string loc = 
-  let filestring = match loc.filename with
-  | Some name -> name
-  | None -> "[unknown]"
-  in sprintf "file \"%s\", line %d, characters %d-%d" filestring loc.line_start loc.char_start loc.char_end 
+let to_string = function
+  | Nowhere -> "[nolocation]"
+  | Loc loc ->
+    let filestring = match loc.filename with
+    | Some name -> name
+    | None -> "[unknown]"
+    in sprintf "file \"%s\", line %d, characters %d-%d" filestring loc.line_start loc.char_start loc.char_end 

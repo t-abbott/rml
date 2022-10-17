@@ -1,5 +1,4 @@
 open Rml
-open Parser
 open Parser.Api
 
 open Core
@@ -7,8 +6,9 @@ open Core
 let version = Version.version
 
 let main filename = 
-  parse_file filename
-  |> Parsetree.program_to_string
+  let prog = parse_file filename
+  in Interp.run prog Interp.Env.empty
+  |> Interp.Env.to_string
   |> print_endline
 
 let filename_param =
