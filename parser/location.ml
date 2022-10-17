@@ -29,9 +29,9 @@ let from start_pos end_pos =
   Loc { line_start; line_end; char_start; char_end; filename }
 
 let to_string = function
-  | Nowhere -> "[nolocation]"
+  | Nowhere -> ""
   | Loc loc ->
     let filestring = match loc.filename with
     | Some name -> name
     | None -> "[unknown]"
-    in sprintf "file \"%s\", line %d, characters %d-%d" filestring loc.line_start loc.char_start loc.char_end 
+    in sprintf "file \"%s\" line %d character %d-%d" filestring loc.line_start loc.char_start loc.char_end 
