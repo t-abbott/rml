@@ -24,7 +24,7 @@ let from start_pos end_pos =
   let line_start = start_pos.Lexing.pos_lnum in 
   let line_end = end_pos.Lexing.pos_lnum in
   let char_start = start_pos.Lexing.pos_cnum - start_pos.Lexing.pos_bol in
-  let char_end = end_pos.Lexing.pos_cnum - end_pos.Lexing.pos_cnum in 
+  let char_end = end_pos.Lexing.pos_cnum - end_pos.Lexing.pos_bol in 
   let filename = Some start_pos.Lexing.pos_fname in
   Loc { line_start; line_end; char_start; char_end; filename }
 
