@@ -1,0 +1,6 @@
+let add =
+    (fun x ->
+        (fun y -> x + y))
+;;
+
+(add 4) 5 ;;

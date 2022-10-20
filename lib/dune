@@ -1,2 +1,3 @@
 (library
- (name rml))
+ (name rml)
+ (libraries base parser))

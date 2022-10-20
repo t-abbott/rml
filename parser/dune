@@ -1,0 +1,10 @@
+(library
+ (name parser)
+ (libraries base))
+
+(ocamllex
+ (modules lex))
+
+(menhir
+ (modules parse)
+ (infer true))

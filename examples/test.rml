@@ -1,0 +1,10 @@
+let y = 4 ;;
+
+let f = (fun x -> x + 1) ;;
+
+let z =
+    let g = (fun x -> x * 2)
+    in g 2
+;;
+
+f (y + z) ;; 
