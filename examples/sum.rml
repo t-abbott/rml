@@ -3,3 +3,4 @@ let add =
         (fun y -> x + y))
 ;;
 
+(add 4) 5 ;;
