@@ -1,0 +1,13 @@
+let if_ = 
+    (fun cond -> 
+        (fun if_t -> 
+            (fun if_f -> ((cond if_t) if_f))
+        )
+    )
+;;
+
+let true_ = (fun x -> (fun y -> x)) ;;
+let false_ = (fun x -> (fun y -> y)) ;;
+
+let x = true_ ;;
+((if_ x) 42) -1
