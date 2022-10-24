@@ -1,13 +1,12 @@
 open Printf
 open Base
 
+open Parsetree
+
 (* TODO: namespace parsing under rml
    is that possible?n Just rename to parser   
 *)
-open Parser
-open Parser.Parsetree
-
-module L = Location
+module L = Rml.Location
 
 module Env = struct 
   type t = (ident * envval) list
@@ -26,7 +25,7 @@ module Env = struct
   let extend (name: ident) (value: envval) env = (name, value) :: env
 end
 
-exception InterpError of string * Location.t
+exception InterpError of string * L.t
 
 let rec eval (expr: t) env =
   match expr.body with
@@ -52,11 +51,24 @@ let rec eval (expr: t) env =
     in eval body (Env.extend name e env)
   | Fun _ as f ->
     Closure (L.unlocated f, env)
-  | Apply (e1, e2) -> 
+  | Apply (e1, e2) ->
+    (* 
+      In the parsetree we allow the argument [x] in the term [(fun x -> ...)]
+      to be of type [Parsetree.t] since that makes parsing easier. It forces to
+      add extra checks when interpreting, however.
+    *) 
     let arg = eval e2 env
     in match (eval e1 env) with
     | Closure ({ body=(Fun (x, body)); _ } , bound_env) ->
-      let env' = Env.extend x arg bound_env
+      let x' = (match x.body with
+      | Var v -> v
+      | Annotated ({ body=(Var v); _ } , _) ->
+        v
+      | _ -> 
+        let msg = 
+          sprintf "function argument must be a variable, got '%s'" (to_string x)
+          in raise (InterpError (msg, x.loc))) 
+      in let env' = Env.extend x' arg bound_env
       in eval body env'   
     | _ ->
       let msg = "tried to apply a value to something that isn't a function"

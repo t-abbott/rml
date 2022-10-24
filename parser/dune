@@ -1,6 +1,6 @@
 (library
  (name parser)
- (libraries base))
+ (libraries base rml))
 
 (ocamllex
  (modules lex))

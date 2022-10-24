@@ -19,6 +19,7 @@ rule token = parse
   | int             { INT (int_of_string(Lexing.lexeme lexbuf)) }
   | "int"           { TINT }
   | "bool"          { TBOOL }
+  | ':'             { COLON }
   | "true"          { TRUE }
   | "false"         { FALSE }
   | "fun"           { FUN }

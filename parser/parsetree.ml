@@ -1,20 +1,9 @@
 open Printf
 
+open Rml
+open Rml.Types
+
 type ident = string
-
-module Ty = struct
-  type t = t_body Location.located
-  and t_body = 
-    | TBool
-    | TInt 
-    | TArrow of t * t
-
-  let rec to_string (typ: t) = 
-    match typ.body with
-    | TBool -> "bool"
-    | TInt -> "int"
-    | TArrow (t1, t2) -> (to_string t1) ^ " -> " ^ (to_string t2)
-end
 
 module Op = struct
   type t =
@@ -49,7 +38,7 @@ and t_body =
   | Binop of Op.t * t * t
   | If of t * t * t
   | LetIn of ident * t * t
-  | Fun of ident * t
+  | Fun of t * t
   | Apply of t * t
 
 let rec to_string (pt: t) =
@@ -66,7 +55,7 @@ let rec to_string (pt: t) =
   | LetIn (name, e1, e2) ->
     sprintf "(let %s = %s in %s)" name (to_string e1) (to_string e2)
   | Fun (arg, body) ->
-    sprintf "(fun %s -> %s)" arg (to_string body)
+    sprintf "(fun %s -> %s)" (to_string arg) (to_string body)
   | Apply (e1, e2) ->
     sprintf "%s %s" (to_string e1) (to_string e2)
     

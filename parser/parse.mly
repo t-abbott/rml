@@ -85,7 +85,7 @@ expr_unmarked:
     { Binop (Op.Or, e1, e2) }
   | IF e1 = expr THEN e2 = expr ELSE e3 = expr
     { If (e1, e2, e3) }
-  | FUN arg = VAR ARROW body = expr 
+  | FUN arg = expr ARROW body = expr 
     { Fun (arg, body) }
   | LET name = VAR EQUAL e1 = expr IN e2 = expr
     { LetIn (name, e1, e2) }

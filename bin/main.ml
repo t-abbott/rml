@@ -10,7 +10,9 @@ let version = Version.version
 let main filename = 
   try 
     parse_file filename
-    |> (fun prog -> Interp.run prog Interp.Env.empty)
+    |> (fun prog -> 
+      Stdio.print_endline (Parsetree.program_to_string prog);
+      Interp.run prog Interp.Env.empty)
     |> Interp.Env.to_string
     |> Stdio.print_endline
   with 

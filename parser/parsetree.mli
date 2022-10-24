@@ -1,14 +1,7 @@
+open Rml
+open Rml.Types
+
 type ident = string
-
-module Ty : sig
-  type t = t_body Location.located
-  and t_body = 
-    | TBool
-    | TInt 
-    | TArrow of t * t
-
-  val to_string : t -> string
-end
 
 module Op : sig
   type t =
@@ -35,7 +28,7 @@ and t_body =
   | Binop of Op.t * t * t
   | If of t * t * t
   | LetIn of ident * t * t
-  | Fun of ident * t
+  | Fun of t * t
   | Apply of t * t
 
 val to_string : t -> string
