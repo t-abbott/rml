@@ -2,6 +2,7 @@ open Printf
 
 open Rml
 open Rml.Types
+open Rml.Location
 
 type ident = string
 
@@ -27,9 +28,7 @@ module Op = struct
       | Or -> "||"
 end
 
-type ty = Empty
-
-type t = t_body Location.located
+type t = t_body located
 and t_body =
   | Annotated of t * Ty.t
   | Var of ident
