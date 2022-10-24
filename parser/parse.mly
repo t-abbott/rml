@@ -107,7 +107,7 @@ simple_expr_unmarked:
     { Boolean false }
   | n = INT
     { (Integer n) }
-  | LPAREN e = expr COLON t = ty RPAREN
+  | e = expr COLON t = ty
     { Annotated (e, t) }
   | LPAREN e = expr_unmarked RPAREN	
     { e }    
@@ -120,11 +120,11 @@ ty_unmarked:
     { Ty.TInt }
   | t1 = ty ARROW t2 = ty
     { Ty.TArrow (t1, t2) }
-  | LPAREN t = ty RPAREN
+  | LPAREN t = ty_unmarked RPAREN
     { t }
 
 mark_location(X):
     x = X
-    { Location.locate (Location.from $startpos $endpos) x }
+    { Rml.Location.locate (Rml.Location.from $startpos $endpos) x }
 
 %%
