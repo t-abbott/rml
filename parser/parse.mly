@@ -112,7 +112,7 @@ simple_expr_unmarked:
   | LPAREN e = expr_unmarked RPAREN	
     { e }    
 
-ty: mark_location(ty_unmarked) { $1 }
+ty: mark_type_location(ty_unmarked) { $1 }
 ty_unmarked:
   | TBOOL
     { Ty.TBool }
@@ -126,5 +126,10 @@ ty_unmarked:
 mark_location(X):
     x = X
     { Rml.Location.locate (Rml.Location.from $startpos $endpos) x }
+
+// TODO: avoid this
+mark_type_location(X):
+    x = X 
+    { Rml.Types.annotated x (Rml.Location.from $startpos $endpos) }
 
 %%

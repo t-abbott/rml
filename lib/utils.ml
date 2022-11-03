@@ -1,3 +1,1 @@
-let rec inverse = function
-  | (a, b) :: xs -> (b, a) :: (inverse xs)
-  | [] -> []
+let proj2 f x y = (f x, f y)
