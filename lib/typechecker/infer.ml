@@ -1,41 +1,9 @@
 open Printf
-open Rml
-open Rml.Types
-open Rml.Location
-open Op
-module PTree = Parser.Parsetree
-
-type ident = string
-
-type t = { body : t_body; ty : Ty.t; loc : Location.t }
-
-and t_body =
-  | Var of ident
-  | Integer of int
-  | Boolean of bool
-  | Binop of Binop.t * t * t
-  | If of t * t * t
-  | LetIn of ident * t * t
-  | Fun of ident * t
-  | Apply of t * t
-
-let rec to_string { body; ty; _ } =
-  let ty_str = Ty.to_string ty in
-  match body with
-  | Var v -> sprintf "(%s: %s)" v ty_str
-  | Integer i -> Int.to_string i
-  | Boolean b -> Bool.to_string b
-  | Binop (op, l, r) ->
-      sprintf "(%s %s %s): %s" (Binop.to_string op) (to_string l) (to_string r)
-        ty_str
-  | If (cond, if_t, if_f) ->
-      sprintf "(if %s then %s else %s): %s" (to_string cond) (to_string if_t)
-        (to_string if_f) ty_str
-  | LetIn (name, value, body) ->
-      sprintf "(let %s = %s in %s): %s" name (to_string value) (to_string body)
-        ty_str
-  | Fun (arg, body) -> sprintf "(%s -> %s): %s" arg (to_string body) ty_str
-  | Apply (e1, e2) -> sprintf "(%s %s): %s" (to_string e1) (to_string e2) ty_str
+open Ast
+open Ast.Typedtree
+open Types
+open Utils
+module PTree = Ast.Parsetree
 
 exception TypeError of string * Location.t
 exception NameError of string * Location.t
@@ -62,11 +30,11 @@ let rec from_parsetree (pt : PTree.t) (ctx : Ty.t Context.t) =
   match pt.body with
   | PTree.Integer i ->
       let body = Integer i in
-      let ty = inferred TInt in
+      let ty = Ty.inferred Ty.TInt in
       { body; ty; loc }
   | PTree.Boolean b ->
       let body = Boolean b in
-      let ty = inferred TBool in
+      let ty = Ty.inferred Ty.TBool in
       { body; ty; loc }
   | PTree.Var v ->
       let ty =
@@ -79,12 +47,11 @@ let rec from_parsetree (pt : PTree.t) (ctx : Ty.t Context.t) =
       in
       let body = Var v in
       { body; ty; loc }
-  | PTree.Binop (ptop, l, r) -> (
-      let op = Op.Binop.of_ptreeop ptop in
+  | PTree.Binop (op, l, r) -> (
       let ty_op = Op.Binop.signature op in
       let l', r' = (from_parsetree l ctx, from_parsetree r ctx) in
       let body = Binop (op, l', r') in
-      match apply_args ty_op [ l'.ty; r'.ty ] with
+      match Ty.apply_args ty_op [ l'.ty; r'.ty ] with
       | Some ty -> { body; ty; loc }
       | _ ->
           let msg =
@@ -98,7 +65,7 @@ let rec from_parsetree (pt : PTree.t) (ctx : Ty.t Context.t) =
       in
       let body = If (typed_cond, typed_ift, typed_iff) in
       let ty = typed_ift.ty in
-      if not (Ty.equal typed_cond.ty (inferred TBool)) then
+      if not (Ty.equal typed_cond.ty (Ty.inferred Ty.TBool)) then
         let t_str = Ty.to_string typed_cond.ty in
         let msg =
           sprintf "expected if statement condition to be a bool, got '%s'" t_str
@@ -136,10 +103,12 @@ let rec from_parsetree (pt : PTree.t) (ctx : Ty.t Context.t) =
       if Ty.is_function typed_e1.ty then
         let body = Apply (typed_e1, typed_e2) in
         let ty =
-          match apply_args typed_e1.ty [ typed_e2.ty ] with
+          match Ty.apply_args typed_e1.ty [ typed_e2.ty ] with
           | Some t -> t
           | None ->
-              let t1, t2 = Utils.proj2 Ty.to_string typed_e1.ty typed_e2.ty in
+              let t1, t2 =
+                Utils.Misc.proj2 Ty.to_string typed_e1.ty typed_e2.ty
+              in
               let msg =
                 sprintf
                   "attempted to apply a value of type '%s' to a value of type \
@@ -156,7 +125,7 @@ let rec from_parsetree (pt : PTree.t) (ctx : Ty.t Context.t) =
       let typed_expr = from_parsetree expr ctx in
       if not (Ty.equal typed_expr.ty ty_stated) then
         let stated, inferred =
-          Utils.proj2 Ty.to_string ty_stated typed_expr.ty
+          Utils.Misc.proj2 Ty.to_string ty_stated typed_expr.ty
         in
         let msg =
           sprintf "provided type '%s' does not match inferred type '%s'" stated

@@ -1,6 +1,7 @@
 %{
-  open Parsetree
-  open Rml.Types
+  open Ast.Op
+  open Ast.Parsetree
+  open Types
 %}
 
 %token TINT
@@ -8,7 +9,7 @@
 %token COLON
 
 %token ARROW
-%token <Parsetree.ident> VAR
+%token <Ast.Ident.t> VAR
 
 %token <int> INT
 %token TRUE FALSE
@@ -28,7 +29,7 @@
 %token EOF
 
 %start file
-%type <Parsetree.program> file
+%type <Ast.Parsetree.program> file
 
 
 %right ARROW
@@ -68,21 +69,21 @@ expr_unmarked:
   | MINUS n = INT
     { Integer (-n) }
   | e1 = expr PLUS e2 = expr	
-    { Binop (Op.Plus, e1, e2) }
+    { Binop (Binop.Plus, e1, e2) }
   | e1 = expr MINUS e2 = expr
-    { Binop (Op.Minus, e1, e2) }
+    { Binop (Binop.Minus, e1, e2) }
   | e1 = expr TIMES e2 = expr
-    { Binop (Op.Times, e1, e2) }
+    { Binop (Binop.Times, e1, e2) }
   | e1 = expr EQUAL e2 = expr
-    { Binop(Op.Equal, e1, e2) }
+    { Binop(Binop.Equal, e1, e2) }
   | e1 = expr LESS e2 = expr
-    { Binop (Op.Less, e1, e2) }
+    { Binop (Binop.Less, e1, e2) }
   | e1 = expr GREATER e2 = expr 
-    { Binop (Op.Greater, e1, e2) }
+    { Binop (Binop.Greater, e1, e2) }
   | e1 = expr AND e2 = expr
-    { Binop (Op.And, e1, e2) }
+    { Binop (Binop.And, e1, e2) }
   | e1 = expr OR e2 = expr
-    { Binop (Op.Or, e1, e2) }
+    { Binop (Binop.Or, e1, e2) }
   | IF e1 = expr THEN e2 = expr ELSE e3 = expr
     { If (e1, e2, e3) }
   | FUN arg = expr ARROW body = expr 
@@ -125,11 +126,11 @@ ty_unmarked:
 
 mark_location(X):
     x = X
-    { Rml.Location.locate (Rml.Location.from $startpos $endpos) x }
+    { Utils.Location.locate (Utils.Location.from $startpos $endpos) x }
 
 // TODO: avoid this
 mark_type_location(X):
     x = X 
-    { Rml.Types.annotated x (Rml.Location.from $startpos $endpos) }
+    { Types.Ty.annotated x (Utils.Location.from $startpos $endpos) }
 
 %%
