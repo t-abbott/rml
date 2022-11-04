@@ -1,42 +1,32 @@
 open Core
 open Base
+open Out_channel
 open Parser.Api
 open Typechecker
 open Utils
 
 let version = Utils.Version.version
+let die () = Caml.exit 1
+
+let format_location loc =
+  match Location.to_string loc with
+  | "" -> ""
+  | helpfulstring -> " in " ^ helpfulstring
 
 let main filename =
   try
     parse_file filename
     |> (fun p -> Infer.type_program p Utils.Context.empty)
     |> Ast.Typedtree.program_to_string |> Stdio.prerr_endline
-  with Typechecker.Infer.TypeError (message, loc) ->
-    let loc_str =
-      match Location.to_string loc with
-      | "" -> ""
-      | helpfulstring -> " in " ^ helpfulstring
-    in
-    Out_channel.eprintf "Type error: %s%s\n" message loc_str;
-    Caml.exit 1
-
-(* let main filename =
-   try
-     parse_file filename
-     |> (fun prog ->
-       Stdio.print_endline (Parsetree.program_to_string prog);
-       Interp.run prog Interp.Env.empty)
-     |> Interp.Env.to_string
-     |> Stdio.print_endline
-   with
-     Interp.InterpError (message, loc) ->
-       let loc_str = match (Location.to_string loc) with
-       | "" -> ""
-       | helpfulstring -> " in " ^ helpfulstring
-     in
-       Out_channel.eprintf "Error: %s%s\n" message loc_str;
-       Caml.exit 1
-*)
+  with
+  | Typechecker.Errors.TypeError (message, loc) ->
+      let loc_str = format_location loc in
+      eprintf "Type error: %s%s\n" message loc_str;
+      die ()
+  | Typechecker.Errors.NameError (message, loc) ->
+      let loc_str = format_location loc in
+      eprintf "Error: %s%s\n" message loc_str;
+      die ()
 
 let filename_param =
   let open Command.Param in
