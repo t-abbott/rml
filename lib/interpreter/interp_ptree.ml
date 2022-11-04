@@ -1,26 +1,8 @@
 open Printf
 open Base
-open Ast
 open Ast.Op
 open Ast.Parsetree
-
-(* TODO: namespace parsing under rml
-   is that possible?n Just rename to parser
-*)
 module L = Utils.Location
-
-module Env = struct
-  type t = (Ident.t * envval) list
-  and envval = Closure of Parsetree.t * t | Value of Parsetree.t
-
-  let to_string = function
-    | Value v -> Parsetree.to_string v
-    | Closure (_, _) -> "[closure]"
-
-  let empty = []
-  let find name env = List.Assoc.find env name ~equal:String.equal
-  let extend name value env = (name, value) :: env
-end
 
 exception InterpError of string * L.t
 
