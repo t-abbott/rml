@@ -3,9 +3,6 @@ open Utils
 module PTree = Ast.Parsetree
 module TTree = Ast.Typedtree
 
-exception TypeError of string * Location.t
-exception NameError of string * Location.t
-
 type context = Ty.t Context.t
 
 val type_parsetree : PTree.t -> context -> TTree.t

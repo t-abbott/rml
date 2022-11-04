@@ -3,13 +3,11 @@ open Ast
 open Ast.Typedtree
 open Types
 open Utils
+open Errors
 module PTree = Ast.Parsetree
 module TTree = Ast.Typedtree
 
 type context = Ty.t Context.t
-
-exception TypeError of string * Location.t
-exception NameError of string * Location.t
 
 let rec type_parsetree (pt : PTree.t) ctx =
   let loc = pt.loc in
@@ -34,6 +32,7 @@ let rec type_parsetree (pt : PTree.t) ctx =
       let body = Var v in
       { body; ty; loc }
   | PTree.Binop (op, l, r) -> (
+      (* Thought: should binops be desugared into normal function application? *)
       let ty_op = Op.Binop.signature op in
       let l', r' = (type_parsetree l ctx, type_parsetree r ctx) in
       let body = Binop (op, l', r') in
@@ -81,7 +80,7 @@ let rec type_parsetree (pt : PTree.t) ctx =
       in
       let ctx' = Context.extend arg ty_arg ctx in
       let typed_expr = type_parsetree expr ctx' in
-      let ty = typed_expr.ty in
+      let ty = Ty.inferred (Ty.TArrow (ty_arg, typed_expr.ty)) in
       let body = Fun (arg, typed_expr) in
       { body; ty; loc }
   | PTree.Apply (e1, e2) ->
@@ -92,9 +91,7 @@ let rec type_parsetree (pt : PTree.t) ctx =
           match Ty.apply_args typed_e1.ty [ typed_e2.ty ] with
           | Some t -> t
           | None ->
-              let t1, t2 =
-                Utils.Misc.proj2 Ty.to_string typed_e1.ty typed_e2.ty
-              in
+              let t1, t2 = Misc.proj2 Ty.to_string typed_e1.ty typed_e2.ty in
               let msg =
                 sprintf
                   "attempted to apply a value of type '%s' to a value of type \
@@ -105,7 +102,12 @@ let rec type_parsetree (pt : PTree.t) ctx =
         in
         { body; ty; loc }
       else
-        let msg = "noo" in
+        let t1, t2 = Misc.proj2 Ty.to_string typed_e1.ty typed_e2.ty in
+        let msg =
+          sprintf
+            "attempted to apply a value of type '%s' to a function of type '%s'"
+            t2 t1
+        in
         raise (TypeError (msg, loc))
   | PTree.Annotated (expr, ty_stated) ->
       let typed_expr = type_parsetree expr ctx in
