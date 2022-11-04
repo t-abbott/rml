@@ -1,4 +1,4 @@
 (executable
  (public_name rml)
  (name main)
- (libraries core core_unix.command_unix parser))
+ (libraries core core_unix.command_unix ast parser interpreter typechecker))
