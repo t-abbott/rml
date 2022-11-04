@@ -35,3 +35,14 @@ let rec to_string { body; ty; _ } =
         ty_str
   | Fun (arg, body) -> sprintf "(%s -> %s): %s" arg (to_string body) ty_str
   | Apply (e1, e2) -> sprintf "(%s %s): %s" (to_string e1) (to_string e2) ty_str
+
+type command = Expr of t | LetDef of Ident.t * t
+
+let command_to_string = function
+  | Expr e -> to_string e
+  | LetDef (name, body) ->
+      sprintf "let %s: %s = %s ;;" name (Ty.to_string body.ty) (to_string body)
+
+type program = command list
+
+let program_to_string p = List.map command_to_string p |> String.concat "\n"
