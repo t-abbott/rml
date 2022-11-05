@@ -2,18 +2,16 @@ open Printf
 open Types
 open Utils
 
-type ident = string
-
 type t = t_body Location.located
 
 and t_body =
   | Annotated of t * Ty.t
-  | Var of ident
+  | Var of Ident.t
   | Integer of int
   | Boolean of bool
   | Binop of Op.Binop.t * t * t
   | If of t * t * t
-  | LetIn of ident * t * t
+  | LetIn of Ident.t * t * t
   | Fun of t * t
   | Apply of t * t
 
@@ -35,7 +33,7 @@ let rec to_string (pt : t) =
   | Apply (e1, e2) -> sprintf "%s %s" (to_string e1) (to_string e2)
 
 type command = command_body Location.located
-and command_body = Expr of t | LetDef of ident * t
+and command_body = Expr of t | LetDef of Ident.t * t
 
 let command_to_string (cmd : command) =
   match cmd.body with

@@ -1,17 +1,18 @@
 open Printf
 open Base
+open Ast
 open Ast.Op
 open Ast.Parsetree
 module L = Utils.Location
-
-exception InterpError of string * L.t
+open Errors
+module PTEnv = Env.MakeEnv (Parsetree)
 
 let rec eval (expr : t) env =
   match expr.body with
   | Annotated (e, _) -> eval e env
-  | Integer _ | Boolean _ -> Env.Value expr
+  | Integer _ | Boolean _ -> PTEnv.Value expr
   | Var v -> (
-      match Env.find v env with
+      match PTEnv.find v env with
       | Some value -> value
       | None ->
           let msg = sprintf "reference to unknown variable '%s'" v in
@@ -21,7 +22,7 @@ let rec eval (expr : t) env =
       if eval_bool cond env then eval if_t env else eval if_f env
   | LetIn (name, boundval, body) ->
       let e = eval boundval env in
-      eval body (Env.extend name e env)
+      eval body (PTEnv.extend name e env)
   | Fun _ as f -> Closure (L.unlocated f, env)
   | Apply (e1, e2) -> (
       (*
@@ -43,7 +44,7 @@ let rec eval (expr : t) env =
                 in
                 raise (InterpError (msg, x.loc))
           in
-          let env' = Env.extend x' arg bound_env in
+          let env' = PTEnv.extend x' arg bound_env in
           eval body env'
       | _ ->
           let msg =
@@ -94,7 +95,7 @@ let eval_cmd (cmd : command) env =
   match cmd.body with
   | Expr e -> (eval e env, env)
   | LetDef (name, body) ->
-      let env' = Env.extend name (eval body env) env in
+      let env' = PTEnv.extend name (eval body env) env in
       (Value (L.unlocated (Integer 0)), env')
 
 let rec run prog env =
