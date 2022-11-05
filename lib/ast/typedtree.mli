@@ -3,18 +3,16 @@ open Op
 open Utils
 module PTree = Parsetree
 
-type ident = string
-
 type t = { body : t_body; ty : Ty.t; loc : Location.t }
 
 and t_body =
-  | Var of ident
+  | Var of Ident.t
   | Integer of int
   | Boolean of bool
   | Binop of Binop.t * t * t
   | If of t * t * t
-  | LetIn of ident * t * t
-  | Fun of ident * t
+  | LetIn of Ident.t * t * t
+  | Fun of Ident.t * t
   | Apply of t * t
 
 val to_string : t -> string
