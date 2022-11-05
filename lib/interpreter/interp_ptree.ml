@@ -68,7 +68,9 @@ and eval_bool expr env =
 
 and eval_binop (op, l, r) env =
   match op with
-  | Binop.Equal -> failwith "equals not implemented"
+  | Binop.Equal ->
+      let x, y = (eval_number l env, eval_number r env) in
+      Value (L.unlocated (Boolean (x = y)))
   | Binop.Less ->
       let x, y = (eval_number l env, eval_number r env) in
       Value (L.unlocated (Boolean (x < y)))
