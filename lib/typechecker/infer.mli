@@ -7,8 +7,8 @@ type context = Ty.t Context.t
 
 val type_parsetree : PTree.t -> context -> TTree.t
 (**
-  Build an explicity typed [Typedtree.t] from a partially 
-  typed [Parsetree.t].
+  [type_parsetree pt ctx] builds an explicity typed [Typedtree.t] from a partially 
+  typed [Parsetree.t] [pt] with respect to a typing context [ctx]
 
   Performs type checking and inference.
 

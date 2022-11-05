@@ -38,9 +38,10 @@ let rec type_parsetree (pt : PTree.t) ctx =
       let body = Binop (op, l', r') in
       match Ty.apply_args ty_op [ l'.ty; r'.ty ] with
       | Some ty -> { body; ty; loc }
-      | _ ->
+      | None ->
           let msg =
-            sprintf "arguments did not match type '%s'" (Ty.to_string ty_op)
+            sprintf "arguments '%s' and '%s' did not match type '%s'"
+              (Ty.to_string l'.ty) (Ty.to_string r'.ty) (Ty.to_string ty_op)
           in
           raise (TypeError (msg, loc)))
   | PTree.If (cond, ift, iff) ->
@@ -65,9 +66,10 @@ let rec type_parsetree (pt : PTree.t) ctx =
       else { body; ty; loc }
   | PTree.LetIn (name, value, expr) ->
       let typed_value = type_parsetree value ctx in
-      let ty = typed_value.ty in
       let ctx' = Context.extend name typed_value.ty ctx in
-      let body = LetIn (name, typed_value, type_parsetree expr ctx') in
+      let typed_expr = type_parsetree expr ctx' in
+      let ty = typed_expr.ty in
+      let body = LetIn (name, typed_value, typed_expr) in
       { body; ty; loc }
   | PTree.Fun (x, expr) ->
       let arg, ty_arg =
@@ -120,7 +122,7 @@ let rec type_parsetree (pt : PTree.t) ctx =
             inferred
         in
         raise (TypeError (msg, loc))
-      else typed_expr
+      else { typed_expr with ty = ty_stated }
 
 let type_command (cmd : PTree.command) (ctx : context) : TTree.command * context
     =

@@ -1,4 +1,8 @@
 open Utils
+open Base
+
+(** Work around [Base] overriding [=] to have type [int -> int] *)
+let ( = ) = Poly.( = )
 
 type source = Builtin | Inferred | Annotation of Location.t
 
@@ -30,7 +34,7 @@ let annotated ty loc = { body = ty; source = Annotation loc }
 *)
 let rec apply_args f args =
   match (f.body, args) with
-  | t, [] -> Some (inferred t)
-  | TArrow (t, g), arg :: rest ->
-      if t.body = arg.body then apply_args g rest else None
+  | ty, [] -> Some (inferred ty)
+  | TArrow (ty_param, g), ty_arg :: rest ->
+      if equal ty_param ty_arg then apply_args g rest else None
   | _ -> None
