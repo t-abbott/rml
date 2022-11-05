@@ -6,9 +6,10 @@ open Types.Ty
 
 let bool_bool = builtin (TArrow (builtin TBool, builtin TBool))
 let int_int = builtin (TArrow (builtin TInt, builtin TInt))
-let int_int_int = builtin (TArrow (int_int, builtin TInt))
-let int_int_bool = builtin (TArrow (int_int, builtin TBool))
-let bool_bool_bool = builtin (TArrow (bool_bool, builtin TBool))
+let int_bool = builtin (TArrow (builtin TInt, builtin TBool))
+let int_int_int = builtin (TArrow (builtin TInt, int_int))
+let int_int_bool = builtin (TArrow (builtin TInt, int_bool))
+let bool_bool_bool = builtin (TArrow (builtin TBool, bool_bool))
 
 module Binop = struct
   type t = Equal | Less | Greater | Plus | Minus | Times | And | Or
