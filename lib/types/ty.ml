@@ -1,3 +1,8 @@
+(**
+  {1 TODO}
+  - implement [flatten] and [normalise] functions
+*)
+
 open Utils
 open Base
 
