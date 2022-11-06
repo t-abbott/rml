@@ -17,6 +17,9 @@ rule token = parse
     whitespace      { token lexbuf }
   | '\n'            { Lexing.new_line lexbuf; token lexbuf }
   | int             { INT (int_of_string(Lexing.lexeme lexbuf)) }
+  | "int"           { TINT }
+  | "bool"          { TBOOL }
+  | ':'             { COLON }
   | "true"          { TRUE }
   | "false"         { FALSE }
   | "fun"           { FUN }

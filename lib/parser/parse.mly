@@ -1,25 +1,35 @@
 %{
-  open Parsetree
+  open Ast.Op
+  open Ast.Parsetree
+  open Types
 %}
 
+%token TINT
+%token TBOOL
+%token COLON
+
 %token ARROW
-%token <Parsetree.ident> VAR
+%token <Ast.Ident.t> VAR
+
 %token <int> INT
 %token TRUE FALSE
+
 %token PLUS
 %token MINUS
 %token TIMES
 %token EQUAL LESS GREATER
 %token AND OR
+
 %token IF THEN ELSE
 %token FUN
 %token LPAREN RPAREN
 %token LET IN
+
 %token SEMISEMI
 %token EOF
 
 %start file
-%type <Parsetree.program> file
+%type <Ast.Parsetree.program> file
 
 
 %right ARROW
@@ -59,24 +69,24 @@ expr_unmarked:
   | MINUS n = INT
     { Integer (-n) }
   | e1 = expr PLUS e2 = expr	
-    { Binop (Op.Plus, e1, e2) }
+    { Binop (Binop.Plus, e1, e2) }
   | e1 = expr MINUS e2 = expr
-    { Binop (Op.Minus, e1, e2) }
+    { Binop (Binop.Minus, e1, e2) }
   | e1 = expr TIMES e2 = expr
-    { Binop (Op.Times, e1, e2) }
+    { Binop (Binop.Times, e1, e2) }
   | e1 = expr EQUAL e2 = expr
-    { Binop(Op.Equal, e1, e2) }
+    { Binop(Binop.Equal, e1, e2) }
   | e1 = expr LESS e2 = expr
-    { Binop (Op.Less, e1, e2) }
+    { Binop (Binop.Less, e1, e2) }
   | e1 = expr GREATER e2 = expr 
-    { Binop (Op.Greater, e1, e2) }
+    { Binop (Binop.Greater, e1, e2) }
   | e1 = expr AND e2 = expr
-    { Binop (Op.And, e1, e2) }
+    { Binop (Binop.And, e1, e2) }
   | e1 = expr OR e2 = expr
-    { Binop (Op.Or, e1, e2) }
+    { Binop (Binop.Or, e1, e2) }
   | IF e1 = expr THEN e2 = expr ELSE e3 = expr
     { If (e1, e2, e3) }
-  | FUN arg = VAR ARROW body = expr 
+  | FUN arg = expr ARROW body = expr 
     { Fun (arg, body) }
   | LET name = VAR EQUAL e1 = expr IN e2 = expr
     { LetIn (name, e1, e2) }
@@ -98,21 +108,29 @@ simple_expr_unmarked:
     { Boolean false }
   | n = INT
     { (Integer n) }
+  | e = expr COLON t = ty
+    { Annotated (e, t) }
   | LPAREN e = expr_unmarked RPAREN	
     { e }    
 
-// ty:
-//   | TBOOL
-//     { TBool }
-//   | TINT
-//     { TInt }
-//   | t1 = ty ARROW t2 = ty
-//     { TArrow (t1, t2) }
-//   | LPAREN t = ty RPAREN
-//     { t }
+ty: mark_type_location(ty_unmarked) { $1 }
+ty_unmarked:
+  | TBOOL
+    { Ty.TBool }
+  | TINT
+    { Ty.TInt }
+  | t1 = ty ARROW t2 = ty
+    { Ty.TArrow ([t1], t2) }
+  | LPAREN t = ty_unmarked RPAREN
+    { t }
 
 mark_location(X):
     x = X
-    { Location.locate (Location.from $startpos $endpos) x }
+    { Utils.Location.locate (Utils.Location.from $startpos $endpos) x }
+
+// TODO: avoid this
+mark_type_location(X):
+    x = X 
+    { Types.Ty.annotated x (Utils.Location.from $startpos $endpos) }
 
 %%
