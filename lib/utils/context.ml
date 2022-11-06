@@ -8,7 +8,5 @@ type 'a t = (string * 'a) list
 *)
 
 let empty = []
-
-let find name ctx = List.Assoc.find ctx name ~equal:(String.equal)
-
+let find name ctx = List.Assoc.find ctx name ~equal:String.equal
 let extend name value env = (name, value) :: env
