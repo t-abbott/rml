@@ -120,7 +120,7 @@ ty_unmarked:
   | TINT
     { Ty.TInt }
   | t1 = ty ARROW t2 = ty
-    { Ty.TArrow (t1, t2) }
+    { Ty.TArrow ([t1], t2) }
   | LPAREN t = ty_unmarked RPAREN
     { t }
 

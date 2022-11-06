@@ -1,15 +1,9 @@
 open Types.Ty
 
-(*
-  Operator types are curried until I add multi-argument functions  
-*)
-
-let bool_bool = builtin (TArrow (builtin TBool, builtin TBool))
-let int_int = builtin (TArrow (builtin TInt, builtin TInt))
-let int_bool = builtin (TArrow (builtin TInt, builtin TBool))
-let int_int_int = builtin (TArrow (builtin TInt, int_int))
-let int_int_bool = builtin (TArrow (builtin TInt, int_bool))
-let bool_bool_bool = builtin (TArrow (builtin TBool, bool_bool))
+let bi = builtin
+let int_int_int = bi (TArrow ([ bi TInt; bi TInt ], bi TInt))
+let int_int_bool = bi (TArrow ([ bi TInt; bi TInt ], bi TBool))
+let bool_bool_bool = bi (TArrow ([ bi TBool; bi TBool ], bi TBool))
 
 module Binop = struct
   type t = Equal | Less | Greater | Plus | Minus | Times | And | Or
