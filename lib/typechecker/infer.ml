@@ -36,7 +36,7 @@ let rec type_parsetree (pt : PTree.t) ctx =
       let ty_op = Op.Binop.signature op in
       let l', r' = (type_parsetree l ctx, type_parsetree r ctx) in
       let body = Binop (op, l', r') in
-      match Ty.apply_args ty_op [ l'.ty; r'.ty ] with
+      match Ty.apply_types ty_op [ l'.ty; r'.ty ] with
       | Some ty -> { body; ty; loc }
       | None ->
           let msg =
@@ -51,7 +51,7 @@ let rec type_parsetree (pt : PTree.t) ctx =
       in
       let body = If (typed_cond, typed_ift, typed_iff) in
       let ty = typed_ift.ty in
-      if not (Ty.equal typed_cond.ty (Ty.inferred Ty.TBool)) then
+      if not (Ty.equal typed_cond.ty Ty.(inferred TBool)) then
         let t_str = Ty.to_string typed_cond.ty in
         let msg =
           sprintf "expected if statement condition to be a bool, got '%s'" t_str
@@ -82,7 +82,7 @@ let rec type_parsetree (pt : PTree.t) ctx =
       in
       let ctx' = Context.extend arg ty_arg ctx in
       let typed_expr = type_parsetree expr ctx' in
-      let ty = Ty.inferred (Ty.TArrow (ty_arg, typed_expr.ty)) in
+      let ty = Ty.inferred (Ty.TArrow ([ ty_arg ], typed_expr.ty)) in
       let body = Fun (arg, typed_expr) in
       { body; ty; loc }
   | PTree.Apply (e1, e2) ->
@@ -90,7 +90,7 @@ let rec type_parsetree (pt : PTree.t) ctx =
       if Ty.is_function typed_e1.ty then
         let body = Apply (typed_e1, typed_e2) in
         let ty =
-          match Ty.apply_args typed_e1.ty [ typed_e2.ty ] with
+          match Ty.apply_types typed_e1.ty [ typed_e2.ty ] with
           | Some t -> t
           | None ->
               let t1, t2 = Misc.proj2 Ty.to_string typed_e1.ty typed_e2.ty in
