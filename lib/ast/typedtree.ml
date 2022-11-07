@@ -1,5 +1,5 @@
 open Printf
-open Types
+open Typing
 open Op
 open Utils
 module PTree = Parsetree

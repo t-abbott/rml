@@ -1,4 +1,4 @@
-open Types.Ty
+open Typing.Ty
 
 let bi = builtin
 let int_int_int = bi (TArrow ([ bi TInt; bi TInt ], bi TInt))

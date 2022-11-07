@@ -1,5 +1,5 @@
 open Base
-open Types
+open Typing
 open Ast
 open Ast.Typedtree
 module L = Utils.Location

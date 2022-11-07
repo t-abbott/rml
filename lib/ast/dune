@@ -1,3 +1,3 @@
 (library
  (name ast)
- (libraries base types utils))
+ (libraries base typing utils))

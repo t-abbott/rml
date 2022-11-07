@@ -1,7 +1,7 @@
 open Printf
 open Ast
 open Ast.Typedtree
-open Types
+open Typing
 open Utils
 open Errors
 module PTree = Ast.Parsetree

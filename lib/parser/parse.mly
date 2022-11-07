@@ -1,7 +1,7 @@
 %{
   open Ast.Op
   open Ast.Parsetree
-  open Types
+  open Typing
 %}
 
 %token TINT
@@ -131,6 +131,6 @@ mark_location(X):
 // TODO: avoid this
 mark_type_location(X):
     x = X 
-    { Types.Ty.annotated x (Utils.Location.from $startpos $endpos) }
+    { Typing.Ty.annotated x (Utils.Location.from $startpos $endpos) }
 
 %%
