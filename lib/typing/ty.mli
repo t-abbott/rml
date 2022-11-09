@@ -44,7 +44,7 @@ val apply_types : t -> t list -> t option
 
 val to_string : t -> string
 
-val basic : Ty_basic.t -> t
+val basic : ?source:source -> Ty_basic.t -> t
 (**
   Tests if the base types of two liquid types are equal.
   

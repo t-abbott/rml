@@ -3,6 +3,6 @@
 *)
 type t = Boolean of bool | Integer of int
 
-let to_string = function 
+let to_string = function
   | Boolean b -> Bool.to_string b
   | Integer i -> Int.to_string i

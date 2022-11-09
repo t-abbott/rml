@@ -1,9 +1,11 @@
+open Typing
 open Typing.Ty
 
-let bi = builtin
-let int_int_int = bi (TArrow ([ bi TInt; bi TInt ], bi TInt))
-let int_int_bool = bi (TArrow ([ bi TInt; bi TInt ], bi TBool))
-let bool_bool_bool = bi (TArrow ([ bi TBool; bi TBool ], bi TBool))
+let t_int = basic Ty_basic.TInt ~source:Builtin
+let t_bool = basic Ty_basic.TBool ~source:Builtin
+let int_int_int = builtin (RArrow ([ t_int; t_int ], t_int))
+let int_int_bool = builtin (RArrow ([ t_int; t_int ], t_bool))
+let bool_bool_bool = builtin (RArrow ([ t_bool; t_bool ], t_bool))
 
 module Binop = struct
   type t = Equal | Less | Greater | Plus | Minus | Times | And | Or

@@ -44,7 +44,9 @@ let is_function ty = match ty.body with RArrow _ -> true | _ -> false
 let builtin ty = { body = ty; source = Builtin }
 let inferred ty = { body = ty; source = Inferred }
 let annotated ty loc = { body = ty; source = Annotation loc }
-let basic ty_b = inferred (RBase (ty_b, Refinement.boolean true))
+
+let basic ?(source = Inferred) ty_b =
+  { body = RBase (ty_b, Refinement.boolean true); source }
 
 let rec apply_types f types =
   match (f.body, types) with
