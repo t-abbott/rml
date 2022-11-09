@@ -9,16 +9,19 @@ module TTree = Ast.Typedtree
 
 type context = Ty.t Context.t
 
+let t_int = Ty.basic Ty_basic.TInt
+let t_bool = Ty.basic Ty_basic.TBool
+
 let rec type_parsetree (pt : PTree.t) ctx =
   let loc = pt.loc in
   match pt.body with
   | PTree.Integer i ->
       let body = Integer i in
-      let ty = Ty.inferred Ty.TInt in
+      let ty = t_int in
       { body; ty; loc }
   | PTree.Boolean b ->
       let body = Boolean b in
-      let ty = Ty.inferred Ty.TBool in
+      let ty = t_bool in
       { body; ty; loc }
   | PTree.Var v ->
       let ty =
@@ -51,7 +54,7 @@ let rec type_parsetree (pt : PTree.t) ctx =
       in
       let body = If (typed_cond, typed_ift, typed_iff) in
       let ty = typed_ift.ty in
-      if not (Ty.equal typed_cond.ty Ty.(inferred TBool)) then
+      if not (Ty.equal typed_cond.ty t_bool) then
         let t_str = Ty.to_string typed_cond.ty in
         let msg =
           sprintf "expected if statement condition to be a bool, got '%s'" t_str
@@ -82,7 +85,7 @@ let rec type_parsetree (pt : PTree.t) ctx =
       in
       let ctx' = Context.extend arg ty_arg ctx in
       let typed_expr = type_parsetree expr ctx' in
-      let ty = Ty.inferred (Ty.TArrow ([ ty_arg ], typed_expr.ty)) in
+      let ty = Ty.inferred (Ty.RArrow ([ ty_arg ], typed_expr.ty)) in
       let body = Fun (arg, typed_expr) in
       { body; ty; loc }
   | PTree.Apply (e1, e2) ->
