@@ -116,11 +116,11 @@ simple_expr_unmarked:
 ty: mark_type_location(ty_unmarked) { $1 }
 ty_unmarked:
   | TBOOL
-    { Ty.TBool }
+    { Ty.RBase (Ty_basic.TBool, Refinement.boolean true) }
   | TINT
-    { Ty.TInt }
+    { Ty.RBase (Ty_basic.TInt, Refinement.boolean true) }
   | t1 = ty ARROW t2 = ty
-    { Ty.TArrow ([t1], t2) }
+    { Ty.RArrow ([t1], t2) }
   | LPAREN t = ty_unmarked RPAREN
     { t }
 
