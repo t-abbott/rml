@@ -25,7 +25,7 @@ let rec is_equal t1 t2 ~with_refinements =
       | _, [] -> is_equal t1 t2_to ~with_refinements)
   | RBase (b1, r1), RBase (b2, r2) ->
       Ty_basic.equal b1 b2
-      && if with_refinements then Refinement.equal r1 r2 else false
+      && if with_refinements then Refinement.equal r1 r2 else true
   | _ -> false
 
 let equal t1 t2 = is_equal t1 t2 ~with_refinements:true
