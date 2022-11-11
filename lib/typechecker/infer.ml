@@ -116,7 +116,7 @@ let rec type_parsetree (pt : PTree.t) ctx =
         raise (TypeError (msg, loc))
   | PTree.Annotated (expr, ty_stated) ->
       let typed_expr = type_parsetree expr ctx in
-      if not (Ty.equal typed_expr.ty ty_stated) then
+      if not (Ty.equal_base typed_expr.ty ty_stated) then
         let stated, inferred =
           Utils.Misc.proj2 Ty.to_string ty_stated typed_expr.ty
         in
