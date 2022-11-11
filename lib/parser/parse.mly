@@ -25,6 +25,9 @@
 %token LPAREN RPAREN
 %token LET IN
 
+%token LINE
+%token LBRACKET RBRACKET
+
 %token SEMISEMI
 %token EOF
 
@@ -115,14 +118,37 @@ simple_expr_unmarked:
 
 ty: mark_type_location(ty_unmarked) { $1 }
 ty_unmarked:
-  | TBOOL
-    { Ty.RBase (Ty_basic.TBool, Refinement.boolean true) }
-  | TINT
-    { Ty.RBase (Ty_basic.TInt, Refinement.boolean true) }
+  | t = ty_basic r = refinement
+    { Ty.RBase (t, r) }
   | t1 = ty ARROW t2 = ty
     { Ty.RArrow ([t1], t2) }
+  | t = ty_basic 
+    { Ty.RBase (t, Refinement.boolean true) }
   | LPAREN t = ty_unmarked RPAREN
     { t }
+
+ty_basic:
+  | TBOOL
+    { Ty_basic.TBool }
+  | TINT
+    { Ty_basic.TInt } 
+
+refinement:
+  | LBRACKET v = VAR LINE body = refinement_body RBRACKET
+    {
+        if v <> "v" then
+            let loc = Utils.Location.from $startpos $endpos in
+            let msg = Printf.sprintf "refinements must bind the variable 'v', found '%s'" v in
+            raise (Errors.ParseError (msg, loc))
+        else
+            body
+    }
+
+refinement_body:
+  | TRUE 
+    { Refinement.boolean true }
+  | FALSE 
+    { Refinement.boolean false }
 
 mark_location(X):
     x = X
