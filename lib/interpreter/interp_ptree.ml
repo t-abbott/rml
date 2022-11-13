@@ -20,15 +20,26 @@ let rec eval (expr : t) env =
   | Binop (op, l, r) -> eval_binop (op, l, r) env
   | If (cond, if_t, if_f) ->
       if eval_bool cond env then eval if_t env else eval if_f env
-  | LetIn (name, boundval, body) ->
+  | LetIn (namebinding, boundval, body) ->
+      let name =
+        match namebinding.body with
+        | Var v -> v
+        | Annotated ({ body = Var v; _ }, _) -> v
+        | _ ->
+            let msg =
+              sprintf "let must bind a variable, got %s" (to_string namebinding)
+            in
+            raise (InterpError (msg, expr.loc))
+      in
       let e = eval boundval env in
       eval body (PTEnv.extend name e env)
   | Fun _ as f -> Closure (L.unlocated f, env)
   | Apply (e1, e2) -> (
       (*
-         In the parsetree we allow the argument [x] in the term [(fun x -> ...)]
-         to be of type [Parsetree.t] since that makes parsing easier. It forces to
-         add extra checks when interpreting, however.
+        In the parsetree we allow the argument [x] in the term [(fun x -> ...)]
+        to be of type [Parsetree.t] since that makes parsing easier. Doing this
+        forces us to add a few extra checks when interpreting, though. We do a similar 
+        thing with the bound variable in [let] expressions.
       *)
       let arg = eval e2 env in
       match eval e1 env with
@@ -96,7 +107,7 @@ and eval_binop (op, l, r) env =
 let eval_cmd (cmd : command) env =
   match cmd.body with
   | Expr e -> (eval e env, env)
-  | LetDef (name, body) ->
+  | LetDef (name, _, body) ->
       let env' = PTEnv.extend name (eval body env) env in
       (Value (L.unlocated (Integer 0)), env')
 

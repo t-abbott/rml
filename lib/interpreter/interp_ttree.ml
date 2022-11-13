@@ -1,12 +1,18 @@
 open Base
-open Types
+open Typing
 open Ast
 open Ast.Typedtree
 module L = Utils.Location
 module TTEnv = Env.MakeEnv (Typedtree)
 
 let placeholder_value =
-  { body = Integer 0; ty = Ty.builtin TInt; loc = L.Nowhere }
+  {
+    body = Integer 0;
+    ty =
+      Ty.builtin
+        (Ty.RBase (Ty_basic.TInt, L.unlocated (Refinement.boolean true)));
+    loc = L.Nowhere;
+  }
 
 let unreachable ~reason =
   let message = "tried to execute branch unreachable because " ^ reason in
@@ -51,46 +57,49 @@ and eval_bool expr env =
         ~reason:"expression should have been checked to reduce to a boolean"
 
 and eval_binop (op, l, r) env =
+  let t_bool = Ty.unrefined Ty_basic.TBool ~source:Ty.Builtin in
+  let t_int = Ty.unrefined Ty_basic.TBool ~source:Ty.Builtin in
+
   match op with
   | Op.Binop.Equal ->
       let x, y = (eval_number l env, eval_number r env) in
       let body = Boolean (x = y) in
-      let ty = Ty.(builtin TBool) in
+      let ty = t_bool in
       Value { placeholder_value with body; ty }
   | Op.Binop.Less ->
       let x, y = (eval_number l env, eval_number r env) in
       let body = Boolean (x < y) in
-      let ty = Ty.(builtin TBool) in
+      let ty = t_bool in
       Value { placeholder_value with body; ty }
   | Op.Binop.Greater ->
       let x, y = (eval_number l env, eval_number r env) in
       let body = Boolean (x > y) in
-      let ty = Ty.(builtin TBool) in
+      let ty = t_bool in
       Value { placeholder_value with body; ty }
   | Op.Binop.Plus ->
       let x, y = (eval_number l env, eval_number r env) in
       let body = Integer (x + y) in
-      let ty = Ty.(builtin TInt) in
+      let ty = t_int in
       Value { placeholder_value with body; ty }
   | Op.Binop.Minus ->
       let x, y = (eval_number l env, eval_number r env) in
       let body = Integer (x - y) in
-      let ty = Ty.(builtin TInt) in
+      let ty = t_int in
       Value { placeholder_value with body; ty }
   | Op.Binop.Times ->
       let x, y = (eval_number l env, eval_number r env) in
       let body = Integer (x * y) in
-      let ty = Ty.(builtin TInt) in
+      let ty = t_int in
       Value { placeholder_value with body; ty }
   | Op.Binop.And ->
       let x, y = (eval_bool l env, eval_bool r env) in
       let body = Boolean (x && y) in
-      let ty = Ty.(builtin TBool) in
+      let ty = t_bool in
       Value { placeholder_value with body; ty }
   | Op.Binop.Or ->
       let x, y = (eval_bool l env, eval_bool r env) in
       let body = Boolean (x || y) in
-      let ty = Ty.(builtin TBool) in
+      let ty = t_bool in
       Value { placeholder_value with body; ty }
 
 let eval_cmd cmd env =

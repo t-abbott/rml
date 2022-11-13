@@ -1,7 +1,7 @@
 %{
   open Ast.Op
   open Ast.Parsetree
-  open Types
+  open Typing
 %}
 
 %token TINT
@@ -24,6 +24,9 @@
 %token FUN
 %token LPAREN RPAREN
 %token LET IN
+
+%token LINE
+%token LBRACKET RBRACKET
 
 %token SEMISEMI
 %token EOF
@@ -54,8 +57,10 @@ file:
 
 topdef: mark_location(topdef_unmarked) { $1 }
 topdef_unmarked:   
+  | LET x = VAR COLON t = ty EQUAL e = expr
+    { LetDef (x, Some t, e) }
   | LET x = VAR EQUAL e = expr
-    { LetDef (x, e) }
+    { LetDef (x, None, e) }
 
 topexpr: mark_location(topexpr_unmarked) { $1 }
 topexpr_unmarked:
@@ -88,7 +93,7 @@ expr_unmarked:
     { If (e1, e2, e3) }
   | FUN arg = expr ARROW body = expr 
     { Fun (arg, body) }
-  | LET name = VAR EQUAL e1 = expr IN e2 = expr
+  | LET name = expr EQUAL e1 = expr IN e2 = expr
     { LetIn (name, e1, e2) }
 
 app_expr: mark_location(app_expr_unmarked) { $1 }
@@ -115,14 +120,66 @@ simple_expr_unmarked:
 
 ty: mark_type_location(ty_unmarked) { $1 }
 ty_unmarked:
-  | TBOOL
-    { Ty.TBool }
-  | TINT
-    { Ty.TInt }
+  | t = ty_basic r = refinement
+    { Ty.RBase (t, r) }
   | t1 = ty ARROW t2 = ty
-    { Ty.TArrow ([t1], t2) }
+    { Ty.RArrow ([t1], t2)  }
+  | t = ty_basic 
+    { Ty.unrefined_body t }
   | LPAREN t = ty_unmarked RPAREN
     { t }
+
+ty_basic:
+  | TBOOL
+    { Ty_basic.TBool }
+  | TINT
+    { Ty_basic.TInt } 
+
+// refinement: mark_location(refinement_unmarked) { $1 }
+refinement:
+  | LBRACKET v = VAR LINE body = refinement_expr RBRACKET
+    {
+        if v <> "v" then
+            let loc = Utils.Location.from $startpos $endpos in
+            let msg = Printf.sprintf "refinements must bind the variable 'v', found '%s'" v in
+            raise (Errors.ParseError (msg, loc))
+        else
+            body
+    }
+
+(*
+    TODO refactor true and false tokens to wrap ocaml bools like integer does
+*)
+
+refinement_expr: mark_location(refinement_expr_unmarked) { $1 }
+refinement_expr_unmarked:
+  | TRUE 
+    { Refinement.boolean true }
+  | FALSE 
+    { Refinement.boolean false }
+  | i = INT 
+    { Refinement.number i }
+  | l = refinement_expr op = refinement_binop r = refinement_expr
+    { Refinement.Binop (op, l, r) }
+  | v = VAR
+    { Refinement.var v }
+  | LPAREN r = refinement_expr_unmarked RPAREN
+   { r }
+
+%inline
+refinement_binop:
+  | LESS
+    { Refinement.Binop.Less } 
+  | GREATER
+    { Refinement.Binop.Greater }
+  | EQUAL
+    { Refinement.Binop.Equal }
+  | AND
+    { Refinement.Binop.And }
+  | OR
+    { Refinement.Binop.Or }
+  | PLUS
+    { Refinement.Binop.Add }
 
 mark_location(X):
     x = X
@@ -131,6 +188,6 @@ mark_location(X):
 // TODO: avoid this
 mark_type_location(X):
     x = X 
-    { Types.Ty.annotated x (Utils.Location.from $startpos $endpos) }
+    { Typing.Ty.annotated x (Utils.Location.from $startpos $endpos) }
 
 %%

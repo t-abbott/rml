@@ -1,4 +1,4 @@
-open Types
+open Typing
 
 module Binop : sig
   type t = Equal | Less | Greater | Plus | Minus | Times | And | Or

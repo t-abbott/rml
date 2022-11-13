@@ -34,9 +34,12 @@ rule token = parse
   | '>'             { GREATER }
   | "&&"            { AND }
   | "||"            { OR }
+  | '|'             { LINE }
   | "->"            { ARROW }
   | '('             { LPAREN }
   | ')'             { RPAREN }
+  | '['             { LBRACKET }
+  | ']'             { RBRACKET }
   | '+'             { PLUS }
   | '-'             { MINUS }
   | '*'             { TIMES }

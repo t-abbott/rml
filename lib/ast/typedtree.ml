@@ -1,5 +1,5 @@
 open Printf
-open Types
+open Typing
 open Op
 open Utils
 module PTree = Parsetree
@@ -17,22 +17,24 @@ and t_body =
   | Apply of t * t
 
 let rec to_string { body; ty; _ } =
-  let ty_str = Ty.to_string ty in
-  match body with
-  | Var v -> sprintf "(%s: %s)" v ty_str
-  | Integer i -> Int.to_string i
-  | Boolean b -> Bool.to_string b
-  | Binop (op, l, r) ->
-      sprintf "(%s %s %s): %s" (Binop.to_string op) (to_string l) (to_string r)
-        ty_str
-  | If (cond, if_t, if_f) ->
-      sprintf "(if %s then %s else %s): %s" (to_string cond) (to_string if_t)
-        (to_string if_f) ty_str
-  | LetIn (name, value, body) ->
-      sprintf "(let %s = %s in %s): %s" name (to_string value) (to_string body)
-        ty_str
-  | Fun (arg, body) -> sprintf "(%s -> %s): %s" arg (to_string body) ty_str
-  | Apply (e1, e2) -> sprintf "(%s %s): %s" (to_string e1) (to_string e2) ty_str
+  let type_str = Ty.to_string ty in
+  let term_str =
+    match body with
+    | Var v -> v
+    | Integer i -> Int.to_string i
+    | Boolean b -> Bool.to_string b
+    | Binop (op, l, r) ->
+        sprintf "%s %s %s" (to_string l) (Binop.to_string op) (to_string r)
+    | If (cond, if_t, if_f) ->
+        sprintf "if %s then %s else %s" (to_string cond) (to_string if_t)
+          (to_string if_f)
+    | LetIn (name, value, body) ->
+        sprintf "let %s: %s = %s in %s" name type_str (to_string value)
+          (to_string body)
+    | Fun (arg, body) -> sprintf "%s: %s -> %s" arg type_str (to_string body)
+    | Apply (e1, e2) -> sprintf "%s %s" (to_string e1) (to_string e2)
+  in
+  term_str
 
 type command = Expr of t | LetDef of Ident.t * t
 

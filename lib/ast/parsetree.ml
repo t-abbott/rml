@@ -1,5 +1,5 @@
 open Printf
-open Types
+open Typing
 open Utils
 
 type t = t_body Location.located
@@ -11,7 +11,7 @@ and t_body =
   | Boolean of bool
   | Binop of Op.Binop.t * t * t
   | If of t * t * t
-  | LetIn of Ident.t * t * t
+  | LetIn of t * t * t
   | Fun of t * t
   | Apply of t * t
 
@@ -28,17 +28,20 @@ let rec to_string (pt : t) =
       sprintf "(if %s then %s else %s)" (to_string cond) (to_string if_t)
         (to_string if_f)
   | LetIn (name, e1, e2) ->
-      sprintf "(let %s = %s in %s)" name (to_string e1) (to_string e2)
+      sprintf "(let %s = %s in %s)" (to_string name) (to_string e1)
+        (to_string e2)
   | Fun (arg, body) -> sprintf "(fun %s -> %s)" (to_string arg) (to_string body)
   | Apply (e1, e2) -> sprintf "%s %s" (to_string e1) (to_string e2)
 
 type command = command_body Location.located
-and command_body = Expr of t | LetDef of Ident.t * t
+and command_body = Expr of t | LetDef of Ident.t * Ty.t option * t
 
 let command_to_string (cmd : command) =
   match cmd.body with
   | Expr e -> to_string e
-  | LetDef (name, body) -> sprintf "let %s = %s ;;" name (to_string body)
+  | LetDef (name, ty, body) ->
+      let ty_str = match ty with Some ty' -> Ty.to_string ty' | _ -> "" in
+      sprintf "let %s: %s = %s ;;" name ty_str (to_string body)
 
 type program = command list
 

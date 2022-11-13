@@ -1,7 +1,7 @@
 open Printf
 open Ast
 open Ast.Typedtree
-open Types
+open Typing
 open Utils
 open Errors
 module PTree = Ast.Parsetree
@@ -9,16 +9,19 @@ module TTree = Ast.Typedtree
 
 type context = Ty.t Context.t
 
+let t_int = Ty.unrefined Ty_basic.TInt ~source:Builtin
+let t_bool = Ty.unrefined Ty_basic.TBool ~source:Builtin
+
 let rec type_parsetree (pt : PTree.t) ctx =
   let loc = pt.loc in
   match pt.body with
   | PTree.Integer i ->
       let body = Integer i in
-      let ty = Ty.inferred Ty.TInt in
+      let ty = t_int in
       { body; ty; loc }
   | PTree.Boolean b ->
       let body = Boolean b in
-      let ty = Ty.inferred Ty.TBool in
+      let ty = t_bool in
       { body; ty; loc }
   | PTree.Var v ->
       let ty =
@@ -51,7 +54,7 @@ let rec type_parsetree (pt : PTree.t) ctx =
       in
       let body = If (typed_cond, typed_ift, typed_iff) in
       let ty = typed_ift.ty in
-      if not (Ty.equal typed_cond.ty Ty.(inferred TBool)) then
+      if not (Ty.equal typed_cond.ty t_bool) then
         let t_str = Ty.to_string typed_cond.ty in
         let msg =
           sprintf "expected if statement condition to be a bool, got '%s'" t_str
@@ -64,8 +67,27 @@ let rec type_parsetree (pt : PTree.t) ctx =
         in
         raise (TypeError (msg, loc))
       else { body; ty; loc }
-  | PTree.LetIn (name, value, expr) ->
+  | PTree.LetIn (namebinding, value, expr) ->
       let typed_value = type_parsetree value ctx in
+      let name =
+        match namebinding.body with
+        | PTree.Var v -> v
+        | PTree.Annotated ({ body = Var v; _ }, ty_stated) ->
+            if not (Ty.equal_base ty_stated typed_value.ty) then
+              let msg =
+                sprintf "stated type '%s' does not match inferred type '%s'"
+                  (Ty.to_string ty_stated)
+                  (Ty.to_string typed_value.ty)
+              in
+              raise (TypeError (msg, namebinding.loc))
+            else v
+        | _ ->
+            let msg =
+              sprintf "let statements must bind a variable, got '%s'"
+                (PTree.to_string namebinding)
+            in
+            raise (TypeError (msg, namebinding.loc))
+      in
       let ctx' = Context.extend name typed_value.ty ctx in
       let typed_expr = type_parsetree expr ctx' in
       let ty = typed_expr.ty in
@@ -82,7 +104,7 @@ let rec type_parsetree (pt : PTree.t) ctx =
       in
       let ctx' = Context.extend arg ty_arg ctx in
       let typed_expr = type_parsetree expr ctx' in
-      let ty = Ty.inferred (Ty.TArrow ([ ty_arg ], typed_expr.ty)) in
+      let ty = Ty.inferred (Ty.RArrow ([ ty_arg ], typed_expr.ty)) in
       let body = Fun (arg, typed_expr) in
       { body; ty; loc }
   | PTree.Apply (e1, e2) ->
@@ -113,7 +135,7 @@ let rec type_parsetree (pt : PTree.t) ctx =
         raise (TypeError (msg, loc))
   | PTree.Annotated (expr, ty_stated) ->
       let typed_expr = type_parsetree expr ctx in
-      if not (Ty.equal typed_expr.ty ty_stated) then
+      if not (Ty.equal_base typed_expr.ty ty_stated) then
         let stated, inferred =
           Utils.Misc.proj2 Ty.to_string ty_stated typed_expr.ty
         in
@@ -130,8 +152,18 @@ let type_command (cmd : PTree.command) (ctx : context) : TTree.command * context
   | PTree.Expr ptree ->
       let ttree = type_parsetree ptree ctx in
       (Expr ttree, ctx)
-  | PTree.LetDef (name, defn) ->
-      let typed_defn = type_parsetree defn ctx in
+  | PTree.LetDef (name, ty_stated, defn) ->
+      let typed_defn =
+        match (type_parsetree defn ctx, ty_stated) with
+        | tdefn, None -> tdefn
+        | tdefn, Some ty when Ty.equal_base tdefn.ty ty -> { tdefn with ty }
+        | tdefn, Some ty_bad ->
+            let msg =
+              sprintf "stated type '%s' doesn't match provided type '%s'"
+                (Ty.to_string ty_bad) (Ty.to_string tdefn.ty)
+            in
+            raise (TypeError (msg, cmd.loc))
+      in
       let ctx' = Context.extend name typed_defn.ty ctx in
       (LetDef (name, typed_defn), ctx')
 

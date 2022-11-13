@@ -1,4 +1,4 @@
-open Types
+open Typing
 open Utils
 module PTree = Ast.Parsetree
 module TTree = Ast.Typedtree
