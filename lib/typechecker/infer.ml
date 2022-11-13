@@ -152,8 +152,18 @@ let type_command (cmd : PTree.command) (ctx : context) : TTree.command * context
   | PTree.Expr ptree ->
       let ttree = type_parsetree ptree ctx in
       (Expr ttree, ctx)
-  | PTree.LetDef (name, defn) ->
-      let typed_defn = type_parsetree defn ctx in
+  | PTree.LetDef (name, ty_stated, defn) ->
+      let typed_defn =
+        match (type_parsetree defn ctx, ty_stated) with
+        | tdefn, None -> tdefn
+        | tdefn, Some ty when Ty.equal_base tdefn.ty ty -> { tdefn with ty }
+        | tdefn, Some ty_bad ->
+            let msg =
+              sprintf "stated type '%s' doesn't match provided type '%s'"
+                (Ty.to_string ty_bad) (Ty.to_string tdefn.ty)
+            in
+            raise (TypeError (msg, cmd.loc))
+      in
       let ctx' = Context.extend name typed_defn.ty ctx in
       (LetDef (name, typed_defn), ctx')
 

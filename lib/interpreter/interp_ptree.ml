@@ -107,7 +107,7 @@ and eval_binop (op, l, r) env =
 let eval_cmd (cmd : command) env =
   match cmd.body with
   | Expr e -> (eval e env, env)
-  | LetDef (name, body) ->
+  | LetDef (name, _, body) ->
       let env' = PTEnv.extend name (eval body env) env in
       (Value (L.unlocated (Integer 0)), env')
 

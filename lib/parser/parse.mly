@@ -57,8 +57,10 @@ file:
 
 topdef: mark_location(topdef_unmarked) { $1 }
 topdef_unmarked:   
+  | LET x = VAR COLON t = ty EQUAL e = expr
+    { LetDef (x, Some t, e) }
   | LET x = VAR EQUAL e = expr
-    { LetDef (x, e) }
+    { LetDef (x, None, e) }
 
 topexpr: mark_location(topexpr_unmarked) { $1 }
 topexpr_unmarked:

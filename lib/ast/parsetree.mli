@@ -21,7 +21,7 @@ type command = command_body Location.located
   A top-level command in the program 
 *)
 
-and command_body = Expr of t | LetDef of Ident.t * t
+and command_body = Expr of t | LetDef of Ident.t * Ty.t option * t
 
 val command_to_string : command -> string
 
