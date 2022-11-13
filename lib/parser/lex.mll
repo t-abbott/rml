@@ -20,6 +20,7 @@ rule token = parse
   | "int"           { TINT }
   | "bool"          { TBOOL }
   | ':'             { COLON }
+  | "val"           { VAL }
   | "true"          { TRUE }
   | "false"         { FALSE }
   | "fun"           { FUN }

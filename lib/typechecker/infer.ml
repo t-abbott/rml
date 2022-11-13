@@ -152,14 +152,30 @@ let type_command (cmd : PTree.command) (ctx : context) :
   | PTree.Expr ptree ->
       let ttree = type_parsetree ptree ctx in
       (Some (Expr ttree), ctx)
-  | PTree.LetDef (name, ty_stated, defn) ->
+  | PTree.LetDef (name, ty_annotated, defn) ->
+      (* test annotated type matches val type *)
+      let ty_stated =
+        match (ty_annotated, Context.find name ctx) with
+        | Some ty_annot, Some ty_val ->
+            if not (Ty.equal_base ty_annot ty_val) then
+              let msg =
+                sprintf
+                  "type mistmatch - declared '%s' but was annotated with '%s'"
+                  (Ty.to_string ty_val) (Ty.to_string ty_annot)
+              in
+              raise (TypeError (msg, cmd.loc))
+            else Some ty_annot
+        | Some t, None | None, Some t -> Some t
+        | None, None -> None
+      in
+      (* test annotated/val type matches inferred type *)
       let typed_defn =
         match (type_parsetree defn ctx, ty_stated) with
         | tdefn, None -> tdefn
         | tdefn, Some ty when Ty.equal_base tdefn.ty ty -> { tdefn with ty }
         | tdefn, Some ty_bad ->
             let msg =
-              sprintf "stated type '%s' doesn't match provided type '%s'"
+              sprintf "stated type '%s' doesn't match expected type '%s'"
                 (Ty.to_string ty_bad) (Ty.to_string tdefn.ty)
             in
             raise (TypeError (msg, cmd.loc))
