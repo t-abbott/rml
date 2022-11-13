@@ -29,11 +29,12 @@ let rec to_string { body; ty; _ } =
         sprintf "if %s then %s else %s" (to_string cond) (to_string if_t)
           (to_string if_f)
     | LetIn (name, value, body) ->
-        sprintf "let %s = %s in %s" name (to_string value) (to_string body)
-    | Fun (arg, body) -> sprintf "%s -> %s" arg (to_string body)
+        sprintf "let %s: %s = %s in %s" name type_str (to_string value)
+          (to_string body)
+    | Fun (arg, body) -> sprintf "%s: %s -> %s" arg type_str (to_string body)
     | Apply (e1, e2) -> sprintf "%s %s" (to_string e1) (to_string e2)
   in
-  sprintf "%s: %s" term_str type_str
+  term_str
 
 type command = Expr of t | LetDef of Ident.t * t
 
