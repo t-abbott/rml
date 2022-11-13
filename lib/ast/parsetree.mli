@@ -10,7 +10,7 @@ and t_body =
   | Boolean of bool
   | Binop of Op.Binop.t * t * t
   | If of t * t * t
-  | LetIn of Ident.t * t * t
+  | LetIn of t * t * t
   | Fun of t * t
   | Apply of t * t
 

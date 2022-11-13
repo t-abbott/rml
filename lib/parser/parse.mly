@@ -91,7 +91,7 @@ expr_unmarked:
     { If (e1, e2, e3) }
   | FUN arg = expr ARROW body = expr 
     { Fun (arg, body) }
-  | LET name = VAR EQUAL e1 = expr IN e2 = expr
+  | LET name = expr EQUAL e1 = expr IN e2 = expr
     { LetIn (name, e1, e2) }
 
 app_expr: mark_location(app_expr_unmarked) { $1 }

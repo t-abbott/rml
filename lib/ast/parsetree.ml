@@ -11,7 +11,7 @@ and t_body =
   | Boolean of bool
   | Binop of Op.Binop.t * t * t
   | If of t * t * t
-  | LetIn of Ident.t * t * t
+  | LetIn of t * t * t
   | Fun of t * t
   | Apply of t * t
 
@@ -28,7 +28,8 @@ let rec to_string (pt : t) =
       sprintf "(if %s then %s else %s)" (to_string cond) (to_string if_t)
         (to_string if_f)
   | LetIn (name, e1, e2) ->
-      sprintf "(let %s = %s in %s)" name (to_string e1) (to_string e2)
+      sprintf "(let %s = %s in %s)" (to_string name) (to_string e1)
+        (to_string e2)
   | Fun (arg, body) -> sprintf "(fun %s -> %s)" (to_string arg) (to_string body)
   | Apply (e1, e2) -> sprintf "%s %s" (to_string e1) (to_string e2)
 

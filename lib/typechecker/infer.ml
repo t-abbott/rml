@@ -67,8 +67,27 @@ let rec type_parsetree (pt : PTree.t) ctx =
         in
         raise (TypeError (msg, loc))
       else { body; ty; loc }
-  | PTree.LetIn (name, value, expr) ->
+  | PTree.LetIn (namebinding, value, expr) ->
       let typed_value = type_parsetree value ctx in
+      let name =
+        match namebinding.body with
+        | PTree.Var v -> v
+        | PTree.Annotated ({ body = Var v; _ }, ty_stated) ->
+            if not (Ty.equal_base ty_stated typed_value.ty) then
+              let msg =
+                sprintf "stated type '%s' does not match inferred type '%s'"
+                  (Ty.to_string ty_stated)
+                  (Ty.to_string typed_value.ty)
+              in
+              raise (TypeError (msg, namebinding.loc))
+            else v
+        | _ ->
+            let msg =
+              sprintf "let statements must bind a variable, got '%s'"
+                (PTree.to_string namebinding)
+            in
+            raise (TypeError (msg, namebinding.loc))
+      in
       let ctx' = Context.extend name typed_value.ty ctx in
       let typed_expr = type_parsetree expr ctx' in
       let ty = typed_expr.ty in
