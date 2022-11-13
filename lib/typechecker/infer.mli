@@ -22,5 +22,5 @@ val type_parsetree : PTree.t -> context -> TTree.t
   inference/semantic analysis pass for further inspection. The tricky part is 
 *)
 
-val type_command : PTree.command -> context -> TTree.command * context
+val type_command : PTree.command -> context -> TTree.command option * context
 val type_program : PTree.program -> context -> TTree.program

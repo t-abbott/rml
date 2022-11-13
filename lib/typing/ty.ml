@@ -7,7 +7,11 @@ open Printf
 open Utils
 module Loc = Location
 
-type source = Builtin | Inferred | Annotation of Location.t
+type source =
+  | Builtin
+  | Inferred
+  | Annotation of Location.t
+  | ValStmt of Location.t
 
 type t = { body : t_body; source : source }
 and t_body = RBase of Ty_basic.t * Refinement.t | RArrow of t list * t

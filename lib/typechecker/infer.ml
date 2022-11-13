@@ -146,12 +146,12 @@ let rec type_parsetree (pt : PTree.t) ctx =
         raise (TypeError (msg, loc))
       else { typed_expr with ty = ty_stated }
 
-let type_command (cmd : PTree.command) (ctx : context) : TTree.command * context
-    =
+let type_command (cmd : PTree.command) (ctx : context) :
+    TTree.command option * context =
   match cmd.body with
   | PTree.Expr ptree ->
       let ttree = type_parsetree ptree ctx in
-      (Expr ttree, ctx)
+      (Some (Expr ttree), ctx)
   | PTree.LetDef (name, ty_stated, defn) ->
       let typed_defn =
         match (type_parsetree defn ctx, ty_stated) with
@@ -165,11 +165,15 @@ let type_command (cmd : PTree.command) (ctx : context) : TTree.command * context
             raise (TypeError (msg, cmd.loc))
       in
       let ctx' = Context.extend name typed_defn.ty ctx in
-      (LetDef (name, typed_defn), ctx')
+      (Some (LetDef (name, typed_defn)), ctx')
+  | PTree.ValDef (name, ty) ->
+      let ctx' = Context.extend name ty ctx in
+      (None, ctx')
 
 let rec type_program prog ctx =
   match prog with
-  | cmd :: rest ->
-      let typed_cmd, ctx' = type_command cmd ctx in
-      typed_cmd :: type_program rest ctx'
+  | cmd :: rest -> (
+      match type_command cmd ctx with
+      | Some typed_cmd, ctx' -> typed_cmd :: type_program rest ctx'
+      | None, ctx' -> type_program rest ctx')
   | [] -> []

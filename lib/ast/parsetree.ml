@@ -34,7 +34,11 @@ let rec to_string (pt : t) =
   | Apply (e1, e2) -> sprintf "%s %s" (to_string e1) (to_string e2)
 
 type command = command_body Location.located
-and command_body = Expr of t | LetDef of Ident.t * Ty.t option * t
+
+and command_body =
+  | Expr of t
+  | LetDef of Ident.t * Ty.t option * t
+  | ValDef of Ident.t * Ty.t
 
 let command_to_string (cmd : command) =
   match cmd.body with
@@ -42,6 +46,7 @@ let command_to_string (cmd : command) =
   | LetDef (name, ty, body) ->
       let ty_str = match ty with Some ty' -> Ty.to_string ty' | _ -> "" in
       sprintf "let %s: %s = %s ;;" name ty_str (to_string body)
+  | ValDef (name, ty) -> sprintf "val %s: %s" name (Ty.to_string ty)
 
 type program = command list
 
