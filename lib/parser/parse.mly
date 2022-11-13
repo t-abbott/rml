@@ -121,9 +121,9 @@ ty_unmarked:
   | t = ty_basic r = refinement
     { Ty.RBase (t, r) }
   | t1 = ty ARROW t2 = ty
-    { Ty.RArrow ([t1], t2) }
+    { Ty.RArrow ([t1], t2)  }
   | t = ty_basic 
-    { Ty.RBase (t, Refinement.boolean true) }
+    { Ty.unrefined_body t }
   | LPAREN t = ty_unmarked RPAREN
     { t }
 
@@ -133,8 +133,9 @@ ty_basic:
   | TINT
     { Ty_basic.TInt } 
 
+// refinement: mark_location(refinement_unmarked) { $1 }
 refinement:
-  | LBRACKET v = VAR LINE body = refinement_body RBRACKET
+  | LBRACKET v = VAR LINE body = refinement_expr RBRACKET
     {
         if v <> "v" then
             let loc = Utils.Location.from $startpos $endpos in
@@ -144,11 +145,39 @@ refinement:
             body
     }
 
-refinement_body:
+(*
+    TODO refactor true and false tokens to wrap ocaml bools like integer does
+*)
+
+refinement_expr: mark_location(refinement_expr_unmarked) { $1 }
+refinement_expr_unmarked:
   | TRUE 
     { Refinement.boolean true }
   | FALSE 
     { Refinement.boolean false }
+  | i = INT 
+    { Refinement.number i }
+  | l = refinement_expr op = refinement_binop r = refinement_expr
+    { Refinement.Binop (op, l, r) }
+  | v = VAR
+    { Refinement.var v }
+  | LPAREN r = refinement_expr_unmarked RPAREN
+   { r }
+
+%inline
+refinement_binop:
+  | LESS
+    { Refinement.Binop.Less } 
+  | GREATER
+    { Refinement.Binop.Greater }
+  | EQUAL
+    { Refinement.Binop.Equal }
+  | AND
+    { Refinement.Binop.And }
+  | OR
+    { Refinement.Binop.Or }
+  | PLUS
+    { Refinement.Binop.Add }
 
 mark_location(X):
     x = X

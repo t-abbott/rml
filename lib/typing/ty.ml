@@ -5,6 +5,7 @@
 
 open Printf
 open Utils
+module Loc = Location
 
 type source = Builtin | Inferred | Annotation of Location.t
 
@@ -44,9 +45,8 @@ let is_function ty = match ty.body with RArrow _ -> true | _ -> false
 let builtin ty = { body = ty; source = Builtin }
 let inferred ty = { body = ty; source = Inferred }
 let annotated ty loc = { body = ty; source = Annotation loc }
-
-let basic ?(source = Inferred) ty_b =
-  { body = RBase (ty_b, Refinement.boolean true); source }
+let unrefined_body ty = RBase (ty, Loc.unlocated (Refinement.boolean true))
+let unrefined ?(source = Inferred) ty = { body = unrefined_body ty; source }
 
 let rec apply_types f types =
   match (f.body, types) with

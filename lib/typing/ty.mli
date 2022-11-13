@@ -15,6 +15,18 @@ type t = { body : t_body; source : source }
 
 and t_body = RBase of Ty_basic.t * Refinement.t | RArrow of t list * t
 
+val unrefined_body : Ty_basic.t -> t_body
+(**
+    [unrefined_body ty] creates a [Ty.t_body] over [ty] with the trivial
+    refinement [ty[v | true]] 
+*)
+
+val unrefined : ?source:source -> Ty_basic.t -> t
+(** 
+  [unrefined ty] creates a location-tagged liquid [Ty.t] over [ty] with the 
+  trivial refinement [ty[v | true]]    
+*)
+
 val equal : t -> t -> bool
 (**
   Tests if the base types of two liquid types are equal.
@@ -43,14 +55,6 @@ val apply_types : t -> t list -> t option
 *)
 
 val to_string : t -> string
-
-val basic : ?source:source -> Ty_basic.t -> t
-(**
-  Tests if the base types of two liquid types are equal.
-  
-  Refinements are ignored, so comparing the terms [int[v | v > 0]], [int[v | v < 0]]
-  returns [true]. 
-*)
 
 val is_base : t -> bool
 (**
