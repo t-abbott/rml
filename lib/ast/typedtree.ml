@@ -31,7 +31,7 @@ let rec to_string { body; ty; _ } =
     | LetIn (name, value, body) ->
         sprintf "let %s: %s = %s in %s" name type_str (to_string value)
           (to_string body)
-    | Fun (arg, body) -> sprintf "%s: %s -> %s" arg type_str (to_string body)
+    | Fun (arg, body) -> sprintf "(%s -> %s)" arg (to_string body)
     | Apply (e1, e2) -> sprintf "%s %s" (to_string e1) (to_string e2)
   in
   term_str

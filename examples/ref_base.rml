@@ -1,0 +1,5 @@
+val f : int[v | v > 0] -> int [v | v > 1] ;;
+
+let f = (fun (x: int[v | v > 0]) -> x + 1) ;;
+
+f 4 
