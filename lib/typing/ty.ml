@@ -14,12 +14,12 @@ type source =
   | ValStmt of Location.t
 
 type t = { body : t_body; source : source }
-and t_body = RBase of Ty_basic.t * Refinement.t | RArrow of t list * t
+and t_body = RBase of Base_ty.t * Refinement.t | RArrow of t list * t
 
 let rec to_string ty =
   match ty.body with
   | RBase (t, r) ->
-      sprintf "%s[%s]" (Ty_basic.to_string t) (Refinement.to_string r)
+      sprintf "%s[%s]" (Base_ty.to_string t) (Refinement.to_string r)
   | RArrow (tys_from, ty_to) ->
       let args = List.map to_string tys_from |> String.concat " -> " in
       args ^ " -> " ^ to_string ty_to
@@ -38,7 +38,7 @@ let rec is_equal t1 t2 ~with_refinements =
       | [], _ -> is_equal t1_to t2 ~with_refinements
       | _, [] -> is_equal t1 t2_to ~with_refinements)
   | RBase (b1, r1), RBase (b2, r2) ->
-      Ty_basic.equal b1 b2
+      Base_ty.equal b1 b2
       && if with_refinements then Refinement.equal r1 r2 else true
   | _ -> false
 

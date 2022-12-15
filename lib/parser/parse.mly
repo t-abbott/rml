@@ -134,9 +134,9 @@ ty_unmarked:
 
 ty_basic:
   | TBOOL
-    { Ty_basic.TBool }
+    { Base_ty.TBool }
   | TINT
-    { Ty_basic.TInt } 
+    { Base_ty.TInt } 
 
 // refinement: mark_location(refinement_unmarked) { $1 }
 refinement:

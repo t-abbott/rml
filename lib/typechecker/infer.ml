@@ -9,8 +9,8 @@ module TTree = Ast.Typedtree
 
 type context = Ty.t Context.t
 
-let t_int = Ty.unrefined Ty_basic.TInt ~source:Builtin
-let t_bool = Ty.unrefined Ty_basic.TBool ~source:Builtin
+let t_int = Ty.unrefined Base_ty.TInt ~source:Builtin
+let t_bool = Ty.unrefined Base_ty.TBool ~source:Builtin
 
 let rec type_parsetree (pt : PTree.t) ctx =
   let loc = pt.loc in

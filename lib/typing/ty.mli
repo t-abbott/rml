@@ -16,15 +16,15 @@ type t = { body : t_body; source : source }
   Represents the type of a term
 *)
 
-and t_body = RBase of Ty_basic.t * Refinement.t | RArrow of t list * t
+and t_body = RBase of Base_ty.t * Refinement.t | RArrow of t list * t
 
-val unrefined_body : Ty_basic.t -> t_body
+val unrefined_body : Base_ty.t -> t_body
 (**
     [unrefined_body ty] creates a [Ty.t_body] over [ty] with the trivial
     refinement [ty[v | true]] 
 *)
 
-val unrefined : ?source:source -> Ty_basic.t -> t
+val unrefined : ?source:source -> Base_ty.t -> t
 (** 
   [unrefined ty] creates a location-tagged liquid [Ty.t] over [ty] with the 
   trivial refinement [ty[v | true]]    

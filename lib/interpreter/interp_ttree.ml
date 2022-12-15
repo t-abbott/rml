@@ -10,7 +10,7 @@ let placeholder_value =
     body = Integer 0;
     ty =
       Ty.builtin
-        (Ty.RBase (Ty_basic.TInt, L.unlocated (Refinement.boolean true)));
+        (Ty.RBase (Base_ty.TInt, L.unlocated (Refinement.boolean true)));
     loc = L.Nowhere;
   }
 
@@ -57,8 +57,8 @@ and eval_bool expr env =
         ~reason:"expression should have been checked to reduce to a boolean"
 
 and eval_binop (op, l, r) env =
-  let t_bool = Ty.unrefined Ty_basic.TBool ~source:Ty.Builtin in
-  let t_int = Ty.unrefined Ty_basic.TBool ~source:Ty.Builtin in
+  let t_bool = Ty.unrefined Base_ty.TBool ~source:Ty.Builtin in
+  let t_int = Ty.unrefined Base_ty.TBool ~source:Ty.Builtin in
 
   match op with
   | Op.Binop.Equal ->

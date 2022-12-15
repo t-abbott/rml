@@ -8,6 +8,6 @@
 open Utils
 
 type t = t_body Location.located
-and t_body = SBase of Ty_basic.t * Refinement_surface.t | SArrow of t * t
+and t_body = SBase of Base_ty.t * Refinement_surface.t | SArrow of t * t
 
 val to_string : t -> string
