@@ -1,11 +1,11 @@
 open Printf
 open Ast
-open Ast.Typedtree
+open Ast.Templatetree
 open Typing
 open Utils
 open Errors
 module PTree = Ast.Parsetree
-module TTree = Ast.Typedtree
+module TTree = Ast.Templatetree
 
 type context = Ty.t Context.t
 

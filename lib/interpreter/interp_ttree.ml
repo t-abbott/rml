@@ -1,9 +1,9 @@
 open Base
 open Typing
 open Ast
-open Ast.Typedtree
+open Ast.Templatetree
 module L = Utils.Location
-module TTEnv = Env.MakeEnv (Typedtree)
+module TTEnv = Env.MakeEnv (Templatetree)
 
 let placeholder_value =
   {
