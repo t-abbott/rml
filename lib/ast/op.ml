@@ -1,5 +1,5 @@
 open Typing
-open Typing.Ty
+open Typing.Ty_template
 
 let t_int = unrefined Base_ty.TInt ~source:Builtin
 let t_bool = unrefined Base_ty.TBool ~source:Builtin
