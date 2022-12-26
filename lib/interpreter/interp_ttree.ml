@@ -10,7 +10,8 @@ let placeholder_value =
     body = Integer 0;
     ty =
       Ty_template.builtin
-        (Ty_template.RBase (Base_ty.TInt, L.unlocated (Refinement.boolean true)));
+        (Ty_template.RBase
+           (Base_ty.TInt, Some (L.unlocated (Refinement.boolean true))));
     loc = L.Nowhere;
   }
 
