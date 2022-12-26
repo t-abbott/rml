@@ -1,17 +1,6 @@
 open Utils
 
-(**
-  Represents the source of a type.         
-*)
-type source =
-  | Builtin  (** the type belongs to a builtin operator/function *)
-  | Inferred  (** the type was inferred during type inference *)
-  | Annotation of Location.t
-      (** the type was annotated by the programmer in-line *)
-  | ValStmt of Location.t
-      (** the type was annotated by the programmer in a [val] statement  *)
-
-type t = { body : t_body; source : source }
+type t = { body : t_body; source : Source.t }
 (**
   Represents the type of a term
 *)
@@ -24,7 +13,7 @@ val unrefined_body : Base_ty.t -> t_body
     refinement [ty[v | true]] 
 *)
 
-val unrefined : ?source:source -> Base_ty.t -> t
+val unrefined : ?source:Source.t -> Base_ty.t -> t
 (** 
   [unrefined ty] creates a location-tagged liquid [Ty.t] over [ty] with the 
   trivial refinement [ty[v | true]]    

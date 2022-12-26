@@ -7,13 +7,7 @@ open Printf
 open Utils
 module Loc = Location
 
-type source =
-  | Builtin
-  | Inferred
-  | Annotation of Location.t
-  | ValStmt of Location.t
-
-type t = { body : t_body; source : source }
+type t = { body : t_body; source : Source.t }
 and t_body = RBase of Base_ty.t * Refinement.t option | RArrow of t list * t
 
 let rec to_string ty =
@@ -55,7 +49,8 @@ let annotated ty loc = { body = ty; source = Annotation loc }
 let unrefined_body ty =
   RBase (ty, Some (Loc.unlocated (Refinement.boolean true)))
 
-let unrefined ?(source = Inferred) ty = { body = unrefined_body ty; source }
+let unrefined ?(source = Source.Inferred) ty =
+  { body = unrefined_body ty; source }
 
 let rec apply_types f types =
   match (f.body, types) with
@@ -70,7 +65,7 @@ let rec apply_types f types =
   | _ -> None
 
 let rec of_surface (t_surface : Ty_surface.t) : t =
-  let source = Annotation t_surface.loc in
+  let source = t_surface.source in
   let t_template =
     match t_surface.body with
     | Ty_surface.SBase (ty_base, Some r_surface) ->
