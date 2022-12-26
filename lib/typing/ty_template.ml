@@ -45,9 +45,7 @@ let is_function ty = match ty.body with RArrow _ -> true | _ -> false
 let builtin ty = { body = ty; source = Builtin }
 let inferred ty = { body = ty; source = Inferred }
 let annotated ty loc = { body = ty; source = Annotation loc }
-
-let unrefined_body ty =
-  RBase (ty, Some (Loc.unlocated (Refinement.boolean true)))
+let unrefined_body ty = RBase (ty, None)
 
 let unrefined ?(source = Source.Inferred) ty =
   { body = unrefined_body ty; source }
