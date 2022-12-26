@@ -45,7 +45,8 @@ let rec type_parsetree (pt : PTree.t) ctx =
       | Some ty -> { body; ty; loc }
       | None ->
           let msg =
-            sprintf "arguments '%s' and '%s' did not match type '%s'"
+            sprintf
+              "arguments of type '%s' and '%s' did not match expected type '%s'"
               (Ty_template.to_string l'.ty)
               (Ty_template.to_string r'.ty)
               (Ty_template.to_string ty_op)
