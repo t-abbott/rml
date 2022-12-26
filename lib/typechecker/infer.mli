@@ -3,7 +3,7 @@ open Utils
 module PTree = Ast.Parsetree
 module TTree = Ast.Templatetree
 
-type context = Ty.t Context.t
+type context = Ty_template.t Context.t
 
 val type_parsetree : PTree.t -> context -> TTree.t
 (**
