@@ -138,7 +138,6 @@ ty_basic:
   | TINT
     { Base_ty.TInt } 
 
-// refinement: mark_location(refinement_unmarked) { $1 }
 refinement:
   | LBRACKET v = VAR LINE body = refinement_expr RBRACKET
     {
@@ -172,17 +171,17 @@ refinement_expr_unmarked:
 %inline
 refinement_binop:
   | LESS
-    { Refinement.Binop.Less } 
+    { Refop.Binop.Less } 
   | GREATER
-    { Refinement.Binop.Greater }
+    { Refop.Binop.Greater }
   | EQUAL
-    { Refinement.Binop.Equal }
+    { Refop.Binop.Equal }
   | AND
-    { Refinement.Binop.And }
+    { Refop.Binop.And }
   | OR
-    { Refinement.Binop.Or }
+    { Refop.Binop.Or }
   | PLUS
-    { Refinement.Binop.Add }
+    { Refop.Binop.Add }
 
 mark_location(X):
     x = X
