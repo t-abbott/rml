@@ -16,3 +16,14 @@ and t_body =
   | IfThen of t * t * t
 
 val to_string : t -> string
+
+val var : string -> t_body
+(** [var v] is an alias for [Var v]*)
+
+val number : int -> t_body
+(** [number n] is an alias for [Const (Constant.Integer n)]*)
+
+val boolean : bool -> t_body
+(**
+    [boolean b] is an alias for [Const (Constant.Boolean b)] 
+*)

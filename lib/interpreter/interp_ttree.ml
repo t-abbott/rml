@@ -58,10 +58,8 @@ and eval_bool expr env =
         ~reason:"expression should have been checked to reduce to a boolean"
 
 and eval_binop (op, l, r) env =
-  let t_bool =
-    Ty_template.unrefined Base_ty.TBool ~source:Ty_template.Builtin
-  in
-  let t_int = Ty_template.unrefined Base_ty.TBool ~source:Ty_template.Builtin in
+  let t_bool = Ty_template.unrefined Base_ty.TBool ~source:Source.Builtin in
+  let t_int = Ty_template.unrefined Base_ty.TBool ~source:Source.Builtin in
 
   match op with
   | Op.Binop.Equal ->

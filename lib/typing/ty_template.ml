@@ -7,13 +7,7 @@ open Printf
 open Utils
 module Loc = Location
 
-type source =
-  | Builtin
-  | Inferred
-  | Annotation of Location.t
-  | ValStmt of Location.t
-
-type t = { body : t_body; source : source }
+type t = { body : t_body; source : Source.t }
 and t_body = RBase of Base_ty.t * Refinement.t option | RArrow of t list * t
 
 let rec to_string ty =
@@ -51,11 +45,10 @@ let is_function ty = match ty.body with RArrow _ -> true | _ -> false
 let builtin ty = { body = ty; source = Builtin }
 let inferred ty = { body = ty; source = Inferred }
 let annotated ty loc = { body = ty; source = Annotation loc }
+let unrefined_body ty = RBase (ty, None)
 
-let unrefined_body ty =
-  RBase (ty, Some (Loc.unlocated (Refinement.boolean true)))
-
-let unrefined ?(source = Inferred) ty = { body = unrefined_body ty; source }
+let unrefined ?(source = Source.Inferred) ty =
+  { body = unrefined_body ty; source }
 
 let rec apply_types f types =
   match (f.body, types) with
@@ -70,12 +63,13 @@ let rec apply_types f types =
   | _ -> None
 
 let rec of_surface (t_surface : Ty_surface.t) : t =
-  let source = Annotation t_surface.loc in
+  let source = t_surface.source in
   let t_template =
     match t_surface.body with
     | Ty_surface.SBase (ty_base, Some r_surface) ->
         RBase (ty_base, Some (Refinement.of_surface r_surface))
     | Ty_surface.SBase (ty_base, None) -> RBase (ty_base, None)
-    | Ty_surface.SArrow (t1, t2) -> RArrow ([ of_surface t1 ], of_surface t2)
+    | Ty_surface.SArrow (tys_from, ty_to) ->
+        RArrow (List.map of_surface tys_from, of_surface ty_to)
   in
   { body = t_template; source }

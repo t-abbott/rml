@@ -1,8 +1,13 @@
+open Base
 open Utils
+module Loc = Location
 module RSurface = Refinement_surface
 
-type t = t_body Location.located
-and t_body = SBase of Base_ty.t * RSurface.t option | SArrow of t * t
+type t = { body : t_body; source : Source.t }
+
+and t_body =
+  | SBase of Base_ty.t * RSurface.t option (* basic type *)
+  | SArrow of t list * t (* function type *)
 
 let rec to_string (ty : t) =
   match ty.body with
@@ -13,4 +18,8 @@ let rec to_string (ty : t) =
         | _ -> ""
       in
       Base_ty.to_string t ^ r_str
-  | SArrow (t1, t2) -> to_string t1 ^ " -> " ^ to_string t2
+  | SArrow (tys_from, ty_to) ->
+      List.map ~f:to_string (tys_from @ [ ty_to ]) |> String.concat ~sep:" -> "
+
+let unrefined_base ty = SBase (ty, Some (Loc.unlocated (RSurface.boolean true)))
+let annotated ty loc = { body = ty; source = Annotation loc }

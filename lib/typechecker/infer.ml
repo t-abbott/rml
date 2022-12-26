@@ -1,3 +1,4 @@
+open Base
 open Printf
 open Ast
 open Ast.Templatetree
@@ -44,7 +45,8 @@ let rec type_parsetree (pt : PTree.t) ctx =
       | Some ty -> { body; ty; loc }
       | None ->
           let msg =
-            sprintf "arguments '%s' and '%s' did not match type '%s'"
+            sprintf
+              "arguments of type '%s' and '%s' did not match expected type '%s'"
               (Ty_template.to_string l'.ty)
               (Ty_template.to_string r'.ty)
               (Ty_template.to_string ty_op)
@@ -167,7 +169,11 @@ let type_command (cmd : PTree.command) (ctx : context) :
       (Some (Expr ttree), ctx)
   | PTree.LetDef (name, ty_annotated, defn) ->
       (* convert any annotated [Ty_surface.t] to a [Ty_template.t] *)
-      let ty_t_annotated = Option.bind ty_annotated Ty_template.of_surface in
+      let ty_t_annotated =
+        match ty_annotated with
+        | Some t -> Some (Ty_template.of_surface t)
+        | None -> None
+      in
 
       (* get the type of [name] as declared in a [val] statement (if any) *)
       let ty_t_valdef = Context.find name ctx in

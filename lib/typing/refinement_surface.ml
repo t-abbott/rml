@@ -19,3 +19,12 @@ let rec to_string (r : t) =
   | IfThen (cond, if_t, if_f) ->
       sprintf "if %s then %s else %s" (to_string cond) (to_string if_t)
         (to_string if_f)
+
+(*
+  The following functions are convenient aliases, mostly for
+  use in the parser (lib/parser/parse.mly).   
+*)
+
+let var v = Var v
+let boolean b = Const (Constant.Boolean b)
+let number n = Const (Constant.Integer n)
