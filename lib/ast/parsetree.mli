@@ -4,7 +4,7 @@ open Utils
 type t = t_body Location.located
 
 and t_body =
-  | Annotated of t * Ty.t
+  | Annotated of t * Ty_surface.t
   | Var of Ident.t
   | Integer of int
   | Boolean of bool
@@ -23,8 +23,8 @@ type command = command_body Location.located
 
 and command_body =
   | Expr of t
-  | LetDef of Ident.t * Ty.t option * t
-  | ValDef of Ident.t * Ty.t
+  | LetDef of Ident.t * Ty_surface.t option * t
+  | ValDef of Ident.t * Ty_surface.t
 
 val command_to_string : command -> string
 
