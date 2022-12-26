@@ -83,3 +83,8 @@ val annotated : t_body -> Location.t -> t
 (**
     [annotated ty] creates an annotated type from the raw type [ty]
 *)
+
+val of_surface : Ty_surface.t -> t
+(**
+    [of_surface ty] creates a [Ty_template.t] corresponding to [ty]
+*)

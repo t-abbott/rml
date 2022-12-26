@@ -18,8 +18,9 @@ and t_body = RBase of Base_ty.t * Refinement.t option | RArrow of t list * t
 
 let rec to_string ty =
   match ty.body with
-  | RBase (t, r) ->
+  | RBase (t, Some r) ->
       sprintf "%s[%s]" (Base_ty.to_string t) (Refinement.to_string r)
+  | RBase (t, None) -> Base_ty.to_string t
   | RArrow (tys_from, ty_to) ->
       let args = List.map to_string tys_from |> String.concat " -> " in
       args ^ " -> " ^ to_string ty_to
