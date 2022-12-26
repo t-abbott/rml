@@ -16,3 +16,8 @@ and t_body =
   | IfThen of t * t * t
 
 val to_string : t -> string
+
+val boolean : bool -> t_body
+(**
+    [boolean b] is an alias for [Const (Constant.Boolean b)] 
+*)

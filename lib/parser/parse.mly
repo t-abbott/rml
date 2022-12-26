@@ -124,11 +124,11 @@ simple_expr_unmarked:
 ty: mark_type_location(ty_unmarked) { $1 }
 ty_unmarked:
   | t = ty_basic r = refinement
-    { Ty.RBase (t, r) }
+    { Ty_surface.SBase (t, r) }
   | t1 = ty ARROW t2 = ty
-    { Ty.RArrow ([t1], t2)  }
+    { Ty_surface.SArrow ([t1], t2)  }
   | t = ty_basic 
-    { Ty.unrefined_body t }
+    { Ty_surface.unrefined_base t }
   | LPAREN t = ty_unmarked RPAREN
     { t }
 
