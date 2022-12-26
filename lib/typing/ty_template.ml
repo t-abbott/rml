@@ -76,6 +76,7 @@ let rec of_surface (t_surface : Ty_surface.t) : t =
     | Ty_surface.SBase (ty_base, Some r_surface) ->
         RBase (ty_base, Some (Refinement.of_surface r_surface))
     | Ty_surface.SBase (ty_base, None) -> RBase (ty_base, None)
-    | Ty_surface.SArrow (t1, t2) -> RArrow ([ of_surface t1 ], of_surface t2)
+    | Ty_surface.SArrow (tys_from, ty_to) ->
+        RArrow (List.map of_surface tys_from, of_surface ty_to)
   in
   { body = t_template; source }
