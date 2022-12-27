@@ -40,7 +40,6 @@ let rec is_equal t1 t2 ~with_refinements =
 
 let equal t1 t2 = is_equal t1 t2 ~with_refinements:true
 let equal_base t1 t2 = is_equal t1 t2 ~with_refinements:false
-let is_base ty = match ty.body with RBase _ -> true | _ -> false
 let is_function ty = match ty.body with RArrow _ -> true | _ -> false
 let builtin ty = { body = ty; source = Builtin }
 let inferred ty = { body = ty; source = Inferred }

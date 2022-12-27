@@ -48,10 +48,10 @@ val apply_types : t -> t list -> t option
 
 val to_string : t -> string
 
-val is_base : t -> bool
-(**
-    [is_base ty] returns true if [ty] is a base (non-function) type    
-*)
+(* val is_base : t -> bool
+   (**
+       [is_base ty] returns true if [ty] is a base (non-function) type
+   *) *)
 
 val is_function : t -> bool
 (**
