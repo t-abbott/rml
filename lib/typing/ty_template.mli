@@ -77,3 +77,10 @@ val of_surface : Ty_surface.t -> t
 (**
     [of_surface ty] creates a [Ty_template.t] corresponding to [ty]
 *)
+
+val arity : t -> int
+(**
+    [arity ty] returns the number of arguments taken by the
+    type [ty], and [0] in the case that [ty] is not a function
+    type.
+*)

@@ -138,11 +138,7 @@ let rec type_parsetree (pt : PTree.t) ctx =
           let arg_tys = List.map ~f:(fun e -> e.ty) typed_e2s in
 
           (* test we're applying the right number of arguments *)
-          let n_params =
-            match typed_e1.body with
-            | Fun (params, _) -> List.length params
-            | _ -> failwith "unreachable"
-          in
+          let n_params = Ty_template.arity typed_e1.ty in
           let n_args = List.length e2s in
           if n_args <> n_params then
             let msg =

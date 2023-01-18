@@ -72,3 +72,6 @@ let rec of_surface (t_surface : Ty_surface.t) : t =
         RArrow (List.map of_surface tys_from, of_surface ty_to)
   in
   { body = t_template; source }
+
+let arity ty =
+  match ty.body with RArrow (tys_from, _) -> List.length tys_from | _ -> 0
