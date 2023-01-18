@@ -20,6 +20,14 @@ let main filename =
     |> (fun p -> Infer.type_program p Utils.Context.empty)
     |> Interp.ttree |> Interp.TTEnv.to_string |> Stdio.prerr_endline
   with
+  | Parser.Errors.ParseError (message, loc) ->
+      let loc_str = format_location loc in
+      eprintf "Parser error: %s%s\n" message loc_str;
+      die ()
+  | Parser.Errors.LexError (message, loc) ->
+      let loc_str = format_location loc in
+      eprintf "Error while lexing: %s%s\n" message loc_str;
+      die ()
   | Typechecker.Errors.TypeError (message, loc) ->
       let loc_str = format_location loc in
       eprintf "Type error: %s%s\n" message loc_str;

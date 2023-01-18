@@ -7,10 +7,14 @@
 *)
 
 open Stdlib
+open Utils
 
 let lex_and_parse lexbuf =
   try Parse.file Lex.token lexbuf
-  with _ -> failwith "got an exception while parsing"
+  with Parse.Error ->
+    let start = lexbuf.lex_start_p in
+    let curr = lexbuf.lex_curr_p in
+    raise (Errors.ParseError ("unrecognised error", Location.from start curr))
 
 let parse_file filename =
   let chan = open_in filename in
