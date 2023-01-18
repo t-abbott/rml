@@ -1,16 +1,17 @@
+open Base
 open Printf
 open Ast
-open Ast.Typedtree
+open Ast.Templatetree
 open Typing
 open Utils
 open Errors
 module PTree = Ast.Parsetree
-module TTree = Ast.Typedtree
+module TTree = Ast.Templatetree
 
-type context = Ty.t Context.t
+type context = Ty_template.t Context.t
 
-let t_int = Ty.unrefined Ty_basic.TInt ~source:Builtin
-let t_bool = Ty.unrefined Ty_basic.TBool ~source:Builtin
+let t_int = Ty_template.unrefined Base_ty.TInt ~source:Builtin
+let t_bool = Ty_template.unrefined Base_ty.TBool ~source:Builtin
 
 let rec type_parsetree (pt : PTree.t) ctx =
   let loc = pt.loc in
@@ -35,16 +36,20 @@ let rec type_parsetree (pt : PTree.t) ctx =
       let body = Var v in
       { body; ty; loc }
   | PTree.Binop (op, l, r) -> (
-      (* Thought: should binops be desugared into normal function application? *)
       let ty_op = Op.Binop.signature op in
       let l', r' = (type_parsetree l ctx, type_parsetree r ctx) in
       let body = Binop (op, l', r') in
-      match Ty.apply_types ty_op [ l'.ty; r'.ty ] with
+
+      (* jsdkf *)
+      match Ty_template.apply_types ty_op [ l'.ty; r'.ty ] with
       | Some ty -> { body; ty; loc }
       | None ->
           let msg =
-            sprintf "arguments '%s' and '%s' did not match type '%s'"
-              (Ty.to_string l'.ty) (Ty.to_string r'.ty) (Ty.to_string ty_op)
+            sprintf
+              "arguments of type '%s' and '%s' did not match expected type '%s'"
+              (Ty_template.to_string l'.ty)
+              (Ty_template.to_string r'.ty)
+              (Ty_template.to_string ty_op)
           in
           raise (TypeError (msg, loc)))
   | PTree.If (cond, ift, iff) ->
@@ -54,14 +59,17 @@ let rec type_parsetree (pt : PTree.t) ctx =
       in
       let body = If (typed_cond, typed_ift, typed_iff) in
       let ty = typed_ift.ty in
-      if not (Ty.equal typed_cond.ty t_bool) then
-        let t_str = Ty.to_string typed_cond.ty in
+      if not (Ty_template.equal typed_cond.ty t_bool) then
+        let t_str = Ty_template.to_string typed_cond.ty in
         let msg =
           sprintf "expected if statement condition to be a bool, got '%s'" t_str
         in
         raise (TypeError (msg, loc))
-      else if not (Ty.equal typed_ift.ty typed_iff.ty) then
-        let s1, s2 = (Ty.to_string typed_ift.ty, Ty.to_string typed_iff.ty) in
+      else if not (Ty_template.equal typed_ift.ty typed_iff.ty) then
+        let s1, s2 =
+          ( Ty_template.to_string typed_ift.ty,
+            Ty_template.to_string typed_iff.ty )
+        in
         let msg =
           sprintf "expected branches to have the same type, got '%s', '%s" s1 s2
         in
@@ -73,11 +81,12 @@ let rec type_parsetree (pt : PTree.t) ctx =
         match namebinding.body with
         | PTree.Var v -> v
         | PTree.Annotated ({ body = Var v; _ }, ty_stated) ->
-            if not (Ty.equal_base ty_stated typed_value.ty) then
+            let ty_t_stated = Ty_template.of_surface ty_stated in
+            if not (Ty_template.equal_base ty_t_stated typed_value.ty) then
               let msg =
                 sprintf "stated type '%s' does not match inferred type '%s'"
-                  (Ty.to_string ty_stated)
-                  (Ty.to_string typed_value.ty)
+                  (Ty_template.to_string ty_t_stated)
+                  (Ty_template.to_string typed_value.ty)
               in
               raise (TypeError (msg, namebinding.loc))
             else v
@@ -102,20 +111,25 @@ let rec type_parsetree (pt : PTree.t) ctx =
             let msg = "expected function argument to be a variable" in
             raise (TypeError (msg, loc))
       in
-      let ctx' = Context.extend arg ty_arg ctx in
+      let ty_t_arg = Ty_template.of_surface ty_arg in
+      let ctx' = Context.extend arg ty_t_arg ctx in
       let typed_expr = type_parsetree expr ctx' in
-      let ty = Ty.inferred (Ty.RArrow ([ ty_arg ], typed_expr.ty)) in
+      let ty =
+        Ty_template.inferred (Ty_template.RArrow ([ ty_t_arg ], typed_expr.ty))
+      in
       let body = Fun (arg, typed_expr) in
       { body; ty; loc }
   | PTree.Apply (e1, e2) ->
       let typed_e1, typed_e2 = (type_parsetree e1 ctx, type_parsetree e2 ctx) in
-      if Ty.is_function typed_e1.ty then
+      if Ty_template.is_function typed_e1.ty then
         let body = Apply (typed_e1, typed_e2) in
         let ty =
-          match Ty.apply_types typed_e1.ty [ typed_e2.ty ] with
+          match Ty_template.apply_types typed_e1.ty [ typed_e2.ty ] with
           | Some t -> t
           | None ->
-              let t1, t2 = Misc.proj2 Ty.to_string typed_e1.ty typed_e2.ty in
+              let t1, t2 =
+                Misc.proj2 Ty_template.to_string typed_e1.ty typed_e2.ty
+              in
               let msg =
                 sprintf
                   "attempted to apply a value of type '%s' to a value of type \
@@ -126,7 +140,7 @@ let rec type_parsetree (pt : PTree.t) ctx =
         in
         { body; ty; loc }
       else
-        let t1, t2 = Misc.proj2 Ty.to_string typed_e1.ty typed_e2.ty in
+        let t1, t2 = Misc.proj2 Ty_template.to_string typed_e1.ty typed_e2.ty in
         let msg =
           sprintf
             "attempted to apply a value of type '%s' to a function of type '%s'"
@@ -134,17 +148,18 @@ let rec type_parsetree (pt : PTree.t) ctx =
         in
         raise (TypeError (msg, loc))
   | PTree.Annotated (expr, ty_stated) ->
+      let ty_t_stated = Ty_template.of_surface ty_stated in
       let typed_expr = type_parsetree expr ctx in
-      if not (Ty.equal_base typed_expr.ty ty_stated) then
+      if not (Ty_template.equal_base typed_expr.ty ty_t_stated) then
         let stated, inferred =
-          Utils.Misc.proj2 Ty.to_string ty_stated typed_expr.ty
+          Utils.Misc.proj2 Ty_template.to_string ty_t_stated typed_expr.ty
         in
         let msg =
           sprintf "provided type '%s' does not match inferred type '%s'" stated
             inferred
         in
         raise (TypeError (msg, loc))
-      else { typed_expr with ty = ty_stated }
+      else { typed_expr with ty = ty_t_stated }
 
 let type_command (cmd : PTree.command) (ctx : context) :
     TTree.command option * context =
@@ -153,37 +168,57 @@ let type_command (cmd : PTree.command) (ctx : context) :
       let ttree = type_parsetree ptree ctx in
       (Some (Expr ttree), ctx)
   | PTree.LetDef (name, ty_annotated, defn) ->
-      (* test annotated type matches val type *)
-      let ty_stated =
-        match (ty_annotated, Context.find name ctx) with
+      (* convert any annotated [Ty_surface.t] to a [Ty_template.t] *)
+      let ty_t_annotated =
+        match ty_annotated with
+        | Some t -> Some (Ty_template.of_surface t)
+        | None -> None
+      in
+
+      (* get the type of [name] as declared in a [val] statement (if any) *)
+      let ty_t_valdef = Context.find name ctx in
+
+      (* test that the annotated type matched the val type (if both are present) *)
+      let ty_t_stated =
+        match (ty_t_annotated, ty_t_valdef) with
         | Some ty_annot, Some ty_val ->
-            if not (Ty.equal_base ty_annot ty_val) then
+            if not (Ty_template.equal_base ty_annot ty_val) then
               let msg =
                 sprintf
                   "type mistmatch - declared '%s' but was annotated with '%s'"
-                  (Ty.to_string ty_val) (Ty.to_string ty_annot)
+                  (Ty_template.to_string ty_val)
+                  (Ty_template.to_string ty_annot)
               in
               raise (TypeError (msg, cmd.loc))
             else Some ty_annot
         | Some t, None | None, Some t -> Some t
         | None, None -> None
       in
-      (* test annotated/val type matches inferred type *)
+
+      (* infer the type of [defn] *)
+      let ty_t_inferred = type_parsetree defn ctx in
+
+      (* test the stated type matches the inferred type *)
       let typed_defn =
-        match (type_parsetree defn ctx, ty_stated) with
+        match (ty_t_inferred, ty_t_stated) with
         | tdefn, None -> tdefn
-        | tdefn, Some ty when Ty.equal_base tdefn.ty ty -> { tdefn with ty }
+        | tdefn, Some ty when Ty_template.equal_base tdefn.ty ty ->
+            (* prefer the annotated type as it may contain refinement annotations *)
+            { tdefn with ty }
         | tdefn, Some ty_bad ->
             let msg =
               sprintf "stated type '%s' doesn't match expected type '%s'"
-                (Ty.to_string ty_bad) (Ty.to_string tdefn.ty)
+                (Ty_template.to_string ty_bad)
+                (Ty_template.to_string tdefn.ty)
             in
             raise (TypeError (msg, cmd.loc))
       in
+      (* otherwise the expression is well-typed and we can add it to the environment *)
       let ctx' = Context.extend name typed_defn.ty ctx in
       (Some (LetDef (name, typed_defn)), ctx')
   | PTree.ValDef (name, ty) ->
-      let ctx' = Context.extend name ty ctx in
+      let ty_t = Ty_template.of_surface ty in
+      let ctx' = Context.extend name ty_t ctx in
       (None, ctx')
 
 let rec type_program prog ctx =

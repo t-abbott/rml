@@ -1,13 +1,13 @@
 open Typing
 open Utils
 module PTree = Ast.Parsetree
-module TTree = Ast.Typedtree
+module TTree = Ast.Templatetree
 
-type context = Ty.t Context.t
+type context = Ty_template.t Context.t
 
 val type_parsetree : PTree.t -> context -> TTree.t
 (**
-  [type_parsetree pt ctx] builds an explicity typed [Typedtree.t] from a partially 
+  [type_parsetree pt ctx] builds an explicity typed [Templatetree.t] from a partially 
   typed [Parsetree.t] [pt] with respect to a typing context [ctx]
 
   Performs type checking and inference.

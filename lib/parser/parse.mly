@@ -124,21 +124,21 @@ simple_expr_unmarked:
 ty: mark_type_location(ty_unmarked) { $1 }
 ty_unmarked:
   | t = ty_basic r = refinement
-    { Ty.RBase (t, r) }
+    { Ty_surface.SBase (t, Some r) }
   | t1 = ty ARROW t2 = ty
-    { Ty.RArrow ([t1], t2)  }
-  | t = ty_basic 
-    { Ty.unrefined_body t }
+    // todo match list of types
+    { Ty_surface.SArrow ([t1], t2)  }
+  | t = ty_basic  
+    { Ty_surface.SBase (t, None) }
   | LPAREN t = ty_unmarked RPAREN
     { t }
 
 ty_basic:
   | TBOOL
-    { Ty_basic.TBool }
+    { Base_ty.TBool }
   | TINT
-    { Ty_basic.TInt } 
+    { Base_ty.TInt } 
 
-// refinement: mark_location(refinement_unmarked) { $1 }
 refinement:
   | LBRACKET v = VAR LINE body = refinement_expr RBRACKET
     {
@@ -157,32 +157,32 @@ refinement:
 refinement_expr: mark_location(refinement_expr_unmarked) { $1 }
 refinement_expr_unmarked:
   | TRUE 
-    { Refinement.boolean true }
+    { Refinement_surface.boolean true }
   | FALSE 
-    { Refinement.boolean false }
+    { Refinement_surface.boolean false }
   | i = INT 
-    { Refinement.number i }
+    { Refinement_surface.number i }
   | l = refinement_expr op = refinement_binop r = refinement_expr
-    { Refinement.Binop (op, l, r) }
+    { Refinement_surface.Binop (op, l, r) }
   | v = VAR
-    { Refinement.var v }
+    { Refinement_surface.var v }
   | LPAREN r = refinement_expr_unmarked RPAREN
    { r }
 
 %inline
 refinement_binop:
   | LESS
-    { Refinement.Binop.Less } 
+    { Refop.Binop.Less } 
   | GREATER
-    { Refinement.Binop.Greater }
+    { Refop.Binop.Greater }
   | EQUAL
-    { Refinement.Binop.Equal }
+    { Refop.Binop.Equal }
   | AND
-    { Refinement.Binop.And }
+    { Refop.Binop.And }
   | OR
-    { Refinement.Binop.Or }
+    { Refop.Binop.Or }
   | PLUS
-    { Refinement.Binop.Add }
+    { Refop.Binop.Add }
 
 mark_location(X):
     x = X
@@ -191,6 +191,6 @@ mark_location(X):
 // TODO: avoid this
 mark_type_location(X):
     x = X 
-    { Typing.Ty.annotated x (Utils.Location.from $startpos $endpos) }
+    { Ty_surface.annotated x (Utils.Location.from $startpos $endpos) }
 
 %%

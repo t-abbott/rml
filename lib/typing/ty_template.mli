@@ -1,30 +1,19 @@
 open Utils
 
-(**
-  Represents the source of a type.         
-*)
-type source =
-  | Builtin  (** the type belongs to a builtin operator/function *)
-  | Inferred  (** the type was inferred during type inference *)
-  | Annotation of Location.t
-      (** the type was annotated by the programmer in-line *)
-  | ValStmt of Location.t
-      (** the type was annotated by the programmer in a [val] statement  *)
-
-type t = { body : t_body; source : source }
+type t = { body : t_body; source : Source.t }
 (**
   Represents the type of a term
 *)
 
-and t_body = RBase of Ty_basic.t * Refinement.t | RArrow of t list * t
+and t_body = RBase of Base_ty.t * Refinement.t option | RArrow of t list * t
 
-val unrefined_body : Ty_basic.t -> t_body
+val unrefined_body : Base_ty.t -> t_body
 (**
     [unrefined_body ty] creates a [Ty.t_body] over [ty] with the trivial
     refinement [ty[v | true]] 
 *)
 
-val unrefined : ?source:source -> Ty_basic.t -> t
+val unrefined : ?source:Source.t -> Base_ty.t -> t
 (** 
   [unrefined ty] creates a location-tagged liquid [Ty.t] over [ty] with the 
   trivial refinement [ty[v | true]]    
@@ -59,10 +48,10 @@ val apply_types : t -> t list -> t option
 
 val to_string : t -> string
 
-val is_base : t -> bool
-(**
-    [is_base ty] returns true if [ty] is a base (non-function) type    
-*)
+(* val is_base : t -> bool
+   (**
+       [is_base ty] returns true if [ty] is a base (non-function) type
+   *) *)
 
 val is_function : t -> bool
 (**
@@ -82,4 +71,9 @@ val inferred : t_body -> t
 val annotated : t_body -> Location.t -> t
 (**
     [annotated ty] creates an annotated type from the raw type [ty]
+*)
+
+val of_surface : Ty_surface.t -> t
+(**
+    [of_surface ty] creates a [Ty_template.t] corresponding to [ty]
 *)

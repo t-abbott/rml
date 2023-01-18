@@ -1,8 +1,8 @@
 open Typing
-open Typing.Ty
+open Typing.Ty_template
 
-let t_int = unrefined Ty_basic.TInt ~source:Builtin
-let t_bool = unrefined Ty_basic.TBool ~source:Builtin
+let t_int = unrefined Base_ty.TInt ~source:Builtin
+let t_bool = unrefined Base_ty.TBool ~source:Builtin
 let int_int_int = builtin (RArrow ([ t_int; t_int ], t_int))
 let int_int_bool = builtin (RArrow ([ t_int; t_int ], t_bool))
 let bool_bool_bool = builtin (RArrow ([ t_bool; t_bool ], t_bool))

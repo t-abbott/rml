@@ -1,18 +1,7 @@
 open Printf
 open Utils
+open Refop
 module Loc = Location
-
-module Binop = struct
-  type t = Less | Greater | Equal | And | Or | Add
-
-  let to_string = function
-    | Less -> "<"
-    | Greater -> ">"
-    | Equal -> "="
-    | And -> "&&"
-    | Or -> "||"
-    | Add -> "+"
-end
 
 type t = t_body Location.located
 
@@ -37,3 +26,16 @@ let rec to_string (ref : t) =
 let boolean b = Const (Constant.Boolean b)
 let number n = Const (Constant.Integer n)
 let var v = Var v
+
+let rec of_surface (r_surface : Refinement_surface.t) : t =
+  let loc = r_surface.loc in
+  let body =
+    match r_surface.body with
+    | Refinement_surface.Var v -> Var v
+    | Refinement_surface.Const c -> Const c
+    | Refinement_surface.Binop (op, l, r) ->
+        Binop (op, of_surface l, of_surface r)
+    | Refinement_surface.IfThen (cond, if_t, if_f) ->
+        IfThen (of_surface cond, of_surface if_t, of_surface if_f)
+  in
+  { body; loc }

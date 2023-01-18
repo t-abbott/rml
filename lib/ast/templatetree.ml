@@ -4,7 +4,10 @@ open Op
 open Utils
 module PTree = Parsetree
 
-type t = { body : t_body; ty : Ty.t; loc : Location.t }
+(** TODO: use this *)
+(* module Ty = Ty_template *)
+
+type t = { body : t_body; ty : Ty_template.t; loc : Location.t }
 
 and t_body =
   | Var of Ident.t
@@ -17,7 +20,7 @@ and t_body =
   | Apply of t * t
 
 let rec to_string { body; ty; _ } =
-  let type_str = Ty.to_string ty in
+  let type_str = Ty_template.to_string ty in
   let term_str =
     match body with
     | Var v -> v
@@ -41,7 +44,9 @@ type command = Expr of t | LetDef of Ident.t * t
 let command_to_string = function
   | Expr e -> to_string e
   | LetDef (name, body) ->
-      sprintf "let %s: %s = %s ;;" name (Ty.to_string body.ty) (to_string body)
+      sprintf "let %s: %s = %s ;;" name
+        (Ty_template.to_string body.ty)
+        (to_string body)
 
 type program = command list
 

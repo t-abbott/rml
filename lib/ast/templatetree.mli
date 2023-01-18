@@ -3,7 +3,7 @@ open Op
 open Utils
 module PTree = Parsetree
 
-type t = { body : t_body; ty : Ty.t; loc : Location.t }
+type t = { body : t_body; ty : Ty_template.t; loc : Location.t }
 
 and t_body =
   | Var of Ident.t
