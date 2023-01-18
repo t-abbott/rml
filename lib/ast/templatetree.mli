@@ -12,8 +12,8 @@ and t_body =
   | Binop of Binop.t * t * t
   | If of t * t * t
   | LetIn of Ident.t * t * t
-  | Fun of Ident.t * t
-  | Apply of t * t
+  | Fun of Ident.t list * t
+  | Apply of t * t list
 
 val to_string : t -> string
 
