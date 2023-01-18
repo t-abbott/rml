@@ -102,49 +102,78 @@ let rec type_parsetree (pt : PTree.t) ctx =
       let ty = typed_expr.ty in
       let body = LetIn (name, typed_value, typed_expr) in
       { body; ty; loc }
-  | PTree.Fun (x, expr) ->
-      let arg, ty_arg =
-        match x.body with
-        | Var _ -> failwith "function parameter type inference not implemented"
-        | Annotated ({ body = Var v; _ }, t) -> (v, t)
-        | _ ->
-            let msg = "expected function argument to be a variable" in
-            raise (TypeError (msg, loc))
+  | PTree.Fun (xs, expr) ->
+      let param_ty_pairs =
+        List.map
+          ~f:(fun param ->
+            match param.body with
+            | Var _ ->
+                failwith "function parameter type inference not implemented"
+            | Annotated ({ body = Var v; _ }, t) -> (v, Ty_template.of_surface t)
+            | _ ->
+                let msg = "expected function argument to be a variable" in
+                raise (TypeError (msg, loc)))
+          xs
       in
-      let ty_t_arg = Ty_template.of_surface ty_arg in
-      let ctx' = Context.extend arg ty_t_arg ctx in
+      let ctx' =
+        List.fold ~init:ctx
+          ~f:(fun ctx (param, ty) -> Context.extend param ty ctx)
+          param_ty_pairs
+      in
       let typed_expr = type_parsetree expr ctx' in
+      let params = List.map ~f:fst param_ty_pairs in
+      let param_tys = List.map ~f:snd param_ty_pairs in
       let ty =
-        Ty_template.inferred (Ty_template.RArrow ([ ty_t_arg ], typed_expr.ty))
+        Ty_template.inferred (Ty_template.RArrow (param_tys, typed_expr.ty))
       in
-      let body = Fun (arg, typed_expr) in
+      let body = Fun (params, typed_expr) in
       { body; ty; loc }
-  | PTree.Apply (e1, e2) ->
-      let typed_e1, typed_e2 = (type_parsetree e1 ctx, type_parsetree e2 ctx) in
+  | PTree.Apply (e1, e2s) ->
+      let typed_e1, typed_e2s =
+        (type_parsetree e1 ctx, List.map ~f:(fun e -> type_parsetree e ctx) e2s)
+      in
       if Ty_template.is_function typed_e1.ty then
-        let body = Apply (typed_e1, typed_e2) in
+        let body = Apply (typed_e1, typed_e2s) in
         let ty =
-          match Ty_template.apply_types typed_e1.ty [ typed_e2.ty ] with
-          | Some t -> t
-          | None ->
-              let t1, t2 =
-                Misc.proj2 Ty_template.to_string typed_e1.ty typed_e2.ty
-              in
-              let msg =
-                sprintf
-                  "attempted to apply a value of type '%s' to a value of type \
-                   '%s'"
-                  t1 t2
-              in
-              raise (TypeError (msg, loc))
+          let arg_tys = List.map ~f:(fun e -> e.ty) typed_e2s in
+
+          (* test we're applying the right number of arguments *)
+          let n_params =
+            match typed_e1.body with
+            | Fun (params, _) -> List.length params
+            | _ -> failwith "unreachable"
+          in
+          let n_args = List.length e2s in
+          if n_args <> n_params then
+            let msg =
+              sprintf
+                "attemped to apply %d arguments to a function of %d parameters"
+                n_args n_params
+            in
+            raise (TypeError (msg, loc))
+          else
+            (* test argument types match *)
+            match Ty_template.apply_types typed_e1.ty arg_tys with
+            | Some t -> t
+            | None ->
+                let f_ty_str = Ty_template.to_string typed_e1.ty in
+                let arg_ty_strs =
+                  List.map ~f:(fun e -> Ty_template.to_string e.ty) typed_e2s
+                in
+                let msg =
+                  sprintf
+                    "attempted to apply arguments of type '%s' to a function \
+                     of type '%s'"
+                    f_ty_str
+                    (String.concat ~sep:" " arg_ty_strs)
+                in
+                raise (TypeError (msg, loc))
         in
         { body; ty; loc }
       else
-        let t1, t2 = Misc.proj2 Ty_template.to_string typed_e1.ty typed_e2.ty in
+        let s1 = Ty_template.to_string typed_e1.ty in
         let msg =
-          sprintf
-            "attempted to apply a value of type '%s' to a function of type '%s'"
-            t2 t1
+          sprintf "attempted to apply to a non-function value of type '%s'" s1
         in
         raise (TypeError (msg, loc))
   | PTree.Annotated (expr, ty_stated) ->
