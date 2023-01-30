@@ -12,6 +12,7 @@ and t_body =
   | If of t * t * t
   | LetIn of t * t * t
   | Fun of t list * t
+  | LetFun of Ident.t * t list * t * t
   | Apply of t * t list
 
 val to_string : t -> string

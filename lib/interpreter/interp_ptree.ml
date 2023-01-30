@@ -34,6 +34,11 @@ let rec eval (expr : t) env =
       let e = eval boundval env in
       eval body (PTEnv.extend name e env)
   | Fun _ as f -> Closure (L.unlocated f, env)
+  | LetFun (name, params, body, rest) ->
+      let fname = L.unlocated (Var name) in
+      let lambda = L.unlocated (Fun (params, body)) in
+      let binding = L.unlocated (LetIn (fname, lambda, rest)) in
+      eval binding env
   | Apply (f, args) -> (
       (*
         In the parsetree we allow the argument [x] in the term [(fun x -> ...)]
