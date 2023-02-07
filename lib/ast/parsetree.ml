@@ -13,7 +13,7 @@ and t_body =
   | If of t * t * t
   | LetIn of t * t * t
   | Fun of t list * t
-  | LetFun of Ident.t * t list * t * t
+  | LetFun of t * t list * t * t
   | Apply of t * t list
 
 let rec to_string (pt : t) =
@@ -36,8 +36,8 @@ let rec to_string (pt : t) =
       sprintf "(fun %s -> %s)" param_strs (to_string body)
   | LetFun (name, params, body, rest) ->
       let param_strs = String.concat " " (List.map to_string params) in
-      sprintf "let %s %s = %s in %s" name param_strs (to_string body)
-        (to_string rest)
+      sprintf "let %s %s = %s in %s" (to_string name) param_strs
+        (to_string body) (to_string rest)
   | Apply (f, args) ->
       let arg_strs = String.concat " " (List.map to_string args) in
       sprintf "%s %s" (to_string f) arg_strs

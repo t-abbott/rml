@@ -98,6 +98,8 @@ expr_unmarked:
     { Fun ([arg], body) }
   | LET name = expr EQUAL e1 = expr IN e2 = expr
     { LetIn (name, e1, e2) }
+  | LET name = expr arg = expr EQUAL body = expr IN rest = expr 
+    { LetFun (name, [arg], body, rest) }
 
 app_expr: mark_location(app_expr_unmarked) { $1 }
 app_expr_unmarked:

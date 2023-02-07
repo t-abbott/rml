@@ -130,9 +130,8 @@ let rec type_parsetree (pt : PTree.t) ctx =
       { body; ty; loc }
   | PTree.LetFun (name, params, body, rest) ->
       (* desugar named functions to lambdas and then type *)
-      let fname = Location.locate loc (PTree.Var name) in
       let lambda = Location.locate loc (PTree.Fun (params, body)) in
-      let bound_fn = Location.locate loc (PTree.LetIn (fname, lambda, rest)) in
+      let bound_fn = Location.locate loc (PTree.LetIn (name, lambda, rest)) in
       type_parsetree bound_fn ctx
   | PTree.Apply (e1, e2s) ->
       let typed_e1, typed_e2s =

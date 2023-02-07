@@ -1,4 +1,11 @@
 let y = 
     let f x = x + 1 
     in f 4
-in y ;;
+;;
+
+let z = 
+    let g x = x * 2
+    in g 
+;;
+
+g y ;;
