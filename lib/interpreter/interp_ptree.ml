@@ -34,29 +34,46 @@ let rec eval (expr : t) env =
       let e = eval boundval env in
       eval body (PTEnv.extend name e env)
   | Fun _ as f -> Closure (L.unlocated f, env)
-  | Apply (e1, e2) -> (
+  | Apply (f, args) -> (
       (*
         In the parsetree we allow the argument [x] in the term [(fun x -> ...)]
         to be of type [Parsetree.t] since that makes parsing easier. Doing this
         forces us to add a few extra checks when interpreting, though. We do a similar 
         thing with the bound variable in [let] expressions.
       *)
-      let arg = eval e2 env in
-      match eval e1 env with
-      | Closure ({ body = Fun (x, body); _ }, bound_env) ->
-          let x' =
-            match x.body with
-            | Var v -> v
-            | Annotated ({ body = Var v; _ }, _) -> v
-            | _ ->
+      let extract_param (p : t) : Ident.t =
+        match p.body with
+        | Var v -> v
+        | Annotated ({ body = Var v; _ }, _) -> v
+        | _ ->
+            let msg =
+              sprintf "function argument must be a variable, got '%s'"
+                (to_string p)
+            in
+            raise (InterpError (msg, p.loc))
+      in
+      let args' = List.map ~f:(fun expr -> eval expr env) args in
+      match eval f env with
+      | Closure ({ body = Fun (params, body); _ }, bound_env) ->
+          let params' = List.map ~f:extract_param params in
+          let param_arg_pairs =
+            match List.zip params' args' with
+            | Ok pairs -> pairs
+            | Unequal_lengths ->
+                let n_params = List.length params in
+                let n_args = List.length args in
                 let msg =
-                  sprintf "function argument must be a variable, got '%s'"
-                    (to_string x)
+                  sprintf
+                    "tried to apply %d arguments to a function expecting %d"
+                    n_args n_params
                 in
-                raise (InterpError (msg, x.loc))
+                raise (InterpError (msg, expr.loc))
           in
-          let env' = PTEnv.extend x' arg bound_env in
-          eval body env'
+          let new_env =
+            List.fold param_arg_pairs ~init:bound_env
+              ~f:(fun env (param, arg) -> PTEnv.extend param arg env)
+          in
+          eval body new_env
       | _ ->
           let msg =
             "tried to apply a value to something that isn't a function"

@@ -12,8 +12,8 @@ and t_body =
   | Binop of Op.Binop.t * t * t
   | If of t * t * t
   | LetIn of t * t * t
-  | Fun of t * t
-  | Apply of t * t
+  | Fun of t list * t
+  | Apply of t * t list
 
 let rec to_string (pt : t) =
   match pt.body with
@@ -30,8 +30,12 @@ let rec to_string (pt : t) =
   | LetIn (name, e1, e2) ->
       sprintf "(let %s = %s in %s)" (to_string name) (to_string e1)
         (to_string e2)
-  | Fun (arg, body) -> sprintf "(fun %s -> %s)" (to_string arg) (to_string body)
-  | Apply (e1, e2) -> sprintf "%s %s" (to_string e1) (to_string e2)
+  | Fun (params, body) ->
+      let param_strs = String.concat " " (List.map to_string params) in
+      sprintf "(fun %s -> %s)" param_strs (to_string body)
+  | Apply (f, args) ->
+      let arg_strs = String.concat " " (List.map to_string args) in
+      sprintf "%s %s" (to_string f) arg_strs
 
 type command = command_body Location.located
 

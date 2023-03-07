@@ -33,12 +33,23 @@ let rec eval expr env =
       let env' = TTEnv.extend name (eval value env) env in
       eval body env'
   | Fun _ as body -> Closure ({ placeholder_value with body }, env)
-  | Apply (e1, e2) -> (
-      let arg = eval e2 env in
-      match eval e1 env with
-      | Closure ({ body = Fun (x, body); _ }, closed_env) ->
-          let env' = TTEnv.extend x arg closed_env in
-          eval body env'
+  | Apply (f, args) -> (
+      let args' = List.map ~f:(fun e -> eval e env) args in
+      match eval f env with
+      | Closure ({ body = Fun (params, body); _ }, closed_env) ->
+          let param_arg_pairs =
+            match List.zip params args' with
+            | Ok pairs -> pairs
+            | Unequal_lengths ->
+                unreachable
+                  ~reason:
+                    "type checking should have detected mismatched arg lengths"
+          in
+          let new_env =
+            List.fold param_arg_pairs ~init:closed_env
+              ~f:(fun env (param, arg) -> TTEnv.extend param arg env)
+          in
+          eval body new_env
       | _ ->
           unreachable
             ~reason:"expression should have been checked to be a function")

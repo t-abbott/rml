@@ -95,7 +95,7 @@ expr_unmarked:
   | IF e1 = expr THEN e2 = expr ELSE e3 = expr
     { If (e1, e2, e3) }
   | FUN arg = expr ARROW body = expr 
-    { Fun (arg, body) }
+    { Fun ([arg], body) }
   | LET name = expr EQUAL e1 = expr IN e2 = expr
     { LetIn (name, e1, e2) }
 
@@ -104,7 +104,7 @@ app_expr_unmarked:
   | e = simple_expr_unmarked
     { e }
   | e1 = app_expr e2 = simple_expr
-    { Apply (e1, e2) }
+    { Apply (e1, [e2]) }
 
 simple_expr: mark_location(simple_expr_unmarked) { $1 }
 simple_expr_unmarked:
