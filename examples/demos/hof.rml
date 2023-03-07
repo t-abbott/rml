@@ -1,0 +1,9 @@
+let double = (fun (x: int) -> x + x) ;; 
+
+let twice = (fun (f : int -> int) -> 
+    (fun (x: int) -> 
+        f (f x)
+    )
+) ;; 
+
+(twice double) 2 ;; 

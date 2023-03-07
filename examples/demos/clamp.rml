@@ -1,0 +1,16 @@
+let clamp = 
+    (fun (low: int) ->
+        (fun (high: int) -> 
+            (fun (x: int) -> 
+                if x < low then
+                    low 
+                else if x > high then 
+                    high 
+                else
+                    x
+            )
+        )
+    ) ;;
+
+
+((clamp 0) 10) -1 ;; 
