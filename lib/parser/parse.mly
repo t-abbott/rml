@@ -141,14 +141,7 @@ ty_basic:
 
 refinement:
   | LBRACKET v = VAR LINE body = refinement_expr RBRACKET
-    {
-        if v <> "v" then
-            let loc = Utils.Location.from $startpos $endpos in
-            let msg = Printf.sprintf "refinements must bind the variable 'v', found '%s'" v in
-            raise (Errors.ParseError (msg, loc))
-        else
-            body
-    }
+    { Refinement_surface.refinement v body }
 
 (*
     TODO refactor true and false tokens to wrap ocaml bools like integer does

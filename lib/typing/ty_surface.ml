@@ -21,5 +21,5 @@ let rec to_string (ty : t) =
   | SArrow (tys_from, ty_to) ->
       List.map ~f:to_string (tys_from @ [ ty_to ]) |> String.concat ~sep:" -> "
 
-let unrefined_base ty = SBase (ty, Some (Loc.unlocated (RSurface.boolean true)))
+let unrefined_base ty = SBase (ty, None)
 let annotated ty loc = { body = ty; source = Annotation loc }

@@ -19,6 +19,9 @@ let rec to_string ty =
       let args = List.map to_string tys_from |> String.concat " -> " in
       args ^ " -> " ^ to_string ty_to
 
+(*
+    FIXME: with_refinements not working? 
+*)
 let rec is_equal t1 t2 ~with_refinements =
   match (t1.body, t2.body) with
   | RArrow (t1s_from, t1_to), RArrow (t2s_from, t2_to) -> (
@@ -32,9 +35,10 @@ let rec is_equal t1 t2 ~with_refinements =
       | [], [] -> is_equal t1_to t2_to ~with_refinements
       | [], _ -> is_equal t1_to t2 ~with_refinements
       | _, [] -> is_equal t1 t2_to ~with_refinements)
-  | RBase (b1, Some r1), RBase (b2, Some r2) ->
+  | RBase (b1, _), RBase (b2, _) when not with_refinements ->
       Base_ty.equal b1 b2
-      && if with_refinements then Refinement.equal r1 r2 else true
+  | RBase (b1, Some r1), RBase (b2, Some r2) ->
+      Base_ty.equal b1 b2 && Refinement.equal r1 r2
   | RBase (b1, None), RBase (b2, None) -> Base_ty.equal b1 b2
   | _ -> false
 

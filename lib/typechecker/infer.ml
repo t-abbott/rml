@@ -40,16 +40,23 @@ let rec type_parsetree (pt : PTree.t) ctx =
       let l', r' = (type_parsetree l ctx, type_parsetree r ctx) in
       let body = Binop (op, l', r') in
 
-      (* jsdkf *)
+      (*
+         FIXME: should only compare base types at this stage; currently failing
+         on rejecting refinements.
+
+         The code looks like its calling `equal_base` though - hmm.
+      *)
       match Ty_template.apply_types ty_op [ l'.ty; r'.ty ] with
       | Some ty -> { body; ty; loc }
       | None ->
           let msg =
             sprintf
-              "arguments of type '%s' and '%s' did not match expected type '%s'"
+              "arguments of type '%s' and '%s' did not match expected type \
+               '%s' for operator '%s'"
               (Ty_template.to_string l'.ty)
               (Ty_template.to_string r'.ty)
               (Ty_template.to_string ty_op)
+              (Op.Binop.to_string op)
           in
           raise (TypeError (msg, loc)))
   | PTree.If (cond, ift, iff) ->
