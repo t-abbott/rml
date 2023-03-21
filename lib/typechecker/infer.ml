@@ -8,6 +8,8 @@ open Errors
 module PTree = Ast.Parsetree
 module TTree = Ast.Templatetree
 
+open Ref_checks
+
 type context = Ty_template.t Context.t
 
 let t_int = Ty_template.unrefined Base_ty.TInt ~source:Builtin
@@ -182,6 +184,16 @@ let rec type_parsetree (pt : PTree.t) ctx =
   | PTree.Annotated (expr, ty_stated) ->
       let ty_t_stated = Ty_template.of_surface ty_stated in
       let typed_expr = type_parsetree expr ctx in
+
+      (* check refinement is in the right place *)
+      let _ = (
+        if not (check_ref_only_on_var typed_expr ty_t_stated) then 
+          let msg = "Attempted to refine an expression that isn't a variable" in 
+          raise (TypeError (msg, expr.loc))
+      else
+        ()
+      ) in 
+
       if not (Ty_template.equal_base typed_expr.ty ty_t_stated) then
         let stated, inferred =
           Utils.Misc.proj2 Ty_template.to_string ty_t_stated typed_expr.ty
