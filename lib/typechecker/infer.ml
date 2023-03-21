@@ -7,13 +7,17 @@ open Utils
 open Errors
 module PTree = Ast.Parsetree
 module TTree = Ast.Templatetree
-
 open Ref_checks
 
 type context = Ty_template.t Context.t
 
 let t_int = Ty_template.unrefined Base_ty.TInt ~source:Builtin
 let t_bool = Ty_template.unrefined Base_ty.TBool ~source:Builtin
+
+let check_annotatated_refs expr ty =
+  match check_ref_annotations expr ty with
+  | Ok () -> ()
+  | Error msg -> raise (TypeError (msg, expr.loc))
 
 let rec type_parsetree (pt : PTree.t) ctx =
   let loc = pt.loc in
@@ -89,7 +93,22 @@ let rec type_parsetree (pt : PTree.t) ctx =
       let name =
         match namebinding.body with
         | PTree.Var v -> v
+        (* handle annotations separately here bc of extra logic wrt
+           checking the annotated type of an expression matches it's
+           actual type
+        *)
         | PTree.Annotated ({ body = Var v; _ }, ty_stated) ->
+            (* check refinement and variable names match *)
+            let _ =
+              if not (check_var_matches_bound_var v ty_stated) then
+                let msg =
+                  "bound variable in refinement doesn't match the name of the \
+                   variable it refines"
+                in
+                raise (TypeError (msg, namebinding.loc))
+              else ()
+            in
+
             let ty_t_stated = Ty_template.of_surface ty_stated in
             if not (Ty_template.equal_base ty_t_stated typed_value.ty) then
               let msg =
@@ -112,26 +131,40 @@ let rec type_parsetree (pt : PTree.t) ctx =
       let body = LetIn (name, typed_value, typed_expr) in
       { body; ty; loc }
   | PTree.Fun (xs, expr) ->
+      (* extract function arguments and their types *)
       let param_ty_pairs =
         List.map
           ~f:(fun param ->
             match param.body with
             | Var _ ->
                 failwith "function parameter type inference not implemented"
-            | Annotated ({ body = Var v; _ }, t) -> (v, Ty_template.of_surface t)
+            | Annotated ({ body = Var v; _ }, t) ->
+                (* check that refinement names match variable names (step 2 in ref_checks.mli) *)
+                if not (check_var_matches_bound_var v t) then
+                  let msg =
+                    "bound variable in refinement doesn't match the name of \
+                     the variable it refines"
+                  in
+                  raise (TypeError (msg, param.loc))
+                else (v, Ty_template.of_surface t)
             | _ ->
                 let msg = "expected function argument to be a variable" in
                 raise (TypeError (msg, loc)))
           xs
       in
+      (* add parameters to the typing context *)
       let ctx' =
         List.fold ~init:ctx
           ~f:(fun ctx (param, ty) -> Context.extend param ty ctx)
           param_ty_pairs
       in
       let typed_expr = type_parsetree expr ctx' in
+
+      (* extract parameter variable names and types *)
       let params = List.map ~f:fst param_ty_pairs in
       let param_tys = List.map ~f:snd param_ty_pairs in
+
+      (* shove them in an RArrow *)
       let ty =
         Ty_template.inferred (Ty_template.RArrow (param_tys, typed_expr.ty))
       in
@@ -185,14 +218,8 @@ let rec type_parsetree (pt : PTree.t) ctx =
       let ty_t_stated = Ty_template.of_surface ty_stated in
       let typed_expr = type_parsetree expr ctx in
 
-      (* check refinement is in the right place *)
-      let _ = (
-        if not (check_ref_only_on_var typed_expr ty_t_stated) then 
-          let msg = "Attempted to refine an expression that isn't a variable" in 
-          raise (TypeError (msg, expr.loc))
-      else
-        ()
-      ) in 
+      (* check any refinement annotation is well-formed *)
+      ignore (check_annotatated_refs typed_expr ty_t_stated);
 
       if not (Ty_template.equal_base typed_expr.ty ty_t_stated) then
         let stated, inferred =

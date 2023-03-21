@@ -1,0 +1,12 @@
+let f_good = (fun (x: int[x | x > 0]) -> 
+    x
+) ;;
+
+let f_bad_expr = (fun (x: int) -> 
+    let y: int[z | z = x] = x in 
+    y
+) ;;
+
+let f_bad_arg = (fun (x: int[y | y > 0]) ->
+    x
+) ;;

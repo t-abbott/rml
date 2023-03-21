@@ -1,9 +1,9 @@
-let g = (fun (x: int[x | x > 1]) -> 
+let f_good = (fun (x: int[x | x > 1]) -> 
     let y: int[y | y > x] = x + 1 in 
     y
 ) ;;
 
-let f = (fun (x: int[x | x > 1]) -> 
+let f_bad = (fun (x: int[x | x > 1]) -> 
     let y = ((x + 1) : int[y | y > x]) in 
     y
 ) ;;

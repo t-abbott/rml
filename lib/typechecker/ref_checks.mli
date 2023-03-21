@@ -13,6 +13,8 @@
     Check that the names in inline definition annotations match
     (as in [let f = fun (x: int[x | x != 0]) -> ...]).
 
+    We do this inline when lowering [PTree.Fun]s
+    
   3.  
     Check that the names in variable signature definitions match
     (as in [val f : int[x | x != 0] -> ...]).
@@ -24,8 +26,24 @@
 open Ast
 open Typing
 
+val check_ref_only_on_var : Templatetree.t -> Ty_template.t -> bool
 (**
     Checks that a use-provided type only includes a refinement if 
     if is an annotation on a [Templatetree.Var]    
 *)
-val check_ref_only_on_var : Templatetree.t -> Ty_template.t -> bool
+
+val check_inline_var_names_match : Templatetree.t -> Ty_template.t -> bool
+(**
+    Checks if the name bound in a refinement matches the variable 
+    the refinement is attached to 
+    
+    (e.g. rejects expressions like [x: int[y | y < 0]])
+*)
+
+val check_var_matches_bound_var : string -> Ty_surface.t -> bool
+(**
+    djskf    
+*)
+
+val check_ref_annotations :
+  Templatetree.t -> Ty_template.t -> (unit, string) result
