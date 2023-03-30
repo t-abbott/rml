@@ -42,7 +42,6 @@ type command = command_body Location.located
 and command_body =
   | Expr of t
   | LetDef of Ident.t * Ty_surface.t option * t
-  | ValDef of Ident.t * Ty_surface.t
 
 let command_to_string (cmd : command) =
   match cmd.body with
@@ -52,7 +51,6 @@ let command_to_string (cmd : command) =
         match ty with Some ty' -> Ty_surface.to_string ty' | _ -> ""
       in
       sprintf "let %s: %s = %s ;;" name ty_str (to_string body)
-  | ValDef (name, ty) -> sprintf "val %s: %s" name (Ty_surface.to_string ty)
 
 type program = command list
 

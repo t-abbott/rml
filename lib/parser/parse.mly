@@ -7,8 +7,6 @@
 %token TINT
 %token TBOOL
 %token COLON
-%token VAL
-
 %token ARROW
 %token <Ast.Ident.t> VAR
 
@@ -62,8 +60,6 @@ topdef_unmarked:
     { LetDef (x, Some t, e) }
   | LET x = VAR EQUAL e = expr
     { LetDef (x, None, e) }
-  | VAL x = VAR COLON t = ty
-    { ValDef (x, t) }
 
 topexpr: mark_location(topexpr_unmarked) { $1 }
 topexpr_unmarked:

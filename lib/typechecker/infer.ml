@@ -240,30 +240,10 @@ let type_command (cmd : PTree.command) (ctx : context) :
       (Some (Expr ttree), ctx)
   | PTree.LetDef (name, ty_annotated, defn) ->
       (* convert any annotated [Ty_surface.t] to a [Ty_template.t] *)
-      let ty_t_annotated =
+      let ty_t_stated =
         match ty_annotated with
         | Some t -> Some (Ty_template.of_surface t)
         | None -> None
-      in
-
-      (* get the type of [name] as declared in a [val] statement (if any) *)
-      let ty_t_valdef = Context.find name ctx in
-
-      (* test that the annotated type matched the val type (if both are present) *)
-      let ty_t_stated =
-        match (ty_t_annotated, ty_t_valdef) with
-        | Some ty_annot, Some ty_val ->
-            if not (Ty_template.equal ty_annot ty_val) then
-              let msg =
-                sprintf
-                  "type mistmatch - declared '%s' but was annotated with '%s'"
-                  (Ty_template.to_string ty_val)
-                  (Ty_template.to_string ty_annot)
-              in
-              raise (TypeError (msg, cmd.loc))
-            else Some ty_annot
-        | Some t, None | None, Some t -> Some t
-        | None, None -> None
       in
 
       (* infer the type of [defn] *)
@@ -287,10 +267,6 @@ let type_command (cmd : PTree.command) (ctx : context) :
       (* otherwise the expression is well-typed and we can add it to the environment *)
       let ctx' = Context.extend name typed_defn.ty ctx in
       (Some (LetDef (name, typed_defn)), ctx')
-  | PTree.ValDef (name, ty) ->
-      let ty_t = Ty_template.of_surface ty in
-      let ctx' = Context.extend name ty_t ctx in
-      (None, ctx')
 
 let rec type_program prog ctx =
   match prog with
