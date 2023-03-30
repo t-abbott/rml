@@ -30,12 +30,7 @@ let checks =
 let check_ref_annotations (expr : TTree.t) (ty : Ty_template.t) =
   let rec iter tests =
     match tests with
-    | (msg, test_fn) :: rest ->
-        Printf.eprintf "on test %s\n" msg;
-        if test_fn expr ty then iter rest else Error msg
+    | (msg, test_fn) :: rest -> if test_fn expr ty then iter rest else Error msg
     | [] -> Ok ()
   in
   iter checks
-
-(*
-   let check_signature_vars_match () = failwith "not implemented" *)

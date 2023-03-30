@@ -13,14 +13,21 @@
     Check that the names in inline definition annotations match
     (as in [let f = fun (x: int[x | x != 0]) -> ...]).
 
-    We do this inline when lowering [PTree.Fun]s
+    We do this inline when lowering [PTree.Fun]s and [PTree.LetIn]s
     
   3.  
     Check that the names in variable signature definitions match
-    (as in [val f : int[x | x != 0] -> ...]).
+    (as in [
+        val f : int[x | x != 0] -> ...
+        let f = (fun (x: int[x | x != 0]) -> ...)
+    ]).
+
+    We do this inline when lowering [PTree.Fun]s. 
 
   4. 
     Check that the return variable name doesn't alias any other.
+
+    We do this inline when lowering [PTree.Fun]s.
 *)
 
 open Ast
@@ -42,8 +49,11 @@ val check_inline_var_names_match : Templatetree.t -> Ty_template.t -> bool
 
 val check_var_matches_bound_var : string -> Ty_surface.t -> bool
 (**
-    djskf    
+    TODO docstring 
 *)
 
 val check_ref_annotations :
   Templatetree.t -> Ty_template.t -> (unit, string) result
+(**
+    TODO docstring    
+*)
