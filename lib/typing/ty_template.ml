@@ -77,5 +77,30 @@ let rec of_surface (t_surface : Ty_surface.t) : t =
   in
   { body = t_template; source }
 
+(* let rec flatten ?(prefix: t list = []) (ty: t) =
+   ignore (ty, prefix);
+   match ty.body with
+   | RBase (_, _) ->
+     if List.length prefix > 0 then
+       RArrow (prefix, ty)
+     else
+       ty.body
+   | _ -> ty.body
+*)
+
+let rec flatten (ty : t) =
+  match ty.body with RBase _ -> [ ty ] | RArrow (t1, t2) -> t1 @ flatten t2
+
+(**
+  [uncurry ty] produces an uncurried version of [ty] (i.e. as flattened as possible)
+*)
+let rec uncurry (ty : t) =
+  let tys = ty |> flatten |> List.rev in
+  if List.length tys = 1 then ty
+  else
+    let ty_to = List.hd tys in
+    let tys_from = tys |> List.tl |> List.rev |> List.map uncurry in
+    { ty with body = RArrow (tys_from, ty_to) }
+
 let arity ty =
   match ty.body with RArrow (tys_from, _) -> List.length tys_from | _ -> 0
