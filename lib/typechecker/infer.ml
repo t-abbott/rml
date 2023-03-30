@@ -253,7 +253,7 @@ let type_command (cmd : PTree.command) (ctx : context) :
       let ty_t_stated =
         match (ty_t_annotated, ty_t_valdef) with
         | Some ty_annot, Some ty_val ->
-            if not (Ty_template.equal_base ty_annot ty_val) then
+            if not (Ty_template.equal ty_annot ty_val) then
               let msg =
                 sprintf
                   "type mistmatch - declared '%s' but was annotated with '%s'"
