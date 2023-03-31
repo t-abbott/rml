@@ -38,10 +38,7 @@ let rec to_string (pt : t) =
       sprintf "%s %s" (to_string f) arg_strs
 
 type command = command_body Location.located
-
-and command_body =
-  | Expr of t
-  | LetDef of Ident.t * Ty_surface.t option * t
+and command_body = Expr of t | LetDef of Ident.t * Ty_surface.t option * t
 
 let command_to_string (cmd : command) =
   match cmd.body with
