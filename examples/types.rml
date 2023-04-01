@@ -1,5 +1,5 @@
 let f = 
-    (fun (x: int) -> x + (1: int)): int -> int 
+    (fun (x: num) -> x + (1: num)): num -> num 
 ;;
 
 f 4 

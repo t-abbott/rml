@@ -11,7 +11,7 @@ type t = { body : t_body; ty : Ty_template.t; loc : Location.t }
 
 and t_body =
   | Var of Ident.t
-  | Integer of int
+  | Number of float
   | Boolean of bool
   | Binop of Binop.t * t * t
   | If of t * t * t
@@ -24,7 +24,7 @@ let rec to_string { body; ty; _ } =
   let term_str =
     match body with
     | Var v -> v
-    | Integer i -> Int.to_string i
+    | Number n -> Float.to_string n
     | Boolean b -> Bool.to_string b
     | Binop (op, l, r) ->
         sprintf "%s %s %s" (to_string l) (Binop.to_string op) (to_string r)

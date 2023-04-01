@@ -23,7 +23,7 @@ val equal : t -> t -> bool
 (**
   Tests if the base types of two liquid types are equal.
   
-  Refinements are ignored, so comparing the terms [int[v | v > 0]], [int[v | v < 0]]
+  Refinements are ignored, so comparing the terms [num[v | v > 0]], [num[v | v < 0]]
   returns [true]. 
 *)
 
@@ -31,7 +31,7 @@ val equal_base : t -> t -> bool
 (**
   Tests if the base types of two liquid types are equal.
   
-  Refinements are ignored, so comparing the terms [int[v | v > 0]], [int[v | v < 0]]
+  Refinements are ignored, so comparing the terms [num[v | v > 0]], [num[v | v < 0]]
   returns [true]. 
 *)
 
@@ -41,7 +41,7 @@ val apply_types : t -> t list -> t option
   the type [ty_f].
 
   For example, [apply_types (RArrow ([TInt], TInt)) TInt] corresponds to applying a value
-  of type [int] to a function of type [int -> int], and therefore evaluates to [TInt].
+  of type [num] to a function of type [num -> num], and therefore evaluates to [TInt].
 
   Returns [None] in the event of a type mismatch (e.g. applying a type to a base type)
 *)
@@ -78,7 +78,7 @@ val tbool : t
     Useful alias for [builtin (RBase (Base_ty.TBool, None))]
 *)
 
-val tint : t
+val tnum : t
 (**
     builtin (RBase (Base_ty.TInt, None))    
 *)
@@ -106,7 +106,7 @@ val of_surface : Ty_surface.t -> t Context.t -> t
 val flatten : t -> t list
 (**
   Flattens all the types of a function into a single list - e.g. 
-    [int -> bool -> int] -> [[int; bool; int]]
+    [num -> bool -> num] -> [[num; bool; num]]
 *)
 
 val uncurry : t -> t

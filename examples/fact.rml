@@ -1,4 +1,4 @@
-let fact = (fun (x: int) -> 
+let fact = (fun (x: num) -> 
     if x < 1 then
         0
     else

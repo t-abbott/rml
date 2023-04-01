@@ -8,7 +8,6 @@ let letter = ['a'-'z' 'A'-'Z']
 let symbol = ['+' '-' '*' '/' '<' '>' '=' '!' '%']
 let digit = ['0'-'9']
 
-let int = '-'? digit+
 let decimal = '-'? digit+ '.' (digit+)?
 
 let var = (letter | '_') (letter | digit | symbol | '_')*
@@ -16,8 +15,8 @@ let var = (letter | '_') (letter | digit | symbol | '_')*
 rule token = parse
     whitespace      { token lexbuf }
   | '\n'            { Lexing.new_line lexbuf; token lexbuf }
-  | int             { INT (int_of_string(Lexing.lexeme lexbuf)) }
-  | "int"           { TINT }
+  | decimal         { NUM (Float.of_string(Lexing.lexeme lexbuf)) }
+  | "num"           { TNUM }
   | "bool"          { TBOOL }
   | ':'             { COLON }
   | "true"          { TRUE }

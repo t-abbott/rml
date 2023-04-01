@@ -17,8 +17,8 @@ val to_string : t -> string
 val boolean : bool -> t_expr_body
 (** [boolean b] is an alias for [Const (Constant.Boolean b)] *)
 
-val number : int -> t_expr_body
-(** [number n] is an alias for [Const (Constant.Integer n)]*)
+val number : float -> t_expr_body
+(** [number n] is an alias for [Const (Constant.Number n)]*)
 
 val var : string -> t_expr_body
 (** [var v] is an alias for [Var v]*)

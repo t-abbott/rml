@@ -22,8 +22,8 @@ let check_annotatated_refs expr ty =
 let rec type_parsetree (pt : PTree.t) ctx =
   let loc = pt.loc in
   match pt.body with
-  | PTree.Integer i ->
-      let body = Integer i in
+  | PTree.Number i ->
+      let body = Number i in
       let ty = t_int in
       { body; ty; loc }
   | PTree.Boolean b ->

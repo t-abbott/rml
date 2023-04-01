@@ -28,5 +28,5 @@ let rec expr_to_string (ref : t_expr) =
 
 let to_string (ref : t) = ref.bound_var ^ " | " ^ expr_to_string ref.expr
 let boolean b = Const (Constant.Boolean b)
-let number n = Const (Constant.Integer n)
+let number n = Const (Constant.Number n)
 let var v = Var v
