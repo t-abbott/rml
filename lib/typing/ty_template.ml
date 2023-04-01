@@ -5,6 +5,7 @@
 
 open Printf
 open Utils
+open Refinement_errors
 module Loc = Location
 
 type t = { body : t_body; source : Source.t }
@@ -88,8 +89,18 @@ let rec lower_refinement_expr (r_surface : Refinement_surface.t_expr)
         match Context.find v ctx with
         | Some ty ->
             if ty = ty_expected then (Refinement.Var v, ty)
-            else failwith "types don't match"
-        | None -> failwith "var doesn't exit")
+            else
+              let ty_str = to_string ty in
+              let ty_expected_str = to_string ty_expected in
+              let msg =
+                sprintf
+                  "type of variable '%s: %s' doesn't match expected type %s" v
+                  ty_str ty_expected_str
+              in
+              raise (RefinementError (msg, loc))
+        | None ->
+            let msg = sprintf "reference to unknown variable %s" v in
+            raise (RefinementError (msg, loc)))
     | R_surf.Const (Boolean b) -> (Refinement.boolean b, tbool)
     | R_surf.Const (Integer n) -> (Refinement.number n, tint)
     | R_surf.Binop (op, l_surf, r_surf) ->
@@ -104,7 +115,12 @@ let rec lower_refinement_expr (r_surface : Refinement_surface.t_expr)
         (Refinement.IfThen (cond, if_t, if_f), ty_expected)
   in
   if equal_base ty_actual ty_expected then Location.locate loc expr
-  else failwith "error here"
+  else
+    let ty_a_str, ty_e_str = Misc.proj2 to_string ty_actual ty_expected in
+    let msg =
+      sprintf "type '%s' doesn't match expected type '%s'" ty_a_str ty_e_str
+    in
+    raise (RefinementError (msg, loc))
 
 let lower_refinement (r_surface : Refinement_surface.t) (ctx : t Context.t)
     (bound_base_ty : Base_ty.t) : Refinement.t =
