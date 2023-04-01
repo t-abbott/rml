@@ -7,8 +7,6 @@
 %token TINT
 %token TBOOL
 %token COLON
-%token VAL
-
 %token ARROW
 %token <Ast.Ident.t> VAR
 
@@ -62,8 +60,6 @@ topdef_unmarked:
     { LetDef (x, Some t, e) }
   | LET x = VAR EQUAL e = expr
     { LetDef (x, None, e) }
-  | VAL x = VAR COLON t = ty
-    { ValDef (x, t) }
 
 topexpr: mark_location(topexpr_unmarked) { $1 }
 topexpr_unmarked:
@@ -141,14 +137,7 @@ ty_basic:
 
 refinement:
   | LBRACKET v = VAR LINE body = refinement_expr RBRACKET
-    {
-        if v <> "v" then
-            let loc = Utils.Location.from $startpos $endpos in
-            let msg = Printf.sprintf "refinements must bind the variable 'v', found '%s'" v in
-            raise (Errors.ParseError (msg, loc))
-        else
-            body
-    }
+    { Refinement_surface.refinement v body }
 
 (*
     TODO refactor true and false tokens to wrap ocaml bools like integer does

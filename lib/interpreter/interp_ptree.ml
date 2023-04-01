@@ -127,7 +127,6 @@ let eval_cmd (cmd : command) env =
   | LetDef (name, _, body) ->
       let env' = PTEnv.extend name (eval body env) env in
       (Value (L.unlocated (Integer 0)), env')
-  | ValDef _ -> (Value (L.unlocated (Integer 0)), env)
 
 let rec run prog env =
   match prog with

@@ -78,6 +78,17 @@ val of_surface : Ty_surface.t -> t
     [of_surface ty] creates a [Ty_template.t] corresponding to [ty]
 *)
 
+val flatten : t -> t list
+(**
+  Flattens all the types of a function into a single list - e.g. 
+    [int -> bool -> int] -> [[int; bool; int]]
+*)
+
+val uncurry : t -> t
+(**
+    uncurries a type.    
+*)
+
 val arity : t -> int
 (**
     [arity ty] returns the number of arguments taken by the

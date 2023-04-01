@@ -19,6 +19,9 @@ let rec to_string ty =
       let args = List.map to_string tys_from |> String.concat " -> " in
       args ^ " -> " ^ to_string ty_to
 
+(*
+    FIXME: with_refinements not working? 
+*)
 let rec is_equal t1 t2 ~with_refinements =
   match (t1.body, t2.body) with
   | RArrow (t1s_from, t1_to), RArrow (t2s_from, t2_to) -> (
@@ -32,9 +35,10 @@ let rec is_equal t1 t2 ~with_refinements =
       | [], [] -> is_equal t1_to t2_to ~with_refinements
       | [], _ -> is_equal t1_to t2 ~with_refinements
       | _, [] -> is_equal t1 t2_to ~with_refinements)
-  | RBase (b1, Some r1), RBase (b2, Some r2) ->
+  | RBase (b1, _), RBase (b2, _) when not with_refinements ->
       Base_ty.equal b1 b2
-      && if with_refinements then Refinement.equal r1 r2 else true
+  | RBase (b1, Some r1), RBase (b2, Some r2) ->
+      Base_ty.equal b1 b2 && Refinement.equal r1 r2
   | RBase (b1, None), RBase (b2, None) -> Base_ty.equal b1 b2
   | _ -> false
 
@@ -72,6 +76,31 @@ let rec of_surface (t_surface : Ty_surface.t) : t =
         RArrow (List.map of_surface tys_from, of_surface ty_to)
   in
   { body = t_template; source }
+
+(* let rec flatten ?(prefix: t list = []) (ty: t) =
+   ignore (ty, prefix);
+   match ty.body with
+   | RBase (_, _) ->
+     if List.length prefix > 0 then
+       RArrow (prefix, ty)
+     else
+       ty.body
+   | _ -> ty.body
+*)
+
+let rec flatten (ty : t) =
+  match ty.body with RBase _ -> [ ty ] | RArrow (t1, t2) -> t1 @ flatten t2
+
+(**
+  [uncurry ty] produces an uncurried version of [ty] (i.e. as flattened as possible)
+*)
+let rec uncurry (ty : t) =
+  let tys = ty |> flatten |> List.rev in
+  if List.length tys = 1 then ty
+  else
+    let ty_to = List.hd tys in
+    let tys_from = tys |> List.tl |> List.rev |> List.map uncurry in
+    { ty with body = RArrow (tys_from, ty_to) }
 
 let arity ty =
   match ty.body with RArrow (tys_from, _) -> List.length tys_from | _ -> 0

@@ -5,15 +5,14 @@ open Ast.Templatetree
 module L = Utils.Location
 module TTEnv = Env.MakeEnv (Templatetree)
 
+let placeholder_ty =
+  let (ref : Refinement.t) =
+    { bound_var = "_"; expr = L.unlocated (Refinement.boolean true) }
+  in
+  Ty_template.builtin (Ty_template.RBase (Base_ty.TInt, Some ref))
+
 let placeholder_value =
-  {
-    body = Integer 0;
-    ty =
-      Ty_template.builtin
-        (Ty_template.RBase
-           (Base_ty.TInt, Some (L.unlocated (Refinement.boolean true))));
-    loc = L.Nowhere;
-  }
+  { body = Integer 0; ty = placeholder_ty; loc = L.Nowhere }
 
 let unreachable ~reason =
   let message = "tried to execute branch unreachable because " ^ reason in
