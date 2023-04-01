@@ -42,6 +42,7 @@ rule token = parse
   | ']'             { RBRACKET }
   | '+'             { PLUS }
   | '-'             { MINUS }
+  | '/'             { DIV }
   | '*'             { TIMES }
   | var             { VAR (Lexing.lexeme lexbuf) }
   | eof             { EOF }

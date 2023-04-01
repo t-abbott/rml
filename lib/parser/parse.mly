@@ -16,6 +16,7 @@
 %token PLUS
 %token MINUS
 %token TIMES
+%token DIV
 %token EQUAL LESS GREATER
 %token AND OR
 
@@ -72,28 +73,35 @@ expr_unmarked:
     { e }
   | MINUS n = INT
     { Integer (-n) }
-  | e1 = expr PLUS e2 = expr	
-    { Binop (Binop.Plus, e1, e2) }
-  | e1 = expr MINUS e2 = expr
-    { Binop (Binop.Minus, e1, e2) }
-  | e1 = expr TIMES e2 = expr
-    { Binop (Binop.Times, e1, e2) }
-  | e1 = expr EQUAL e2 = expr
-    { Binop(Binop.Equal, e1, e2) }
-  | e1 = expr LESS e2 = expr
-    { Binop (Binop.Less, e1, e2) }
-  | e1 = expr GREATER e2 = expr 
-    { Binop (Binop.Greater, e1, e2) }
-  | e1 = expr AND e2 = expr
-    { Binop (Binop.And, e1, e2) }
-  | e1 = expr OR e2 = expr
-    { Binop (Binop.Or, e1, e2) }
+  | e1 = expr op = expr_binop e2 = expr
+    { Binop (op, e1, e2) }
   | IF e1 = expr THEN e2 = expr ELSE e3 = expr
     { If (e1, e2, e3) }
   | FUN arg = expr ARROW body = expr 
     { Fun ([arg], body) }
   | LET name = expr EQUAL e1 = expr IN e2 = expr
     { LetIn (name, e1, e2) }
+
+%inline
+expr_binop:
+    | PLUS
+        { Binop.Plus }
+    | MINUS
+        { Binop.Minus }
+    | TIMES
+        { Binop.Times }
+    // | DIV  
+        // { Binop.Div }
+    | EQUAL
+        { Binop.Equal }
+    | LESS 
+        { Binop.Less }
+    | GREATER
+        { Binop.Greater } 
+    | AND
+        { Binop.And }
+    | OR
+        { Binop.Or }
 
 app_expr: mark_location(app_expr_unmarked) { $1 }
 app_expr_unmarked:
