@@ -8,7 +8,17 @@ let int_int_bool = builtin (RArrow ([ t_int; t_int ], t_bool))
 let bool_bool_bool = builtin (RArrow ([ t_bool; t_bool ], t_bool))
 
 module Binop = struct
-  type t = Equal | Less | Greater | Plus | Minus | Times | Div | And | Or
+  type t =
+    | Equal
+    | Less
+    | Greater
+    | Plus
+    | Minus
+    | Times
+    | Div
+    | Mod
+    | And
+    | Or
 
   let to_string = function
     | Equal -> "="
@@ -18,6 +28,7 @@ module Binop = struct
     | Minus -> "-"
     | Times -> "*"
     | Div -> "/"
+    | Mod -> "%"
     | And -> "&&"
     | Or -> "||"
 
@@ -29,6 +40,7 @@ module Binop = struct
     | Minus -> int_int_int
     | Times -> int_int_int
     | Div -> int_int_int
+    | Mod -> int_int_int
     | And -> bool_bool_bool
     | Or -> bool_bool_bool
 end

@@ -112,6 +112,11 @@ and eval_binop (op, l, r) env =
         let body = Integer (x / y) in
         let ty = t_int in
         Value { placeholder_value with body; ty }
+  | Op.Binop.Mod ->
+      let x, y = (eval_number l env, eval_number r env) in
+      let body = Integer (x % y) in
+      let ty = t_int in
+      Value { placeholder_value with body; ty }
   | Op.Binop.And ->
       let x, y = (eval_bool l env, eval_bool r env) in
       let body = Boolean (x && y) in

@@ -5,7 +5,7 @@
 let whitespace = [' ' '\t' '\r']
 
 let letter = ['a'-'z' 'A'-'Z']
-let symbol = ['+' '-' '*' '/' '<' '>' '=' '!']
+let symbol = ['+' '-' '*' '/' '<' '>' '=' '!' '%']
 let digit = ['0'-'9']
 
 let int = '-'? digit+
@@ -44,6 +44,7 @@ rule token = parse
   | '-'             { MINUS }
   | '/'             { DIV }
   | '*'             { TIMES }
+  | '%'             { MOD }
   | var             { VAR (Lexing.lexeme lexbuf) }
   | eof             { EOF }
 

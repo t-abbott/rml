@@ -121,6 +121,9 @@ and eval_binop (op, l, r) env =
           let msg = "Attempted to divide by 0" in
           raise (InterpError (msg, r.loc))
       | _ -> Value (L.unlocated (Integer (x / y))))
+  | Binop.Mod ->
+      let x, y = (eval_number l env, eval_number r env) in
+      Value (L.unlocated (Integer (x % y)))
   | Binop.And ->
       let x, y = (eval_bool l env, eval_bool r env) in
       Value (L.unlocated (Boolean (x && y)))

@@ -17,6 +17,7 @@
 %token MINUS
 %token TIMES
 %token DIV
+%token MOD
 %token EQUAL LESS GREATER
 %token AND OR
 
@@ -102,6 +103,8 @@ expr_binop:
         { Binop.And }
     | OR
         { Binop.Or }
+    | MOD
+        { Binop.Mod }
 
 app_expr: mark_location(app_expr_unmarked) { $1 }
 app_expr_unmarked:
