@@ -183,6 +183,10 @@ refinement_binop:
     { Refop.Binop.Or }
   | PLUS
     { Refop.Binop.Add }
+  | MINUS 
+    { Refop.Binop.Sub }
+  | MOD 
+    { Refop.Binop.Mod }
 
 mark_location(X):
     x = X
