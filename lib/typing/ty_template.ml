@@ -88,7 +88,7 @@ let rec lower_refinement_expr (r_surface : Refinement_surface.t_expr)
     | R_surf.Var v -> (
         match Context.find v ctx with
         | Some ty ->
-            if ty = ty_expected then (Refinement.Var v, ty)
+            if equal_base ty ty_expected then (Refinement.Var v, ty)
             else
               let ty_str = to_string ty in
               let ty_expected_str = to_string ty_expected in
