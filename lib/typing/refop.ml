@@ -1,5 +1,5 @@
 module Binop = struct
-  type t = Less | Greater | Equal | And | Or | Add
+  type t = Less | Greater | Equal | And | Or | Add | Sub | Mod
 
   let to_string = function
     | Less -> "<"
@@ -8,4 +8,6 @@ module Binop = struct
     | And -> "&&"
     | Or -> "||"
     | Add -> "+"
+    | Sub -> "-"
+    | Mod -> "%"
 end

@@ -2,6 +2,7 @@ open Base
 open Typing
 open Ast
 open Ast.Templatetree
+open Errors
 module L = Utils.Location
 module TTEnv = Env.MakeEnv (Templatetree)
 
@@ -100,6 +101,20 @@ and eval_binop (op, l, r) env =
   | Op.Binop.Times ->
       let x, y = (eval_number l env, eval_number r env) in
       let body = Integer (x * y) in
+      let ty = t_int in
+      Value { placeholder_value with body; ty }
+  | Op.Binop.Div ->
+      let x, y = (eval_number l env, eval_number r env) in
+      if y = 0 then
+        let msg = "Attempted to divide by 0" in
+        raise (InterpError (msg, r.loc))
+      else
+        let body = Integer (x / y) in
+        let ty = t_int in
+        Value { placeholder_value with body; ty }
+  | Op.Binop.Mod ->
+      let x, y = (eval_number l env, eval_number r env) in
+      let body = Integer (x % y) in
       let ty = t_int in
       Value { placeholder_value with body; ty }
   | Op.Binop.And ->
