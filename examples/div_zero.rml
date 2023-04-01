@@ -1,0 +1,3 @@
+let byzero = (fun (x: int) -> x / 0) ;; 
+
+byzero 4 
