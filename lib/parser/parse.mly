@@ -90,8 +90,8 @@ expr_binop:
         { Binop.Minus }
     | TIMES
         { Binop.Times }
-    // | DIV  
-        // { Binop.Div }
+    | DIV  
+        { Binop.Div }
     | EQUAL
         { Binop.Equal }
     | LESS 
