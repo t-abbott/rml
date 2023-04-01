@@ -8,7 +8,7 @@ let letter = ['a'-'z' 'A'-'Z']
 let symbol = ['+' '-' '*' '/' '<' '>' '=' '!' '%']
 let digit = ['0'-'9']
 
-let decimal = '-'? digit+ '.' (digit+)?
+let decimal = '-'? digit+ ('.' digit+)?
 
 let var = (letter | '_') (letter | digit | symbol | '_')*
 
