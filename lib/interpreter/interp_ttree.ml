@@ -103,10 +103,10 @@ and eval_binop (op, l, r) env =
       let body = Integer (x * y) in
       let ty = t_int in
       Value { placeholder_value with body; ty }
-  | Op.Binop.Div -> 
+  | Op.Binop.Div ->
       let x, y = (eval_number l env, eval_number r env) in
-      if y = 0 then 
-        let msg = "Attempted to divide by 0" in 
+      if y = 0 then
+        let msg = "Attempted to divide by 0" in
         raise (InterpError (msg, r.loc))
       else
         let body = Integer (x / y) in
