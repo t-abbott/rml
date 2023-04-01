@@ -1,9 +1,9 @@
 let y = 4 ;;
 
-let f = (fun (x: int) -> x + 1) ;;
+let f = (fun (x: num) -> x + 1) ;;
 
 let z =
-    let g = (fun (x: int) -> x * 2)
+    let g = (fun (x: num) -> x * 2)
     in g 2
 ;;
 

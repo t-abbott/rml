@@ -11,15 +11,15 @@
 
   2.
     Check that the names in inline definition annotations match
-    (as in [let f = fun (x: int[x | x != 0]) -> ...]).
+    (as in [let f = fun (x: num[x | x != 0]) -> ...]).
 
     We do this inline when lowering [PTree.Fun]s and [PTree.LetIn]s
     
   3.  
     Check that the names in variable signature definitions match
     (as in [
-        val f : int[x | x != 0] -> ...
-        let f = (fun (x: int[x | x != 0]) -> ...)
+        val f : num[x | x != 0] -> ...
+        let f = (fun (x: num[x | x != 0]) -> ...)
     ]).
 
     We do this inline when lowering [PTree.Fun]s. 
@@ -44,7 +44,7 @@ val check_inline_var_names_match : Templatetree.t -> Ty_template.t -> bool
     Checks if the name bound in a refinement matches the variable 
     the refinement is attached to 
     
-    (e.g. rejects expressions like [x: int[y | y < 0]])
+    (e.g. rejects expressions like [x: num[y | y < 0]])
 *)
 
 val check_var_matches_bound_var : string -> Ty_surface.t -> bool

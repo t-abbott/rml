@@ -1,11 +1,11 @@
-val double : int[x] -> int[y | y = (x + x)] ;;
-let double = (fun (x: int) -> x + x) ;;
+val double : num[x] -> num[y | y = (x + x)] ;;
+let double = (fun (x: num) -> x + x) ;;
 
-val inc : int[x] -> int[y | (y - x) = 1] ;; 
-let inc = (fun (x: int) -> x + 1) ;;
+val inc : num[x] -> num[y | (y - x) = 1] ;; 
+let inc = (fun (x: num) -> x + 1) ;;
 
-val add : int -> int[c | c > 0] -> int[y | y > x] ;; 
-let add = (fun (x: int) -> 
-    (fun (c: int[c | c > 0]) -> x + c)
+val add : num -> num[c | c > 0] -> num[y | y > x] ;; 
+let add = (fun (x: num) -> 
+    (fun (c: num[c | c > 0]) -> x + c)
 ) ;; 
 

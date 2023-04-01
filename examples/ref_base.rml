@@ -1,5 +1,5 @@
-val f : int[x | x > 0] -> int[y | y > 1] ;;
+val f : num[x | x > 0] -> num[y | y > 1] ;;
 
-let f = (fun (x: int[z | z > 0]) -> x + 1) ;;
+let f = (fun (x: num[z | z > 0]) -> x + 1) ;;
 
 f 4 

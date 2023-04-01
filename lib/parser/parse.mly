@@ -4,13 +4,13 @@
   open Typing
 %}
 
-%token TINT
+%token TNUM
 %token TBOOL
 %token COLON
 %token ARROW
 %token <Ast.Ident.t> VAR
 
-%token <int> INT
+%token <float> NUM
 %token TRUE FALSE
 
 %token PLUS
@@ -72,8 +72,8 @@ expr: mark_location(expr_unmarked) { $1 }
 expr_unmarked:
   | e = app_expr_unmarked
     { e }
-  | MINUS n = INT
-    { Integer (-n) }
+  | MINUS n = NUM
+    { Number (-. n) }
   | e1 = expr op = expr_binop e2 = expr
     { Binop (op, e1, e2) }
   | IF e1 = expr THEN e2 = expr ELSE e3 = expr
@@ -121,8 +121,8 @@ simple_expr_unmarked:
     { Boolean true }
   | FALSE
     { Boolean false }
-  | n = INT
-    { (Integer n) }
+  | n = NUM
+    { (Number n) }
   | e = expr COLON t = ty
     { Annotated (e, t) }
   | LPAREN e = expr_unmarked RPAREN	
@@ -143,7 +143,7 @@ ty_unmarked:
 ty_basic:
   | TBOOL
     { Base_ty.TBool }
-  | TINT
+  | TNUM
     { Base_ty.TInt } 
 
 refinement:
@@ -160,8 +160,8 @@ refinement_expr_unmarked:
     { Refinement_surface.boolean true }
   | FALSE 
     { Refinement_surface.boolean false }
-  | i = INT 
-    { Refinement_surface.number i }
+  | n = NUM 
+    { Refinement_surface.number n }
   | l = refinement_expr op = refinement_binop r = refinement_expr
     { Refinement_surface.Binop (op, l, r) }
   | v = VAR

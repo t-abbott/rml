@@ -32,5 +32,5 @@ let to_string (r : t) = r.bound_var ^ " | " ^ expr_to_string r.expr
 
 let var v = Var v
 let boolean b = Const (Constant.Boolean b)
-let number n = Const (Constant.Integer n)
+let number n = Const (Constant.Number n)
 let refinement bound_var expr = { bound_var; expr }

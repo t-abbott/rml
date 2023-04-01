@@ -55,7 +55,7 @@ let unrefined ?(source = Source.Inferred) ty =
   { body = unrefined_body ty; source }
 
 let tbool = builtin (RBase (Base_ty.TBool, None))
-let tint = builtin (RBase (Base_ty.TInt, None))
+let tnum = builtin (RBase (Base_ty.TInt, None))
 
 let rec apply_types f types =
   match (f.body, types) with
@@ -70,14 +70,14 @@ let rec apply_types f types =
   | _ -> None
 
 let ty_of_refop = function
-  | Refop.Binop.Less -> (tint, tint, tbool)
-  | Refop.Binop.Greater -> (tint, tint, tbool)
-  | Refop.Binop.Equal -> (tint, tint, tbool)
+  | Refop.Binop.Less -> (tnum, tnum, tbool)
+  | Refop.Binop.Greater -> (tnum, tnum, tbool)
+  | Refop.Binop.Equal -> (tnum, tnum, tbool)
   | Refop.Binop.And -> (tbool, tbool, tbool)
   | Refop.Binop.Or -> (tbool, tbool, tbool)
-  | Refop.Binop.Add -> (tint, tint, tint)
-  | Refop.Binop.Sub -> (tint, tint, tint)
-  | Refop.Binop.Mod -> (tint, tint, tbool)
+  | Refop.Binop.Add -> (tnum, tnum, tnum)
+  | Refop.Binop.Sub -> (tnum, tnum, tnum)
+  | Refop.Binop.Mod -> (tnum, tnum, tbool)
 
 let rec lower_refinement_expr (r_surface : Refinement_surface.t_expr)
     (ctx : t Context.t) (ty_expected : t) : Refinement.t_expr =
@@ -102,7 +102,7 @@ let rec lower_refinement_expr (r_surface : Refinement_surface.t_expr)
             let msg = sprintf "reference to unknown variable %s" v in
             raise (RefinementError (msg, loc)))
     | R_surf.Const (Boolean b) -> (Refinement.boolean b, tbool)
-    | R_surf.Const (Integer n) -> (Refinement.number n, tint)
+    | R_surf.Const (Number n) -> (Refinement.number n, tnum)
     | R_surf.Binop (op, l_surf, r_surf) ->
         let ty_l, ty_r, ty_to = ty_of_refop op in
         let l = lower_refinement_expr l_surf ctx ty_l in

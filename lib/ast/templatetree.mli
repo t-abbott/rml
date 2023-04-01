@@ -7,7 +7,7 @@ type t = { body : t_body; ty : Ty_template.t; loc : Location.t }
 
 and t_body =
   | Var of Ident.t
-  | Integer of int
+  | Number of float
   | Boolean of bool
   | Binop of Binop.t * t * t
   | If of t * t * t

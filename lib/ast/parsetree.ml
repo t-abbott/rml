@@ -7,7 +7,7 @@ type t = t_body Location.located
 and t_body =
   | Annotated of t * Ty_surface.t
   | Var of Ident.t
-  | Integer of int
+  | Number of float
   | Boolean of bool
   | Binop of Op.Binop.t * t * t
   | If of t * t * t
@@ -20,7 +20,7 @@ let rec to_string (pt : t) =
   | Annotated (term, annot) ->
       sprintf "(%s: %s)" (to_string term) (Ty_surface.to_string annot)
   | Var v -> v
-  | Integer i -> Int.to_string i
+  | Number n -> Float.to_string n
   | Boolean b -> if b then "true" else "false"
   | Binop (op, l, r) ->
       sprintf "(%s %s %s)" (to_string l) (Op.Binop.to_string op) (to_string r)

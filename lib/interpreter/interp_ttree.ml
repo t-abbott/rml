@@ -13,7 +13,7 @@ let placeholder_ty =
   Ty_template.builtin (Ty_template.RBase (Base_ty.TInt, Some ref))
 
 let placeholder_value =
-  { body = Integer 0; ty = placeholder_ty; loc = L.Nowhere }
+  { body = Number 0.; ty = placeholder_ty; loc = L.Nowhere }
 
 let unreachable ~reason =
   let message = "tried to execute branch unreachable because " ^ reason in
@@ -25,7 +25,7 @@ let rec eval expr env =
       match TTEnv.find v env with
       | Some value -> value
       | _ -> unreachable ~reason:"sema should detect unbound variables")
-  | Integer _ | Boolean _ -> Value expr
+  | Number _ | Boolean _ -> Value expr
   | Binop (op, l, r) -> eval_binop (op, l, r) env
   | If (cond, if_t, if_f) ->
       if eval_bool cond env then eval if_t env else eval if_f env
@@ -56,7 +56,7 @@ let rec eval expr env =
 
 and eval_number expr env =
   match eval expr env with
-  | Value { body = Integer i; _ } -> i
+  | Value { body = Number i; _ } -> i
   | _ ->
       unreachable
         ~reason:"expression should have been checked to reduce to an integer"
@@ -75,46 +75,46 @@ and eval_binop (op, l, r) env =
   match op with
   | Op.Binop.Equal ->
       let x, y = (eval_number l env, eval_number r env) in
-      let body = Boolean (x = y) in
+      let body = Boolean (Float.( = ) x y) in
       let ty = t_bool in
       Value { placeholder_value with body; ty }
   | Op.Binop.Less ->
       let x, y = (eval_number l env, eval_number r env) in
-      let body = Boolean (x < y) in
+      let body = Boolean (Float.( < ) x y) in
       let ty = t_bool in
       Value { placeholder_value with body; ty }
   | Op.Binop.Greater ->
       let x, y = (eval_number l env, eval_number r env) in
-      let body = Boolean (x > y) in
+      let body = Boolean (Float.( > ) x y) in
       let ty = t_bool in
       Value { placeholder_value with body; ty }
   | Op.Binop.Plus ->
       let x, y = (eval_number l env, eval_number r env) in
-      let body = Integer (x + y) in
+      let body = Number (x +. y) in
       let ty = t_int in
       Value { placeholder_value with body; ty }
   | Op.Binop.Minus ->
       let x, y = (eval_number l env, eval_number r env) in
-      let body = Integer (x - y) in
+      let body = Number (x -. y) in
       let ty = t_int in
       Value { placeholder_value with body; ty }
   | Op.Binop.Times ->
       let x, y = (eval_number l env, eval_number r env) in
-      let body = Integer (x * y) in
+      let body = Number (x *. y) in
       let ty = t_int in
       Value { placeholder_value with body; ty }
   | Op.Binop.Div ->
       let x, y = (eval_number l env, eval_number r env) in
-      if y = 0 then
+      if Float.( = ) y 0. then
         let msg = "Attempted to divide by 0" in
         raise (InterpError (msg, r.loc))
       else
-        let body = Integer (x / y) in
+        let body = Number (x /. y) in
         let ty = t_int in
         Value { placeholder_value with body; ty }
   | Op.Binop.Mod ->
       let x, y = (eval_number l env, eval_number r env) in
-      let body = Integer (x % y) in
+      let body = Number (x %. y) in
       let ty = t_int in
       Value { placeholder_value with body; ty }
   | Op.Binop.And ->
