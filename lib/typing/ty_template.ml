@@ -53,6 +53,9 @@ let unrefined_body ty = RBase (ty, None)
 let unrefined ?(source = Source.Inferred) ty =
   { body = unrefined_body ty; source }
 
+let tbool = builtin (RBase (Base_ty.TBool, None))
+let tint = builtin (RBase (Base_ty.TInt, None))
+
 let rec apply_types f types =
   match (f.body, types) with
   | ty, [] -> Some (inferred ty)
@@ -65,28 +68,63 @@ let rec apply_types f types =
       else None
   | _ -> None
 
-let rec of_surface (t_surface : Ty_surface.t) : t =
+let ty_of_refop = function
+  | Refop.Binop.Less -> (tint, tint, tbool)
+  | Refop.Binop.Greater -> (tint, tint, tbool)
+  | Refop.Binop.Equal -> (tint, tint, tbool)
+  | Refop.Binop.And -> (tbool, tbool, tbool)
+  | Refop.Binop.Or -> (tbool, tbool, tbool)
+  | Refop.Binop.Add -> (tint, tint, tint)
+  | Refop.Binop.Sub -> (tint, tint, tint)
+  | Refop.Binop.Mod -> (tint, tint, tbool)
+
+let rec lower_refinement_expr (r_surface : Refinement_surface.t_expr)
+    (ctx : t Context.t) (ty_expected : t) : Refinement.t_expr =
+  let loc = r_surface.loc in
+  let module R_surf = Refinement_surface in
+  let expr, ty_actual =
+    match r_surface.body with
+    | R_surf.Var v -> (
+        match Context.find v ctx with
+        | Some ty ->
+            if ty = ty_expected then (Refinement.Var v, ty)
+            else failwith "types don't match"
+        | None -> failwith "var doesn't exit")
+    | R_surf.Const (Boolean b) -> (Refinement.boolean b, tbool)
+    | R_surf.Const (Integer n) -> (Refinement.number n, tint)
+    | R_surf.Binop (op, l_surf, r_surf) ->
+        let ty_l, ty_r, ty_to = ty_of_refop op in
+        let l = lower_refinement_expr l_surf ctx ty_l in
+        let r = lower_refinement_expr r_surf ctx ty_r in
+        (Refinement.Binop (op, l, r), ty_to)
+    | R_surf.IfThen (cond_surf, if_t_surf, if_f_surf) ->
+        let cond = lower_refinement_expr cond_surf ctx tbool in
+        let if_t = lower_refinement_expr if_t_surf ctx ty_expected in
+        let if_f = lower_refinement_expr if_f_surf ctx ty_expected in
+        (Refinement.IfThen (cond, if_t, if_f), ty_expected)
+  in
+  if equal_base ty_actual ty_expected then Location.locate loc expr
+  else failwith "error here"
+
+let lower_refinement (r_surface : Refinement_surface.t) (ctx : t Context.t)
+    (bound_base_ty : Base_ty.t) : Refinement.t =
+  let bound_ty_t = unrefined bound_base_ty in
+  let ctx' = Context.extend r_surface.bound_var bound_ty_t ctx in
+  let expr = lower_refinement_expr r_surface.expr ctx' tbool in
+  { bound_var = r_surface.bound_var; expr }
+
+let rec of_surface (t_surface : Ty_surface.t) (ctx : t Context.t) : t =
   let source = t_surface.source in
   let t_template =
     match t_surface.body with
     | Ty_surface.SBase (ty_base, Some r_surface) ->
-        RBase (ty_base, Some (Refinement.of_surface r_surface))
+        RBase (ty_base, Some (lower_refinement r_surface ctx ty_base))
     | Ty_surface.SBase (ty_base, None) -> RBase (ty_base, None)
     | Ty_surface.SArrow (tys_from, ty_to) ->
-        RArrow (List.map of_surface tys_from, of_surface ty_to)
+        let f ty = of_surface ty ctx in
+        RArrow (List.map f tys_from, of_surface ty_to ctx)
   in
   { body = t_template; source }
-
-(* let rec flatten ?(prefix: t list = []) (ty: t) =
-   ignore (ty, prefix);
-   match ty.body with
-   | RBase (_, _) ->
-     if List.length prefix > 0 then
-       RArrow (prefix, ty)
-     else
-       ty.body
-   | _ -> ty.body
-*)
 
 let rec flatten (ty : t) =
   match ty.body with RBase _ -> [ ty ] | RArrow (t1, t2) -> t1 @ flatten t2

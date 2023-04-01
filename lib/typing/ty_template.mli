@@ -73,7 +73,32 @@ val annotated : t_body -> Location.t -> t
     [annotated ty] creates an annotated type from the raw type [ty]
 *)
 
-val of_surface : Ty_surface.t -> t
+val tbool : t
+(**
+    Useful alias for [builtin (RBase (Base_ty.TBool, None))]
+*)
+
+val tint : t
+(**
+    builtin (RBase (Base_ty.TInt, None))    
+*)
+
+val ty_of_refop : Refop.Binop.t -> t * t * t
+(**
+    [ty_of_refop t] returns the types of [op]s first 
+    argument, second argument, and return value respectively.
+
+*)
+
+val lower_refinement :
+  Refinement_surface.t -> t Context.t -> Base_ty.t -> Refinement.t
+(**
+    [lower_refinement ref ctx] lowers [ref] to a concerete refinement [Refinement.t]
+    while performing type checking on it's definition and making sure
+    it is a predicate (i.e. it returns a bool).
+*)
+
+val of_surface : Ty_surface.t -> t Context.t -> t
 (**
     [of_surface ty] creates a [Ty_template.t] corresponding to [ty]
 *)
@@ -86,7 +111,7 @@ val flatten : t -> t list
 
 val uncurry : t -> t
 (**
-    uncurries a type.    
+    Uncurries a type.    
 *)
 
 val arity : t -> int

@@ -109,7 +109,7 @@ let rec type_parsetree (pt : PTree.t) ctx =
               else ()
             in
 
-            let ty_t_stated = Ty_template.of_surface ty_stated in
+            let ty_t_stated = Ty_template.of_surface ty_stated ctx in
             if not (Ty_template.equal_base ty_t_stated typed_value.ty) then
               let msg =
                 sprintf "stated type '%s' does not match inferred type '%s'"
@@ -146,7 +146,7 @@ let rec type_parsetree (pt : PTree.t) ctx =
                      the variable it refines"
                   in
                   raise (TypeError (msg, param.loc))
-                else (v, Ty_template.of_surface t)
+                else (v, Ty_template.of_surface t ctx)
             | _ ->
                 let msg = "expected function argument to be a variable" in
                 raise (TypeError (msg, loc)))
@@ -215,7 +215,7 @@ let rec type_parsetree (pt : PTree.t) ctx =
         in
         raise (TypeError (msg, loc))
   | PTree.Annotated (expr, ty_stated) ->
-      let ty_t_stated = Ty_template.of_surface ty_stated in
+      let ty_t_stated = Ty_template.of_surface ty_stated ctx in
       let typed_expr = type_parsetree expr ctx in
 
       (* check any refinement annotation is well-formed *)
@@ -242,7 +242,7 @@ let type_command (cmd : PTree.command) (ctx : context) :
       (* convert any annotated [Ty_surface.t] to a [Ty_template.t] *)
       let ty_t_stated =
         match ty_annotated with
-        | Some t -> Some (Ty_template.of_surface t)
+        | Some t -> Some (Ty_template.of_surface t ctx)
         | None -> None
       in
 

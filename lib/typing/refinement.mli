@@ -22,11 +22,3 @@ val number : int -> t_expr_body
 
 val var : string -> t_expr_body
 (** [var v] is an alias for [Var v]*)
-
-val of_surface : Refinement_surface.t -> t
-(** 
-    [of_surface ref] converts a [Refinement_surface.t] to a [Refinement.t]
-
-    {0 TODO}
-    - normalise [Refinement_surface.t]s when lowering them
-*)
