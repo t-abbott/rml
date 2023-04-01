@@ -36,6 +36,10 @@ let main filename =
       let loc_str = format_location loc in
       eprintf "Error: %s%s\n" message loc_str;
       die ()
+  | Interpreter.Errors.InterpError (message, loc) -> 
+    let loc_str = format_location loc in 
+    eprintf "Runtime error: %s%s\n" message loc_str;
+    die () 
 
 let filename_param =
   let open Command.Param in
