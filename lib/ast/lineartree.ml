@@ -1,1 +1,1 @@
-include Anftree.Make(Typing.Ty_template)
+include Anftree.Make (Typing.Ty_template)
