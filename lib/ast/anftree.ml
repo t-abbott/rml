@@ -47,7 +47,7 @@ module Make (Ty : TYPE) = struct
         let ty_str = Ty.to_string ae.ty in
         let body_str = to_string body in
         let arg_str = List.map Ident_core.to_string arg |> String.concat " " in
-        sprintf "(fun %s -> %s) : %s" arg_str body_str ty_str
+        sprintf "(fun %s -> %s): %s" arg_str body_str ty_str
 
   and cexpr_to_string (ce : cexpr) =
     match ce.body with
@@ -72,16 +72,18 @@ module Make (Ty : TYPE) = struct
         let name_str = Ident_core.to_string name in
         let defn_str = cexpr_to_string defn in
         let rest_str = to_string rest in
-        sprintf "let %s: %s = %s in %s" name_str ty_str defn_str rest_str
+        sprintf "let %s: %s = %s in\n%s" name_str ty_str defn_str rest_str
     | CExpr ce ->
         let ce_str = cexpr_to_string ce in
-        sprintf "%s: %s" ce_str ty_str
+        sprintf "%s" ce_str
 
   let command_to_string = function
     | LetDef (name, value) ->
+        let ty_str = Ty.to_string value.ty in
         let name_str = Ident_core.to_string name in
-        sprintf "let %s = %s ;;" name_str (to_string value)
+        sprintf "let %s: %s = %s" name_str ty_str (to_string value)
     | Expr e -> to_string e
 
-  let program_to_string p = List.map command_to_string p |> String.concat "\n"
+  let program_to_string p =
+    List.map command_to_string p |> String.concat " ;;\n\n"
 end

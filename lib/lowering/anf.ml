@@ -5,6 +5,9 @@ open Utils
 module TTree = Templatetree
 
 type hole = aexpr -> t
+type t_hole = t -> t
+
+let id x = x
 
 let initial_hole (ty : Ty_template.t) (loc : Location.t) (ae : aexpr) : t =
   let ca_node = node_of (CAexpr ae) ty loc in
@@ -51,29 +54,45 @@ let rec anf_inner (expr : TTree.t) (hole : hole) : t =
       let res_name_node = node_of (AVar res_name) ty loc in
 
       (* Since a function can take multiple arguments we need to get
-         an aexpr representing each parameter separately. Using
-         [fold_right] applies [lower_args] to the final element of
-         [args] first, so the resulting intermediate variable names
-         [gen_names] *should* be in the correct order.
+         an aexpr representing each parameter separately and bind the
+         normalisation of each argument in a sequence of [Let] expressions.
+         [fold_right] applies [lower_args] to the final element of [args]
+         first, so the resulting intermediate variable names [gen_names]
+         should be in the correct order.
       *)
       anf_inner fn (fun fn_ae ->
-          let app_hole, gen_names =
-            List.fold_right lower_args args (hole, [])
-          in
-          let res = node_of (CApply (fn_ae, gen_names)) ty loc in
-          node_of (Let (res_name, res, app_hole res_name_node)) ty loc)
+          (* The initial t-hole we pass to [fold_right] is forwarded through each
+             argument let-binding and simply returns it's argument since we'll
+             give it the final let-binding containing the result of applying [fn] to
+             the generated immediate values (whose names aren't known until we fold
+             lower_args over args).
 
-and lower_args arg_expr (hole, gen_names) =
+             This is why a different hole type is necessary - if we tried to use a [hole : aexpr -> t]
+             we'd need to pass a custom [hole] up-front where the names of the resulting
+             immediate argument names are known, which is impossible.
+          *)
+          let res_hole, generated_names =
+            List.fold_right lower_args args (id, [])
+          in
+
+          (* build the final let-binding containing the result of [fn args] *)
+          let app_node = node_of (CApply (fn_ae, generated_names)) ty loc in
+          let res_node =
+            node_of (Let (res_name, app_node, hole res_name_node)) ty loc
+          in
+          res_hole res_node)
+
+and lower_args arg_expr (next_t_hole, gen_names) : t_hole * aexpr list =
   let ty, loc = (arg_expr.ty, arg_expr.loc) in
   let name = Ident_core.fresh ~prefix:"arg" () in
   let name_node = node_of (AVar name) ty loc in
 
-  let new_hole other_ae =
+  let new_t_hole other_let_exp =
     anf_inner arg_expr (fun arg_ae ->
         let value_node = node_of (CAexpr arg_ae) ty loc in
-        node_of (Let (name, value_node, hole other_ae)) ty loc)
+        node_of (Let (name, value_node, next_t_hole other_let_exp)) ty loc)
   in
-  (new_hole, name_node :: gen_names)
+  (new_t_hole, name_node :: gen_names)
 
 and anf (expr : TTree.t) =
   let ty, loc = (expr.ty, expr.loc) in
