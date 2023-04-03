@@ -36,7 +36,7 @@ module Make : functor (Ty : TYPE) -> sig
   (**
       A top-level expression (either a let-binding or plain variable).
     *)
-  type command = LetDef of Ident.t * t | Expr of t
+  type command = LetDef of Ident_core.t * t | Expr of t
 
   type program = command list
 

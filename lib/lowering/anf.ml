@@ -79,3 +79,11 @@ and anf (expr : TTree.t) =
   let ty, loc = (expr.ty, expr.loc) in
   let hole = initial_hole ty loc in
   anf_inner expr hole
+
+let anf_command = function
+  | TTree.Expr e -> Expr (anf e)
+  | TTree.LetDef (name, body) ->
+      let new_name = Ident_core.var name in
+      LetDef (new_name, anf body)
+
+let anf_program = List.map anf_command

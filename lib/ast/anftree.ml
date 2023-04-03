@@ -34,7 +34,7 @@ module Make (Ty : TYPE) = struct
   (**
     A top-level expression (either a let-binding or plain variable).
   *)
-  type command = LetDef of Ident.t * t | Expr of t
+  type command = LetDef of Ident_core.t * t | Expr of t
 
   type program = command list
 
@@ -78,7 +78,9 @@ module Make (Ty : TYPE) = struct
         sprintf "%s: %s" ce_str ty_str
 
   let command_to_string = function
-    | LetDef (name, value) -> sprintf "let %s = %s ;;" name (to_string value)
+    | LetDef (name, value) ->
+        let name_str = Ident_core.to_string name in
+        sprintf "let %s = %s ;;" name_str (to_string value)
     | Expr e -> to_string e
 
   let program_to_string p = List.map command_to_string p |> String.concat "\n"
