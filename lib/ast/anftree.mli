@@ -1,17 +1,19 @@
-open Typing
+open Typing.Ty_sig
 open Utils
 open Op
 
 (**
   Creates an ANF syntax tree from a type [Ty]. 
 *)
-module Make : functor (Ty : Ty.Type) -> sig
+module Make : functor (Ty : TYPE) -> sig
   type 'a astnode = { body : 'a; ty : Ty.t; loc : Location.t }
+
+  val node_of : 'a -> Ty.t -> Location.t -> 'a astnode
 
   type t = t_body astnode
   (** An expression in A-normal form. *)
 
-  and t_body = Let of Ident.t * cexpr | CExpr of cexpr
+  and t_body = Let of Ident_core.t * cexpr * t | CExpr of cexpr
 
   and aexpr = aexpr_body astnode
   (** An atomic expression. *)
@@ -19,8 +21,8 @@ module Make : functor (Ty : Ty.Type) -> sig
   and aexpr_body =
     | ANumber of float
     | ABoolean of bool
-    | AVar of Ident.t
-    | ALambda of Ident.t * t
+    | AVar of Ident_core.t
+    | ALambda of Ident_core.t list * t
 
   and cexpr = cexpr_body astnode
   (** A complex expression. *)
@@ -28,7 +30,7 @@ module Make : functor (Ty : Ty.Type) -> sig
   and cexpr_body =
     | CBinop of Binop.t * aexpr * aexpr
     | CIf of aexpr * aexpr * aexpr
-    | CApply of aexpr * aexpr
+    | CApply of aexpr * aexpr list
     | CAexpr of aexpr
 
   (**

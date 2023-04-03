@@ -1,7 +1,7 @@
 (**
   Signature of a module representing a type.    
 *)
-module type Type = sig
+module type TYPE = sig
   type t
   (**
       Top-level type type (expression with metadata).

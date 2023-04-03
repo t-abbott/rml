@@ -1,4 +1,4 @@
-module type Type = sig
+module type TYPE = sig
   type t
   type t_body
 

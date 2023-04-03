@@ -1,0 +1,3 @@
+(library
+ (name lowering)
+ (libraries base ast typing utils))
