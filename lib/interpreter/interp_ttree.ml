@@ -4,7 +4,7 @@ open Ast
 open Ast.Templatetree
 open Errors
 module L = Utils.Location
-module TTEnv = Env.MakeEnv (Templatetree)
+module TTEnv = Env.Make (Templatetree)
 
 let placeholder_ty =
   let (ref : Refinement.t) =
@@ -15,16 +15,13 @@ let placeholder_ty =
 let placeholder_value =
   { body = Number 0.; ty = placeholder_ty; loc = L.Nowhere }
 
-let unreachable ~reason =
-  let message = "tried to execute branch unreachable because " ^ reason in
-  failwith message
-
 let rec eval expr env =
+  let loc = expr.loc in
   match expr.body with
   | Var v -> (
       match TTEnv.find v env with
       | Some value -> value
-      | _ -> unreachable ~reason:"sema should detect unbound variables")
+      | _ -> unreachable ~reason:"sema should detect unbound variables" ~loc)
   | Number _ | Boolean _ -> Value expr
   | Binop (op, l, r) -> eval_binop (op, l, r) env
   | If (cond, if_t, if_f) ->
@@ -44,6 +41,7 @@ let rec eval expr env =
                 unreachable
                   ~reason:
                     "type checking should have detected mismatched arg lengths"
+                  ~loc
           in
           let new_env =
             List.fold param_arg_pairs ~init:closed_env
@@ -52,7 +50,7 @@ let rec eval expr env =
           eval body new_env
       | _ ->
           unreachable
-            ~reason:"expression should have been checked to be a function")
+            ~reason:"expression should have been checked to be a function" ~loc)
 
 and eval_number expr env =
   match eval expr env with
@@ -60,6 +58,7 @@ and eval_number expr env =
   | _ ->
       unreachable
         ~reason:"expression should have been checked to reduce to an integer"
+        ~loc:expr.loc
 
 and eval_bool expr env =
   match eval expr env with
@@ -67,6 +66,7 @@ and eval_bool expr env =
   | _ ->
       unreachable
         ~reason:"expression should have been checked to reduce to a boolean"
+        ~loc:expr.loc
 
 and eval_binop (op, l, r) env =
   let t_bool = Ty_template.unrefined Base_ty.TBool ~source:Source.Builtin in

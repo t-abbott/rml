@@ -4,6 +4,7 @@ open Out_channel
 open Parser.Api
 open Typechecker
 open Interpreter
+open Lowering
 open Utils
 
 let version = Utils.Version.version
@@ -18,7 +19,8 @@ let main filename =
   try
     parse_file filename
     |> (fun p -> Infer.type_program p Utils.Context.empty)
-    |> Interp.ttree |> Interp.TTEnv.to_string |> Stdio.prerr_endline
+    |> Anf.anf_program |> Interp.ltree |> Interp.LTEnv.to_string |> ( ^ ) "\n"
+    |> Stdio.print_endline
   with
   | Parser.Errors.ParseError (message, loc) ->
       let loc_str = format_location loc in
