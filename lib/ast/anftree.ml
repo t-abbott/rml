@@ -40,7 +40,11 @@ module Make (Ty : TYPE) = struct
 
   let rec aexpr_to_string (ae : aexpr) =
     match ae.body with
-    | ANumber n -> Float.to_string n
+    | ANumber n -> 
+      if Float.is_integer n then 
+        Int.to_string (Int.of_float n)
+      else
+        Float.to_string n
     | ABoolean b -> Bool.to_string b
     | AVar v -> Ident_core.to_string v
     | ALambda (arg, body) ->
