@@ -86,4 +86,12 @@ module Make (Ty : TYPE) = struct
 
   let program_to_string p =
     List.map command_to_string p |> String.concat " ;;\n\n"
+
+  let t_of_cexpr (ce : cexpr) : t = node_of (CExpr ce) ce.ty ce.loc
+
+  let t_of_aexpr (ae : aexpr) : t =
+    node_of (CAexpr ae) ae.ty ae.loc |> t_of_cexpr
+
+  let t_of_bool b ty loc = t_of_aexpr (node_of (ABoolean b) ty loc)
+  let t_of_number n ty loc = t_of_aexpr (node_of (ANumber n) ty loc)
 end

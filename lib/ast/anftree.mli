@@ -43,4 +43,8 @@ module Make : functor (Ty : TYPE) -> sig
   val to_string : t -> string
   val command_to_string : command -> string
   val program_to_string : program -> string
+  val t_of_cexpr : cexpr -> t
+  val t_of_aexpr : aexpr -> t
+  val t_of_bool : bool -> Ty.t -> Location.t -> t
+  val t_of_number : float -> Ty.t -> Location.t -> t
 end
