@@ -7,8 +7,8 @@ module L = Utils.Location
 module TTEnv = Env.Make (Templatetree)
 
 let placeholder_ty =
-  let (ref : Refinement.t) =
-    { bound_var = "_"; expr = L.unlocated (Refinement.boolean true) }
+  let (ref : Refinement_core.t) =
+    { bound_var = "_"; expr = L.unlocated (Refinement_core.boolean true) }
   in
   Ty_template.builtin (Ty_template.RBase (Base_ty.TInt, Some ref))
 

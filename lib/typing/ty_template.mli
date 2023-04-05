@@ -5,7 +5,9 @@ type t = { body : t_body; source : Source.t }
   Represents the type of a term
 *)
 
-and t_body = RBase of Base_ty.t * Refinement.t option | RArrow of t list * t
+and t_body =
+  | RBase of Base_ty.t * Refinement_core.t option
+  | RArrow of t list * t
 
 val unrefined_body : Base_ty.t -> t_body
 (**
@@ -91,7 +93,7 @@ val ty_of_refop : Refop.Binop.t -> t * t * t
 *)
 
 val lower_refinement :
-  Refinement_surface.t -> t Context.t -> Base_ty.t -> Refinement.t
+  Refinement_surface.t -> t Context.t -> Base_ty.t -> Refinement_core.t
 (**
     [lower_refinement ref ctx] lowers [ref] to a concerete refinement [Refinement.t]
     while performing type checking on it's definition and making sure
