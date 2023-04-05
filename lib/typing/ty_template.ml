@@ -4,44 +4,21 @@ open Refinement_errors
 module Loc = Location
 module Ref = Refinement_core
 
-type t = { body : t_body; source : Source.t }
-and t_body = RBase of Base_ty.t * Ref.t option | RArrow of t list * t
+(* ad-hoc maybe refined type *)
+include Refined_ty.Make (struct
+  type t = Refinement_core.t option
 
-let rec to_string ty =
-  match ty.body with
-  | RBase (t, Some r) ->
-      sprintf "%s[%s]" (Base_ty.to_string t) (Ref.to_string r)
-  | RBase (t, None) -> Base_ty.to_string t
-  | RArrow (tys_from, ty_to) ->
-      let args = List.map to_string tys_from |> String.concat " -> " in
-      args ^ " -> " ^ to_string ty_to
+  let to_string = function
+    | Some ref -> "[" ^ Refinement_core.to_string ref ^ "]"
+    | None -> ""
 
-let rec is_equal t1 t2 ~with_refinements =
-  match (t1.body, t2.body) with
-  | RArrow (t1s_from, t1_to), RArrow (t2s_from, t2_to) -> (
-      match (t1s_from, t2s_from) with
-      | x :: t1_rest, y :: t2_rest ->
-          if is_equal x y ~with_refinements then
-            let new_t1 = { t1 with body = RArrow (t1_rest, t1_to) } in
-            let new_t2 = { t2 with body = RArrow (t2_rest, t2_to) } in
-            is_equal new_t1 new_t2 ~with_refinements
-          else false
-      | [], [] -> is_equal t1_to t2_to ~with_refinements
-      | [], _ -> is_equal t1_to t2 ~with_refinements
-      | _, [] -> is_equal t1 t2_to ~with_refinements)
-  | RBase (b1, _), RBase (b2, _) when not with_refinements ->
-      Base_ty.equal b1 b2
-  | RBase (b1, Some r1), RBase (b2, Some r2) ->
-      Base_ty.equal b1 b2 && Ref.equal r1 r2
-  | RBase (b1, None), RBase (b2, None) -> Base_ty.equal b1 b2
-  | _ -> false
+  let equal a b =
+    match (a, b) with
+    | Some r1, Some r2 -> Refinement_core.equal r1 r2
+    | None, None -> true
+    | _ -> false
+end)
 
-let equal t1 t2 = is_equal t1 t2 ~with_refinements:true
-let equal_base t1 t2 = is_equal t1 t2 ~with_refinements:false
-let is_function ty = match ty.body with RArrow _ -> true | _ -> false
-let builtin ty = { body = ty; source = Builtin }
-let inferred ty = { body = ty; source = Inferred }
-let annotated ty loc = { body = ty; source = Annotation loc }
 let unrefined_body ty = RBase (ty, None)
 
 let unrefined ?(source = Source.Inferred) ty =
@@ -134,20 +111,3 @@ let rec of_surface (t_surface : Ty_surface.t) (ctx : t Context.t) : t =
         RArrow (List.map f tys_from, of_surface ty_to ctx)
   in
   { body = t_template; source }
-
-let rec flatten (ty : t) =
-  match ty.body with RBase _ -> [ ty ] | RArrow (t1, t2) -> t1 @ flatten t2
-
-(**
-  [uncurry ty] produces an uncurried version of [ty] (i.e. as flattened as possible)
-*)
-let rec uncurry (ty : t) =
-  let tys = ty |> flatten |> List.rev in
-  if List.length tys = 1 then ty
-  else
-    let ty_to = List.hd tys in
-    let tys_from = tys |> List.tl |> List.rev |> List.map uncurry in
-    { ty with body = RArrow (tys_from, ty_to) }
-
-let arity ty =
-  match ty.body with RArrow (tys_from, _) -> List.length tys_from | _ -> 0
