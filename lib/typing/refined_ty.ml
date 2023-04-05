@@ -48,9 +48,6 @@ functor
       | RBase _ -> [ ty ]
       | RArrow (t1, t2) -> t1 @ flatten t2
 
-    (**
-         [uncurry ty] produces an uncurried version of [ty] (i.e. as flattened as possible)
-       *)
     let rec uncurry (ty : t) =
       let tys = ty |> flatten |> List.rev in
       if List.length tys = 1 then ty
