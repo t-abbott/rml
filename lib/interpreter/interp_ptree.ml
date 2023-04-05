@@ -5,7 +5,7 @@ open Ast.Op
 open Ast.Parsetree
 module L = Utils.Location
 open Errors
-module PTEnv = Env.MakeEnv (Parsetree)
+module PTEnv = Env.Make (Parsetree)
 
 let rec eval (expr : t) env =
   match expr.body with

@@ -13,4 +13,4 @@ module type ENV = functor (Tree : SYNTAXTREE) -> sig
   val extend : Ident.t -> envval -> t -> t
 end
 
-module MakeEnv : ENV
+module Make : ENV

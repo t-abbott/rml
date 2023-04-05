@@ -4,7 +4,7 @@ open Ast
 open Ast.Templatetree
 open Errors
 module L = Utils.Location
-module TTEnv = Env.MakeEnv (Templatetree)
+module TTEnv = Env.Make (Templatetree)
 
 let placeholder_ty =
   let (ref : Refinement.t) =

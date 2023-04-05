@@ -6,7 +6,7 @@ open Errors
 
 module Make (Ty : TYPE) = struct
   module Tree = Anftree.Make (Ty)
-  module TEnv = Env.MakeEnv (Tree)
+  module TEnv = Env.Make (Tree)
 
   let rec eval_aexpr (ae : Tree.aexpr) env =
     match ae.body with
