@@ -24,27 +24,27 @@ let main filename =
   with
   | Parser.Errors.ParseError (message, loc) ->
       let loc_str = format_location loc in
-      eprintf "Parser error: %s%s\n" message loc_str;
+      eprintf "\nParser error: %s%s\n" message loc_str;
       die ()
   | Parser.Errors.LexError (message, loc) ->
       let loc_str = format_location loc in
-      eprintf "Error while lexing: %s%s\n" message loc_str;
+      eprintf "\nError while lexing: %s%s\n" message loc_str;
       die ()
   | Typechecker.Errors.TypeError (message, loc) ->
       let loc_str = format_location loc in
-      eprintf "Type error: %s%s\n" message loc_str;
+      eprintf "\nType error: %s%s\n" message loc_str;
       die ()
   | Typechecker.Errors.NameError (message, loc) ->
       let loc_str = format_location loc in
-      eprintf "Error: %s%s\n" message loc_str;
+      eprintf "\nError: %s%s\n" message loc_str;
       die ()
   | Interpreter.Errors.InterpError (message, loc) ->
       let loc_str = format_location loc in
-      eprintf "Runtime error: %s%s\n" message loc_str;
+      eprintf "\nRuntime error: %s%s\n" message loc_str;
       die ()
   | Typing.Refinement_errors.RefinementError (message, loc) ->
       let loc_str = format_location loc in
-      eprintf "Refinement error: %s%s\n" message loc_str;
+      eprintf "\nRefinement error: %s%s\n" message loc_str;
       die ()
 
 let filename_param =
