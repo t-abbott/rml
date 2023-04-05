@@ -94,4 +94,5 @@ module Make (Ty : TYPE) = struct
 
   let t_of_bool b ty loc = t_of_aexpr (node_of (ABoolean b) ty loc)
   let t_of_number n ty loc = t_of_aexpr (node_of (ANumber n) ty loc)
+  let var v ty loc = t_of_aexpr (node_of (AVar v) ty loc)
 end

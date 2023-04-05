@@ -47,4 +47,5 @@ module Make : functor (Ty : TYPE) -> sig
   val t_of_aexpr : aexpr -> t
   val t_of_bool : bool -> Ty.t -> Location.t -> t
   val t_of_number : float -> Ty.t -> Location.t -> t
+  val var : Ident_core.t -> Ty.t -> Location.t -> t
 end
