@@ -1,3 +1,7 @@
-let f = (fun (x: num[z | z > 0]) -> x + 1);;
+let f : (num[x | x > 0] -> num[y | y > 1]) = 
+    (fun (x: num[x | x > 0]) -> x + 1) 
+;; 
+
+let g = (fun (x: num[z | z > 0]) -> x + 1) ;;
 
 f 4 
