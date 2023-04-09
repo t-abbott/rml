@@ -8,6 +8,8 @@ module Make : functor (Ref : REFINEMENT) -> sig
 
   and t_body = RBase of Base_ty.t * Ref.t | RArrow of t list * t
 
+  type context = t Context.t
+
   val to_string : t -> string
   val is_equal : t -> t -> with_refinements:bool -> bool
 

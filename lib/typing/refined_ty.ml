@@ -11,6 +11,8 @@ functor
     type t = { body : t_body; source : Source.t }
     and t_body = RBase of Base_ty.t * Ref.t | RArrow of t list * t
 
+    type context = t Context.t
+
     let rec to_string ty =
       match ty.body with
       | RBase (t, r) -> sprintf "%s%s" (Base_ty.to_string t) (Ref.to_string r)
