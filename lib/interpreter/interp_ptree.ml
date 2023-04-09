@@ -3,8 +3,9 @@ open Base
 open Ast
 open Ast.Op
 open Ast.Parsetree
-module L = Utils.Location
 open Errors
+open Utils
+module L = Utils.Location
 module PTEnv = Env.Make (Parsetree)
 
 let rec eval (expr : t) env =

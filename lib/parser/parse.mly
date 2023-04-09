@@ -8,7 +8,7 @@
 %token TBOOL
 %token COLON
 %token ARROW
-%token <Ast.Ident.t> VAR
+%token <Utils.Ident.t> VAR
 
 %token <float> NUM
 %token TRUE FALSE

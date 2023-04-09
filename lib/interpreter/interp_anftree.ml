@@ -3,6 +3,7 @@ open Printf
 open Ast
 open Typing.Ty_sig
 open Errors
+open Utils
 
 module Make (Ty : TYPE) = struct
   module Tree = Anftree.Make (Ty)
