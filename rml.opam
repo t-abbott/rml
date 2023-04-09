@@ -8,6 +8,7 @@ bug-reports: "https://github.com/tabbeyy/rml/issues"
 depends: [
   "ocaml"
   "dune" {>= "3.3"}
+  "z3"
   "odoc" {with-doc}
 ]
 build: [
