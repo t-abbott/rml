@@ -24,7 +24,7 @@
 %token IF THEN ELSE
 %token FUN
 %token LPAREN RPAREN
-%token LET IN
+%token LET VAL IN
 
 %token LINE
 %token LBRACKET RBRACKET
@@ -62,6 +62,8 @@ topdef_unmarked:
     { LetDef (x, Some t, e) }
   | LET x = VAR EQUAL e = expr
     { LetDef (x, None, e) }
+  | VAL x = VAR COLON t = ty_val
+    { ValDef (x, t)}
 
 topexpr: mark_location(topexpr_unmarked) { $1 }
 topexpr_unmarked:
@@ -82,6 +84,8 @@ expr_unmarked:
     { Fun ([arg], body) }
   | LET name = expr EQUAL e1 = expr IN e2 = expr
     { LetIn (name, e1, e2) }
+  | VAL name = expr COLON t = ty_val IN e2 = expr 
+    { ValIn (name, t, e2) }
 
 %inline
 expr_binop:
@@ -128,7 +132,8 @@ simple_expr_unmarked:
   | LPAREN e = expr_unmarked RPAREN	
     { e }    
 
-ty: mark_type_location(ty_unmarked) { $1 }
+ty: mark_annot_location(ty_unmarked) { $1 }
+ty_val: mark_val_location(ty_unmarked) { $1 }
 ty_unmarked:
   | t = ty_basic r = refinement
     { Ty_surface.SBase (t, Some r) }
@@ -192,9 +197,11 @@ mark_location(X):
     x = X
     { Utils.Location.locate (Utils.Location.from $startpos $endpos) x }
 
-// TODO: avoid this
-mark_type_location(X):
+mark_annot_location(X):
     x = X 
     { Ty_surface.annotated x (Utils.Location.from $startpos $endpos) }
 
+mark_val_location(X):
+    x = X 
+    { Ty_surface.valstmt x (Utils.Location.from $startpos $endpos) }
 %%
