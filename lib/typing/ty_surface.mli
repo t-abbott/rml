@@ -32,3 +32,9 @@ val annotated : t_body -> Location.t -> t
     [annotated ty loc] creates a [Ty_surface.t] annotated with the location [loc]
     from the raw type [ty].
 *)
+
+val valstmt : t_body -> Location.t -> t
+(**
+    [valstmt ty loc] creates a val-defined [Ty_surface.t] from
+    [ty] at source location [loc].
+*)

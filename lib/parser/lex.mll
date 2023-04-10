@@ -26,6 +26,7 @@ rule token = parse
   | "then"          { THEN }
   | "else"          { ELSE }
   | "let"           { LET }
+  | "val"           { VAL }
   | "in"            { IN } 
   | ";;"            { SEMISEMI }
   | '='             { EQUAL }

@@ -8,6 +8,8 @@ open Utils
 module L = Utils.Location
 module PTEnv = Env.Make (Parsetree)
 
+let placeholder = PTEnv.Value (L.unlocated (Number 0.))
+
 let rec eval (expr : t) env =
   match expr.body with
   | Annotated (e, _) -> eval e env
@@ -34,6 +36,7 @@ let rec eval (expr : t) env =
       in
       let e = eval boundval env in
       eval body (PTEnv.extend name e env)
+  | ValIn _ -> placeholder
   | Fun _ as f -> Closure (L.unlocated f, env)
   | Apply (f, args) -> (
       (*
@@ -138,6 +141,7 @@ let eval_cmd (cmd : command) env =
   | LetDef (name, _, body) ->
       let env' = PTEnv.extend name (eval body env) env in
       (Value (L.unlocated (Number 0.)), env')
+  | ValDef _ -> (placeholder, env)
 
 let rec run prog env =
   match prog with

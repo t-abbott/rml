@@ -46,12 +46,6 @@ let rec type_parsetree (pt : PTree.t) ctx =
       let l', r' = (type_parsetree l ctx, type_parsetree r ctx) in
       let body = Binop (op, l', r') in
 
-      (*
-         FIXME: should only compare base types at this stage; currently failing
-         on rejecting refinements.
-
-         The code looks like its calling `equal_base` though - hmm.
-      *)
       match Ty_template.apply_types ty_op [ l'.ty; r'.ty ] with
       | Some ty -> { body; ty; loc }
       | None ->
@@ -130,6 +124,23 @@ let rec type_parsetree (pt : PTree.t) ctx =
       let ty = typed_expr.ty in
       let body = LetIn (name, typed_value, typed_expr) in
       { body; ty; loc }
+  | PTree.ValIn (namebinding, ty, rest) ->
+      let ty_t = Ty_template.of_surface ty ctx in
+
+      (* pull out the variable being bound *)
+      let name =
+        match namebinding.body with
+        | PTree.Var v -> v
+        | _ ->
+            let msg = "expected variable to be named in val statement" in
+            raise (TypeError (msg, pt.loc))
+      in
+
+      (* add it to the context *)
+      let ctx' = Context.extend name ty_t ctx in
+
+      (* then process the rest of the tree *)
+      type_parsetree rest ctx'
   | PTree.Fun (xs, expr) ->
       (* extract function arguments and their types *)
       let param_ty_pairs =
@@ -238,6 +249,10 @@ let type_command (cmd : PTree.command) (ctx : context) :
   | PTree.Expr ptree ->
       let ttree = type_parsetree ptree ctx in
       (Some (Expr ttree), ctx)
+  | PTree.ValDef (name, ty) ->
+      (* extend the context with the val annotation and move on *)
+      let ty_t = Ty_template.of_surface ty ctx in
+      (None, Context.extend name ty_t ctx)
   | PTree.LetDef (name, ty_annotated, defn) ->
       (* convert any annotated [Ty_surface.t] to a [Ty_template.t] *)
       let ty_t_stated =

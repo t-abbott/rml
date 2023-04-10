@@ -23,3 +23,4 @@ let rec to_string (ty : t) =
 
 let unrefined_base ty = SBase (ty, None)
 let annotated ty loc = { body = ty; source = Annotation loc }
+let valstmt ty loc = { body = ty; source = ValStmt loc }
