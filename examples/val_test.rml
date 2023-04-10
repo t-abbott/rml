@@ -1,0 +1,4 @@
+val inc : num[x | true] -> num[y | y = (x + 1)] ;; 
+let inc = (fun x -> x + 1) ;;
+
+inc 4
