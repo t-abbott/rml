@@ -5,21 +5,21 @@ open Utils
 type t = t_body Location.located
 
 and t_body =
-  | Annotated of t * Ty_surface.t
+  | Annotated of t * Ty_template.t
   | Var of Ident.t
   | Number of float
   | Boolean of bool
   | Binop of Op.Binop.t * t * t
   | If of t * t * t
   | LetIn of Ident.t * t * t
-  | ValIn of Ident.t * Ty_surface.t * t
+  | ValIn of Ident.t * Ty_template.t * t
   | Fun of Ident.t list * t
   | Apply of t * t list
 
 let rec to_string (pt : t) =
   match pt.body with
   | Annotated (term, annot) ->
-      sprintf "(%s: %s)" (to_string term) (Ty_surface.to_string annot)
+      sprintf "(%s: %s)" (to_string term) (Ty_template.to_string annot)
   | Var v -> v
   | Number n -> Float.to_string n
   | Boolean b -> if b then "true" else "false"
@@ -32,7 +32,7 @@ let rec to_string (pt : t) =
       sprintf "(let %s = %s in %s)" name (to_string e1) (to_string e2)
   | ValIn (name, ty, rest) ->
       let rest_str = to_string rest in
-      let ty_str = Ty_surface.to_string ty in
+      let ty_str = Ty_template.to_string ty in
       sprintf "val %s : %s in %s" name ty_str rest_str
   | Fun (params, body) ->
       let param_strs = String.concat " " params in
@@ -46,14 +46,14 @@ type command = command_body Location.located
 and command_body =
   | Expr of t
   | LetDef of Ident.t * t
-  | ValDef of Ident.t * Ty_surface.t
+  | ValDef of Ident.t * Ty_template.t
 
 let command_to_string (cmd : command) =
   match cmd.body with
   | Expr e -> to_string e
   | LetDef (name, body) -> sprintf "let %s = %s ;;" name (to_string body)
   | ValDef (name, ty) ->
-      let ty_str = Ty_surface.to_string ty in
+      let ty_str = Ty_template.to_string ty in
       sprintf "val %s : %s;;" name ty_str
 
 type program = command list
