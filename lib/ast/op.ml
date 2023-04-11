@@ -35,13 +35,18 @@ module Binop = struct
     | Or -> "||"
 
   (* useful aliases *)
-  let x, y = ("__param1", "__param2")
+  let x, y, z = ("__1", "__2", "__3")
 
   type ty_builder = ?pred:R.P.t option -> Ident.t -> Ty_template.t
 
+  let mk_equal v p : R.P.t =
+    let ul = Location.unlocated in
+    let open R.P in
+    ul (IntOp (InterpOp.Equal, ul (Var v), p))
+
   let make_binop_ty mk_s1 mk_s2 (mk_t : ty_builder) mk_p =
-    let pred = Some (mk_p x y) in
-    let t = mk_t ~pred "v" in
+    let pred = Some (mk_equal z (mk_p x y)) in
+    let t = mk_t ~pred z in
     let s1 = mk_s1 "v" in
     let s2 = mk_s2 "v" in
     let g = builtin (RArrow (y, s2, t)) in
