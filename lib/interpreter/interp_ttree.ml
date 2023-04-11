@@ -6,11 +6,7 @@ open Errors
 module L = Utils.Location
 module TTEnv = Env.Make (Templatetree)
 
-let placeholder_ty =
-  let (ref : Refinement_core.t) =
-    { bound_var = "_"; expr = L.unlocated (Refinement_core.boolean true) }
-  in
-  Ty_template.builtin (Ty_template.RBase (Base_ty.TInt, Some ref))
+let placeholder_ty = Ty_template.t_bool "v"
 
 let placeholder_value =
   { body = Number 0.; ty = placeholder_ty; loc = L.Nowhere }
@@ -57,8 +53,8 @@ and eval_bool expr env =
         ~loc:expr.loc
 
 and eval_binop (op, l, r) env =
-  let t_bool = Ty_template.unrefined Base_ty.TBool ~source:Source.Builtin in
-  let t_int = Ty_template.unrefined Base_ty.TBool ~source:Source.Builtin in
+  let t_bool = Ty_template.t_bool "v" in
+  let t_int = Ty_template.t_num "v" in
 
   match op with
   | Op.Binop.Equal ->
