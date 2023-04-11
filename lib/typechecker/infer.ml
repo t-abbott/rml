@@ -72,8 +72,6 @@ let curry params body loc =
     ~init:body
 
 let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
-  Stdlib.prerr_endline "\ncalled type_parsetree";
-
   let loc = pt.loc in
   match pt.body with
   | PTree.Number i ->
@@ -137,18 +135,10 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
         raise (TypeError (msg, loc))
       else { body; ty; loc }
   | PTree.LetIn (name, value, rest) ->
-      Stdlib.prerr_endline "in LetIn";
-
       (* check if a type for [name] as already been stated
          if so, add it to the context
       *)
       let val_ty = Context.find name ctx in
-      let val_ty_str =
-        match val_ty with
-        | Some ty -> Ty_template.to_string ty
-        | None -> "<empty>"
-      in
-      Stdlib.prerr_endline (sprintf "name: %s found val: %s" name val_ty_str);
 
       (* infer a type for the typed body *)
       let typed_value = type_parsetree ~ty_stated:val_ty value ctx in
@@ -180,17 +170,13 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
       let body = LetIn (name, typed_value, typed_rest) in
       { body; ty; loc }
   | PTree.ValIn (name, ty, rest) ->
-      Stdlib.prerr_endline "in ValIn";
+      (* add the declared type to the context *)
       let ty_t = Ty_template.of_surface ty ctx in
       let ctx' = Context.extend name ty_t ctx in
-      Stdlib.print_endline
-        (sprintf "ValIn %s : %s" name (Ty_template.to_string ty_t));
 
       (* then process the rest of the tree *)
       type_parsetree rest ctx'
   | PTree.Fun (params, body) ->
-      Stdlib.prerr_endline "in Fun";
-
       (* check that we have an expected type of the function through a valdef *)
       let val_ty =
         match ty_stated with
@@ -204,17 +190,21 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
 
       (* 1. match the first n args of the function with the types at their stage of the signature *)
       let fn_tys = unfold val_ty in
-      let param_ty_pairs =
-        match pair_args params fn_tys with
-        | Some pairs -> pairs
-        | None ->
-            let n_defn = List.length params in
-            let n_sig = List.length fn_tys - 1 in
+      let param_tys = Ty_template.flatten val_ty in
+
+      let param_ty_pairs, fn_ty_pairs =
+        (* check that the number of parateters matches the number of signatures *)
+        match (pair_args params param_tys, pair_args params fn_tys) with
+        | Some p_pairs, Some fn_pairs -> (p_pairs, fn_pairs)
+        | _, _ ->
+            let n_defn_params = List.length params in
+            let n_sig_params = List.length fn_tys - 1 in
+
             let msg =
               sprintf
                 "number of params in function definition and signature don't \
                  match - got %d, expected %d"
-                n_defn n_sig
+                n_defn_params n_sig_params
             in
             raise (TypeError (msg, pt.loc))
       in
@@ -234,7 +224,7 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
             (* we check that fn_tys has enough elements 2 sections prior *)
             failwith "unreachable"
       in
-      if not (Ty_template.equal ty_final typed_body.ty) then
+      if not (Ty_template.equal_base ty_final typed_body.ty) then
         let t_val_str, t_inf_str =
           Misc.proj2 Ty_template.to_string ty_final typed_body.ty
         in
@@ -246,7 +236,7 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
         raise (TypeError (msg, body.loc))
       else
         (* 4. produced a curried version of the multi-argument function *)
-        curry param_ty_pairs typed_body pt.loc
+        curry fn_ty_pairs typed_body pt.loc
   | PTree.Apply (e1, e2s) ->
       let typed_e1, typed_e2s =
         (type_parsetree e1 ctx, List.map ~f:(fun e -> type_parsetree e ctx) e2s)
