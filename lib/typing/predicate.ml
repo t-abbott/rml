@@ -1,6 +1,7 @@
 open Printf
 open Utils
 open Utils.Ident_sig
+module L = Location
 
 module Make =
 functor
@@ -31,6 +32,27 @@ functor
       | Conj of t * t
       | Disj of t * t
       | IfThen of t * t * t
+
+    let var x = Var x
+    let p_true : t = L.unlocated (Bool true)
+    let p_false : t = L.unlocated (Bool false)
+
+    let make_binop op x y : t =
+      L.unlocated (IntOp (op, L.unlocated (var x), L.unlocated (var y)))
+
+    let p_add = make_binop InterpOp.Add
+    let p_sub = make_binop InterpOp.Sub
+    let p_mult = make_binop InterpOp.Mult
+    let p_div = make_binop InterpOp.Div
+    let p_equal = make_binop InterpOp.Equal
+    let p_less = make_binop InterpOp.Less
+    let p_greater = make_binop InterpOp.Greater
+    let p_mod = make_binop InterpOp.Mod
+
+    let p_and x y =
+      L.unlocated (Conj (L.unlocated (var x), L.unlocated (var y)))
+
+    let p_or x y = L.unlocated (Disj (L.unlocated (var x), L.unlocated (var y)))
 
     let rec to_string ({ body; _ } : t) =
       match body with

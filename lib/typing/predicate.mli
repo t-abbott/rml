@@ -19,6 +19,26 @@ module Make : functor (Id : IDENT) -> sig
     | Disj of t * t
     | IfThen of t * t * t
 
+  val p_true : t
+  (**
+    Alias for the unlocated predicate true
+  *)
+
+  val p_false : t
+  (**
+    Alias for the unlocated predicate false
+  *)
+
+  val p_add : Id.t -> Id.t -> t
+  val p_sub : Id.t -> Id.t -> t
+  val p_mult : Id.t -> Id.t -> t
+  val p_div : Id.t -> Id.t -> t
+  val p_equal : Id.t -> Id.t -> t
+  val p_less : Id.t -> Id.t -> t
+  val p_greater : Id.t -> Id.t -> t
+  val p_mod : Id.t -> Id.t -> t
+  val p_and : Id.t -> Id.t -> t
+  val p_or : Id.t -> Id.t -> t
   val to_string : t -> string
 
   val sub : Id.t -> Id.t -> t -> t

@@ -1,15 +1,17 @@
-open Refinement
 open Utils
+open Utils.Ident_sig
 module Loc = Location
 
 (**
   Constructs a liquid type    
 *)
-module Make : functor (Ref : REFINEMENT) -> sig
+module Make : functor (Id : IDENT) -> sig
+  module R : module type of Refinement.Make (Id)
+
   type t = { body : t_body; source : Source.t }
   (** Represents the type of a term *)
 
-  and t_body = RBase of Base_ty.t * Ref.t | RArrow of t list * t
+  and t_body = RBase of R.t | RArrow of Id.t * t * t
 
   type context = t Context.t
 
@@ -56,11 +58,6 @@ module Make : functor (Ref : REFINEMENT) -> sig
   (**
     Flattens all the types of a function into a single list - e.g. 
     [num -> bool -> num] -> [[num; bool; num]]
-   *)
-
-  val uncurry : t -> t
-  (**
-    [uncurry ty] produces an uncurried version of [ty] (i.e. as flattened as possible)
    *)
 
   val arity : t -> int
