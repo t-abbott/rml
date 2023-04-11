@@ -75,13 +75,13 @@ let apply_arg_types fn_tys args : (Ty_template.t * t) list =
     match List.tl fn_tys with
     | Some tl -> tl
     | None ->
-        let msg = "" in
+        let msg = "TODO error message" in
         failwith msg
   in
   match List.zip res_tys args with
   | Ok pairs -> pairs
   | Unequal_lengths ->
-      let msg = "" in
+      let msg = "TODO error message" in
       failwith msg
 
 (**
