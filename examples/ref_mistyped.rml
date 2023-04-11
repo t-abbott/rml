@@ -1,3 +1,4 @@
-let f = (fun (x: num[x | x + 2]) -> x) ;;
+val f : x:num -> num[v | v] ;;
+let f = (fun x -> x) ;; 
 
 f 4

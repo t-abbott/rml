@@ -5,6 +5,7 @@ open Ast.Templatetree
 open Typing
 open Utils
 open Errors
+open Check_refinements
 
 (* open Ref_checks *)
 module PTree = Ast.Parsetree
@@ -187,6 +188,8 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
       let body = LetIn (name, typed_value, typed_rest) in
       { body; ty; loc }
   | PTree.ValIn (name, ty, rest) ->
+      let ty = check_ref ty in
+
       (* add the declared type to the context *)
       let ctx' = Context.extend name ty ctx in
 
@@ -311,6 +314,8 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
         in
         raise (TypeError (msg, loc))
   | PTree.Annotated (expr, ty_stated) ->
+      let ty_stated = check_ref ty_stated in
+
       let typed_expr = type_parsetree expr ctx in
 
       (* check any refinement annotation is well-formed *)
@@ -333,6 +338,8 @@ let type_command (cmd : PTree.command) (ctx : context) :
       let ttree = type_parsetree ptree ctx in
       (Some (Expr ttree), ctx)
   | PTree.ValDef (name, ty) ->
+      let ty = check_ref ty in
+
       (* extend the context with the val annotation and move on *)
       (None, Context.extend name ty ctx)
   | PTree.LetDef (name, defn) ->

@@ -38,6 +38,10 @@ let main filename =
       let loc_str = format_location loc in
       eprintf "\nError: %s%s\n" message loc_str;
       die ()
+  | Typechecker.Errors.RefinementError (message, loc) ->
+      let loc_str = format_location loc in
+      eprintf "\nRefinement error: %s%s\n" message loc_str;
+      die ()
   | Interpreter.Errors.InterpError (message, loc) ->
       let loc_str = format_location loc in
       eprintf "\nRuntime error: %s%s\n" message loc_str;
