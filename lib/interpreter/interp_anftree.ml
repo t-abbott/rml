@@ -30,26 +30,19 @@ module Make (Ty : TYPE) = struct
     | Tree.CIf (cond, if_t, if_f) ->
         if eval_bool (Tree.t_of_aexpr cond) env then eval_aexpr if_t env
         else eval_aexpr if_f env
-    | Tree.CApply (fn, args) ->
-        let args' = List.map ~f:(fun arg -> eval_aexpr arg env) args in
-        let params, fn_body, closed_env =
+    | Tree.CApply (fn, arg) ->
+        (* evalaute [fn] and [arg] down to redexes *)
+        let arg' = eval_aexpr arg env in
+        let param, fn_body, closed_env =
           eval_closure (Tree.t_of_aexpr fn) env
         in
 
-        (* pair up parameters with the values they've been
-           passed
-        *)
-        let param_arg_pairs =
-          match List.zip params args' with
-          | Ok pairs -> pairs
-          | Unequal_lengths ->
-              let msg = "" in
-              unreachable ~reason:msg ~loc:ce.loc
-        in
+        (* extend the env of [fn] to contain [arg] *)
         let new_env =
-          List.fold param_arg_pairs ~init:closed_env ~f:(fun env (param, arg) ->
-              TEnv.extend (Ident_core.to_string param) arg env)
+          TEnv.extend (Ident_core.to_string param) arg' closed_env
         in
+
+        (* evaluate the body of [fn] *)
         eval fn_body new_env
     | Tree.CAexpr ae -> eval_aexpr ae env
 
@@ -95,7 +88,7 @@ module Make (Ty : TYPE) = struct
 
   and eval_closure expr env =
     match eval_const expr env with
-    | `Closure (params, body, closed_env) -> (params, body, closed_env)
+    | `Closure (param, body, closed_env) -> (param, body, closed_env)
     | _ ->
         let msg = "expected expression to reduce to a function closure" in
         unreachable ~reason:msg ~loc:expr.loc

@@ -22,7 +22,8 @@ let t_bool = Ty_template.unrefined Base_ty.TBool ~source:Builtin
    | Error msg -> raise (TypeError (msg, expr.loc)) *)
 
 (**
-  Check that ...
+  [check_tys_match loc t_s t_i] checks that an inferred type [t_i]
+  matches a stated type [t_s].
  *)
 let check_tys_match loc ~ty_stated ~ty_inferred =
   match ty_stated with
@@ -42,7 +43,7 @@ let check_tys_match loc ~ty_stated ~ty_inferred =
 (**
   unfold [ty] returns a list of all the component types of [ty]. 
   e.g. [unfold (a -> b -> b)] ~> [[(a -> b -> c); (b -> c); c]]    
-*)
+ *)
 let rec unfold (ty : Ty_template.t) =
   match ty.body with
   | Ty_template.RBase _ -> [ ty ]
@@ -62,13 +63,34 @@ let rec pair_args xs tys =
   | [], [ _ ] -> Some []
   | _ -> None
 
+(** 
+  [apply_arg_types fn_tys args] pairs a list of arguments [args]
+  with the type of a function after the application of each successive
+  arg in [args].
+
+  (assumes [fn_tys] produced by [unfold])
+*)
+let apply_arg_types fn_tys args : (Ty_template.t * t) list =
+  let res_tys =
+    match List.tl fn_tys with
+    | Some tl -> tl
+    | None ->
+        let msg = "" in
+        failwith msg
+  in
+  match List.zip res_tys args with
+  | Ok pairs -> pairs
+  | Unequal_lengths ->
+      let msg = "" in
+      failwith msg
+
 (**
   [curry xs e loc] creates a curried function with the body
   [e] and parameters [xs] at loction [loc].  
 *)
 let curry params body loc =
   List.fold_right params
-    ~f:(fun (x, ty) body -> TTree.from (Fun ([ x ], body)) ty loc)
+    ~f:(fun (x, ty) body -> TTree.from (Fun (x, body)) ty loc)
     ~init:body
 
 let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
@@ -242,14 +264,15 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
       let typed_e1, typed_e2s =
         (type_parsetree e1 ctx, List.map ~f:(fun e -> type_parsetree e ctx) e2s)
       in
-      if Ty_template.is_function typed_e1.ty then
-        let body = Apply (typed_e1, typed_e2s) in
-        let ty =
-          let arg_tys = List.map ~f:(fun e -> e.ty) typed_e2s in
+      let arg_tys = List.map ~f:(fun e -> e.ty) typed_e2s in
 
+      if Ty_template.is_function typed_e1.ty then
+        (* compute the type of the result of applying e2 to e1 *)
+        let _ =
           (* test we're applying the right number of arguments *)
           let n_params = Ty_template.arity typed_e1.ty in
           let n_args = List.length e2s in
+
           if n_args <> n_params then
             let msg =
               sprintf
@@ -258,9 +281,9 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
             in
             raise (TypeError (msg, loc))
           else
-            (* test argument types match *)
+            (* test the types of the arguments we're applying match and compute the final type *)
             match Ty_template.apply_types typed_e1.ty arg_tys with
-            | Some t -> t
+            | Some res -> res
             | None ->
                 let f_ty_str = Ty_template.to_string typed_e1.ty in
                 let arg_ty_strs =
@@ -275,8 +298,19 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
                 in
                 raise (TypeError (msg, loc))
         in
-        { body; ty; loc }
+
+        (* Finally we can unfold the single application of n values in to n applications of
+           one value.
+
+           First we compute the intermediate type of the expression at each application *)
+        let fn_tys = unfold typed_e1.ty in
+        let ty_arg_pairs = apply_arg_types fn_tys typed_e2s in
+
+        (* then *)
+        List.fold ty_arg_pairs ~init:typed_e1 ~f:(fun body (res_ty, arg) ->
+            TTree.from (Apply (body, arg)) res_ty loc)
       else
+        (* e1 isn't a function and we can't apply to it *)
         let s1 = Ty_template.to_string typed_e1.ty in
         let msg =
           sprintf "attempted to apply to a non-function value of type '%s'" s1
