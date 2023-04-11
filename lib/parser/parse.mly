@@ -58,10 +58,8 @@ file:
 
 topdef: mark_location(topdef_unmarked) { $1 }
 topdef_unmarked:   
-  | LET x = VAR COLON t = ty EQUAL e = expr
-    { LetDef (x, Some t, e) }
   | LET x = VAR EQUAL e = expr
-    { LetDef (x, None, e) }
+    { LetDef (x, e) }
   | VAL x = VAR COLON t = ty_val
     { ValDef (x, t)}
 

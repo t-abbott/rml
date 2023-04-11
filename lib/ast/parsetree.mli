@@ -24,7 +24,7 @@ type command = command_body Location.located
 
 and command_body =
   | Expr of t
-  | LetDef of Ident.t * Ty_surface.t option * t
+  | LetDef of Ident.t * t
   | ValDef of Ident.t * Ty_surface.t
 
 val command_to_string : command -> string

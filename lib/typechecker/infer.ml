@@ -5,7 +5,8 @@ open Ast.Templatetree
 open Typing
 open Utils
 open Errors
-open Ref_checks
+
+(* open Ref_checks *)
 module PTree = Ast.Parsetree
 module TTree = Ast.Templatetree
 module L = Location
@@ -15,10 +16,28 @@ type context = Ty_template.t Context.t
 let t_int = Ty_template.unrefined Base_ty.TInt ~source:Builtin
 let t_bool = Ty_template.unrefined Base_ty.TBool ~source:Builtin
 
-let check_annotatated_refs expr ty =
-  match check_ref_annotations expr ty with
-  | Ok () -> ()
-  | Error msg -> raise (TypeError (msg, expr.loc))
+(* let check_annotatated_refs expr ty =
+   match check_ref_annotations expr ty with
+   | Ok () -> ()
+   | Error msg -> raise (TypeError (msg, expr.loc)) *)
+
+(**
+  Check that ...
+ *)
+let check_tys_match loc ~ty_stated ~ty_inferred =
+  match ty_stated with
+  | Some stated ->
+      if not (Ty_template.equal_base stated ty_inferred) then
+        let ty_i_str, ty_s_str =
+          Misc.proj2 Ty_template.to_string ty_inferred stated
+        in
+        let msg =
+          sprintf "inferred type '%s' doesn't match stated type '%s'" ty_i_str
+            ty_s_str
+        in
+        raise (TypeError (msg, loc))
+      else ()
+  | None -> ()
 
 (**
   unfold [ty] returns a list of all the component types of [ty]. 
@@ -53,6 +72,8 @@ let curry params body loc =
     ~init:body
 
 let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
+  Stdlib.prerr_endline "\ncalled type_parsetree";
+
   let loc = pt.loc in
   match pt.body with
   | PTree.Number i ->
@@ -116,10 +137,18 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
         raise (TypeError (msg, loc))
       else { body; ty; loc }
   | PTree.LetIn (name, value, rest) ->
+      Stdlib.prerr_endline "in LetIn";
+
       (* check if a type for [name] as already been stated
          if so, add it to the context
       *)
       let val_ty = Context.find name ctx in
+      let val_ty_str =
+        match val_ty with
+        | Some ty -> Ty_template.to_string ty
+        | None -> "<empty>"
+      in
+      Stdlib.prerr_endline (sprintf "name: %s found val: %s" name val_ty_str);
 
       (* infer a type for the typed body *)
       let typed_value = type_parsetree ~ty_stated:val_ty value ctx in
@@ -151,12 +180,17 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
       let body = LetIn (name, typed_value, typed_rest) in
       { body; ty; loc }
   | PTree.ValIn (name, ty, rest) ->
+      Stdlib.prerr_endline "in ValIn";
       let ty_t = Ty_template.of_surface ty ctx in
       let ctx' = Context.extend name ty_t ctx in
+      Stdlib.print_endline
+        (sprintf "ValIn %s : %s" name (Ty_template.to_string ty_t));
 
       (* then process the rest of the tree *)
       type_parsetree rest ctx'
   | PTree.Fun (params, body) ->
+      Stdlib.prerr_endline "in Fun";
+
       (* check that we have an expected type of the function through a valdef *)
       let val_ty =
         match ty_stated with
@@ -262,8 +296,7 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
       let typed_expr = type_parsetree expr ctx in
 
       (* check any refinement annotation is well-formed *)
-      ignore (check_annotatated_refs typed_expr ty_t_stated);
-
+      (* ignore (check_annotatated_refs typed_expr ty_t_stated); *)
       if not (Ty_template.equal_base typed_expr.ty ty_t_stated) then
         let stated, inferred =
           Utils.Misc.proj2 Ty_template.to_string ty_t_stated typed_expr.ty
@@ -285,35 +318,19 @@ let type_command (cmd : PTree.command) (ctx : context) :
       (* extend the context with the val annotation and move on *)
       let ty_t = Ty_template.of_surface ty ctx in
       (None, Context.extend name ty_t ctx)
-  | PTree.LetDef (name, ty_annotated, defn) ->
-      (* convert any annotated [Ty_surface.t] to a [Ty_template.t] *)
-      let ty_t_stated =
-        match ty_annotated with
-        | Some t -> Some (Ty_template.of_surface t ctx)
-        | None -> None
-      in
+  | PTree.LetDef (name, defn) ->
+      (* test if a type has been provided in a prior [val] statement *)
+      let val_ty = Context.find name ctx in
 
       (* infer the type of [defn] *)
-      let ty_t_inferred = type_parsetree defn ctx in
+      let defn_t = type_parsetree ~ty_stated:val_ty defn ctx in
 
-      (* test the stated type matches the inferred type *)
-      let typed_defn =
-        match (ty_t_inferred, ty_t_stated) with
-        | tdefn, None -> tdefn
-        | tdefn, Some ty when Ty_template.equal_base tdefn.ty ty ->
-            (* prefer the annotated type as it may contain refinement annotations *)
-            { tdefn with ty }
-        | tdefn, Some ty_bad ->
-            let msg =
-              sprintf "stated type '%s' doesn't match expected type '%s'"
-                (Ty_template.to_string ty_bad)
-                (Ty_template.to_string tdefn.ty)
-            in
-            raise (TypeError (msg, cmd.loc))
-      in
+      (* test the inferred type matches the val-defined type *)
+      ignore (check_tys_match cmd.loc ~ty_stated:val_ty ~ty_inferred:defn_t.ty);
+
       (* otherwise the expression is well-typed and we can add it to the environment *)
-      let ctx' = Context.extend name typed_defn.ty ctx in
-      (Some (LetDef (name, typed_defn)), ctx')
+      let ctx' = Context.extend name defn_t.ty ctx in
+      (Some (LetDef (name, defn_t)), ctx')
 
 let rec type_program prog ctx =
   match prog with

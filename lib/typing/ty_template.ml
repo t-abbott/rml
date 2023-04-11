@@ -1,6 +1,4 @@
-open Printf
 open Utils
-open Refinement_errors
 module Loc = Location
 module Ref = Refinement_core
 
@@ -49,48 +47,21 @@ let ty_of_refop = function
   | Refop.Binop.Sub -> (tnum, tnum, tnum)
   | Refop.Binop.Mod -> (tnum, tnum, tbool)
 
+(* TODO: refactor *)
 let rec lower_refinement_expr (r_surface : Refinement_surface.t_expr)
     (ctx : t Context.t) (ty_expected : t) : Ref.t_expr =
+  let lower r = lower_refinement_expr r ctx ty_expected in
   let loc = r_surface.loc in
   let module R_surf = Refinement_surface in
-  let expr, ty_actual =
+  let expr =
     match r_surface.body with
-    | R_surf.Var v -> (
-        match Context.find v ctx with
-        | Some ty ->
-            if equal_base ty ty_expected then (Ref.Var v, ty)
-            else
-              let ty_str = to_string ty in
-              let ty_expected_str = to_string ty_expected in
-              let msg =
-                sprintf
-                  "type of variable '%s: %s' doesn't match expected type %s" v
-                  ty_str ty_expected_str
-              in
-              raise (RefinementError (msg, loc))
-        | None ->
-            let msg = sprintf "reference to unknown variable %s" v in
-            raise (RefinementError (msg, loc)))
-    | R_surf.Const (Boolean b) -> (Ref.boolean b, tbool)
-    | R_surf.Const (Number n) -> (Ref.number n, tnum)
-    | R_surf.Binop (op, l_surf, r_surf) ->
-        let ty_l, ty_r, ty_to = ty_of_refop op in
-        let l = lower_refinement_expr l_surf ctx ty_l in
-        let r = lower_refinement_expr r_surf ctx ty_r in
-        (Ref.Binop (op, l, r), ty_to)
-    | R_surf.IfThen (cond_surf, if_t_surf, if_f_surf) ->
-        let cond = lower_refinement_expr cond_surf ctx tbool in
-        let if_t = lower_refinement_expr if_t_surf ctx ty_expected in
-        let if_f = lower_refinement_expr if_f_surf ctx ty_expected in
-        (Ref.IfThen (cond, if_t, if_f), ty_expected)
+    | R_surf.Var v -> Ref.Var v
+    | R_surf.Const c -> Ref.Const c
+    | R_surf.Binop (op, l, r) -> Ref.Binop (op, lower l, lower r)
+    | R_surf.IfThen (cond, if_t, if_f) ->
+        Ref.IfThen (lower cond, lower if_t, lower if_f)
   in
-  if equal_base ty_actual ty_expected then Location.locate loc expr
-  else
-    let ty_a_str, ty_e_str = Misc.proj2 to_string ty_actual ty_expected in
-    let msg =
-      sprintf "type '%s' doesn't match expected type '%s'" ty_a_str ty_e_str
-    in
-    raise (RefinementError (msg, loc))
+  Location.locate loc expr
 
 let lower_refinement (r_surface : Refinement_surface.t) (ctx : t Context.t)
     (bound_base_ty : Base_ty.t) : Ref.t =

@@ -45,17 +45,13 @@ type command = command_body Location.located
 
 and command_body =
   | Expr of t
-  | LetDef of Ident.t * Ty_surface.t option * t
+  | LetDef of Ident.t * t
   | ValDef of Ident.t * Ty_surface.t
 
 let command_to_string (cmd : command) =
   match cmd.body with
   | Expr e -> to_string e
-  | LetDef (name, ty, body) ->
-      let ty_str =
-        match ty with Some ty' -> Ty_surface.to_string ty' | _ -> ""
-      in
-      sprintf "let %s: %s = %s ;;" name ty_str (to_string body)
+  | LetDef (name, body) -> sprintf "let %s = %s ;;" name (to_string body)
   | ValDef (name, ty) ->
       let ty_str = Ty_surface.to_string ty in
       sprintf "val %s : %s;;" name ty_str
