@@ -42,7 +42,7 @@ let check_tys_match loc ~ty_stated ~ty_inferred =
 let rec unfold (ty : Ty_template.t) =
   match ty.body with
   | Ty_template.RBase _ -> [ ty ]
-  | Ty_template.RArrow (_, s, t) -> s :: unfold t
+  | Ty_template.RArrow (_, _, t) -> ty :: unfold t
 
 (**
   [pair_args xs tys] pairs a list of parameter idents with a list

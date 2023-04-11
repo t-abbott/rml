@@ -23,4 +23,4 @@ let rec apply_types f_ty arg_tys =
   | ty, [] -> Some (inferred ty)
   | RArrow (_, s, t), x :: xs ->
       if equal_base s x then apply_types t xs else None
-  | _ -> failwith "no"
+  | _ -> None
