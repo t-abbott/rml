@@ -26,7 +26,8 @@ functor
     let rec is_equal t1 t2 ~with_refinements =
       match (t1.body, t2.body) with
       | RBase r1, RBase r2 ->
-          Base_ty.equal r1.base r2.base && with_refinements && R.equal r1 r2
+          Base_ty.equal r1.base r2.base
+          && if with_refinements then R.equal r1 r2 else true
       | RArrow (_, s1, t1), RArrow (_, s2, t2) ->
           is_equal s1 s2 ~with_refinements && is_equal t1 t2 ~with_refinements
       | _ -> false
