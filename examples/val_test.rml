@@ -1,4 +1,8 @@
 val inc : num[x | true] -> num[y | y = (x + 1)] ;; 
-let inc = (fun x -> x + 1) ;;
+let inc = (fun x -> 
+    val f : num[a | true] -> num[b | b = (a + 1)] in  
+    let f = (fun y -> y + 1) in
+    f x
+) ;;
 
 inc 4

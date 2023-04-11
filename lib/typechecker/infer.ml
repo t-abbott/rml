@@ -216,17 +216,18 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
       in
       let typed_body = type_parsetree body ctx' in
 
-      (* 3. test the base type of the typed function body matches that defined in the signature *)
-      let ty_final =
-        match List.rev fn_tys |> List.hd with
-        | Some t -> t
+      (* 3. test that the typed function body matches that type defined in the signature *)
+      let last xs = List.rev xs |> List.hd in
+      let final_ty_val, final_ty_inf =
+        match (last param_tys, last (Ty_template.flatten typed_body.ty)) with
+        | Some t_val, Some t_inf -> (t_val, t_inf)
         | _ ->
-            (* we check that fn_tys has enough elements 2 sections prior *)
+            (* we check that param_tys has enough elements 2 sections prior *)
             failwith "unreachable"
       in
-      if not (Ty_template.equal_base ty_final typed_body.ty) then
+      if not (Ty_template.equal_base final_ty_val final_ty_inf) then
         let t_val_str, t_inf_str =
-          Misc.proj2 Ty_template.to_string ty_final typed_body.ty
+          Misc.proj2 Ty_template.to_string final_ty_val final_ty_inf
         in
         let msg =
           sprintf
