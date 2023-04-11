@@ -10,9 +10,9 @@ and t_body =
   | Boolean of bool
   | Binop of Op.Binop.t * t * t
   | If of t * t * t
-  | LetIn of t * t * t
-  | ValIn of t * Ty_surface.t * t
-  | Fun of t list * t
+  | LetIn of Ident.t * t * t
+  | ValIn of Ident.t * Ty_surface.t * t
+  | Fun of Ident.t list * t
   | Apply of t * t list
 
 val to_string : t -> string

@@ -80,11 +80,11 @@ expr_unmarked:
     { Binop (op, e1, e2) }
   | IF e1 = expr THEN e2 = expr ELSE e3 = expr
     { If (e1, e2, e3) }
-  | FUN arg = expr ARROW body = expr 
+  | FUN arg = VAR ARROW body = expr 
     { Fun ([arg], body) }
-  | LET name = expr EQUAL e1 = expr IN e2 = expr
+  | LET name = VAR EQUAL e1 = expr IN e2 = expr
     { LetIn (name, e1, e2) }
-  | VAL name = expr COLON t = ty_val IN e2 = expr 
+  | VAL name = VAR COLON t = ty_val IN e2 = expr 
     { ValIn (name, t, e2) }
 
 %inline

@@ -5,9 +5,10 @@ open Ast.Templatetree
 open Typing
 open Utils
 open Errors
+open Ref_checks
 module PTree = Ast.Parsetree
 module TTree = Ast.Templatetree
-open Ref_checks
+module L = Location
 
 type context = Ty_template.t Context.t
 
@@ -19,7 +20,39 @@ let check_annotatated_refs expr ty =
   | Ok () -> ()
   | Error msg -> raise (TypeError (msg, expr.loc))
 
-let rec type_parsetree (pt : PTree.t) ctx =
+(**
+  unfold [ty] returns a list of all the component types of [ty]. 
+  e.g. [unfold (a -> b -> b)] ~> [[(a -> b -> c); (b -> c); c]]    
+*)
+let rec unfold (ty : Ty_template.t) =
+  match ty.body with
+  | Ty_template.RBase _ -> [ ty ]
+  | Ty_template.RArrow (_, t) -> ty :: unfold t
+
+(**
+  [pair_args xs tys] pairs a list of parameter idents with a list
+  of types appearing a function signature ([length tys] should be one
+  greater than [length xs]).    
+*)
+let rec pair_args xs tys =
+  match (xs, tys) with
+  | y :: ys, t :: tys -> (
+      match pair_args ys tys with
+      | Some tl -> Some ((y, t) :: tl)
+      | None -> None)
+  | [], [ _ ] -> Some []
+  | _ -> None
+
+(**
+  [curry xs e loc] creates a curried function with the body
+  [e] and parameters [xs] at loction [loc].  
+*)
+let curry params body loc =
+  List.fold_right params
+    ~f:(fun (x, ty) body -> TTree.from (Fun ([ x ], body)) ty loc)
+    ~init:body
+
+let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
   let loc = pt.loc in
   match pt.body with
   | PTree.Number i ->
@@ -82,105 +115,104 @@ let rec type_parsetree (pt : PTree.t) ctx =
         in
         raise (TypeError (msg, loc))
       else { body; ty; loc }
-  | PTree.LetIn (namebinding, value, expr) ->
-      let typed_value = type_parsetree value ctx in
-      let name =
-        match namebinding.body with
-        | PTree.Var v -> v
-        (* handle annotations separately here bc of extra logic wrt
-           checking the annotated type of an expression matches it's
-           actual type
-        *)
-        | PTree.Annotated ({ body = Var v; _ }, ty_stated) ->
-            (* check refinement and variable names match *)
-            let _ =
-              if not (check_var_matches_bound_var v ty_stated) then
-                let msg =
-                  "bound variable in refinement doesn't match the name of the \
-                   variable it refines"
-                in
-                raise (TypeError (msg, namebinding.loc))
-              else ()
-            in
+  | PTree.LetIn (name, value, rest) ->
+      (* check if a type for [name] as already been stated
+         if so, add it to the context
+      *)
+      let val_ty = Context.find name ctx in
 
-            let ty_t_stated = Ty_template.of_surface ty_stated ctx in
-            if not (Ty_template.equal_base ty_t_stated typed_value.ty) then
-              let msg =
-                sprintf "stated type '%s' does not match inferred type '%s'"
-                  (Ty_template.to_string ty_t_stated)
-                  (Ty_template.to_string typed_value.ty)
+      (* infer a type for the typed body *)
+      let typed_value = type_parsetree ~ty_stated:val_ty value ctx in
+
+      (* check that the inferred base type matches the stated base type *)
+      let _ =
+        match val_ty with
+        | Some stated_ty ->
+            if not (Ty_template.equal_base stated_ty typed_value.ty) then
+              let ty_i_str, ty_s_str =
+                Misc.proj2 Ty_template.to_string typed_value.ty stated_ty
               in
-              raise (TypeError (msg, namebinding.loc))
-            else v
-        | _ ->
-            let msg =
-              sprintf "let statements must bind a variable, got '%s'"
-                (PTree.to_string namebinding)
-            in
-            raise (TypeError (msg, namebinding.loc))
+              let msg =
+                sprintf "inferred type '%s' doesn't match stated type '%s'"
+                  ty_i_str ty_s_str
+              in
+              raise (TypeError (msg, pt.loc))
+            else ()
+        | None -> ()
       in
-      let ctx' = Context.extend name typed_value.ty ctx in
-      let typed_expr = type_parsetree expr ctx' in
-      let ty = typed_expr.ty in
-      let body = LetIn (name, typed_value, typed_expr) in
+
+      (* add the type of [name] to the context *)
+      let ty = typed_value.ty in
+      let ctx' = Context.extend name ty ctx in
+
+      (* check the inferred expression *)
+      let typed_rest = type_parsetree rest ctx' in
+
+      let body = LetIn (name, typed_value, typed_rest) in
       { body; ty; loc }
-  | PTree.ValIn (namebinding, ty, rest) ->
+  | PTree.ValIn (name, ty, rest) ->
       let ty_t = Ty_template.of_surface ty ctx in
-
-      (* pull out the variable being bound *)
-      let name =
-        match namebinding.body with
-        | PTree.Var v -> v
-        | _ ->
-            let msg = "expected variable to be named in val statement" in
-            raise (TypeError (msg, pt.loc))
-      in
-
-      (* add it to the context *)
       let ctx' = Context.extend name ty_t ctx in
 
       (* then process the rest of the tree *)
       type_parsetree rest ctx'
-  | PTree.Fun (xs, expr) ->
-      (* extract function arguments and their types *)
+  | PTree.Fun (params, body) ->
+      (* check that we have an expected type of the function through a valdef *)
+      let val_ty =
+        match ty_stated with
+        | Some ty -> ty
+        | None ->
+            let msg =
+              "expected function signature to be provided in a val expression"
+            in
+            raise (TypeError (msg, pt.loc))
+      in
+
+      (* 1. match the first n args of the function with the types at their stage of the signature *)
+      let fn_tys = unfold val_ty in
       let param_ty_pairs =
-        List.map
-          ~f:(fun param ->
-            match param.body with
-            | Var _ ->
-                failwith "function parameter type inference not implemented"
-            | Annotated ({ body = Var v; _ }, t) ->
-                (* check that refinement names match variable names (step 2 in ref_checks.mli) *)
-                if not (check_var_matches_bound_var v t) then
-                  let msg =
-                    "bound variable in refinement doesn't match the name of \
-                     the variable it refines"
-                  in
-                  raise (TypeError (msg, param.loc))
-                else (v, Ty_template.of_surface t ctx)
-            | _ ->
-                let msg = "expected function argument to be a variable" in
-                raise (TypeError (msg, loc)))
-          xs
+        match pair_args params fn_tys with
+        | Some pairs -> pairs
+        | None ->
+            let n_defn = List.length params in
+            let n_sig = List.length fn_tys - 1 in
+            let msg =
+              sprintf
+                "number of params in function definition and signature don't \
+                 match - got %d, expected %d"
+                n_defn n_sig
+            in
+            raise (TypeError (msg, pt.loc))
       in
-      (* add parameters to the typing context *)
+
+      (* 2. then add the arguments to the context and check the type of the body *)
       let ctx' =
-        List.fold ~init:ctx
-          ~f:(fun ctx (param, ty) -> Context.extend param ty ctx)
-          param_ty_pairs
+        List.fold param_ty_pairs ~init:ctx ~f:(fun c (x, ty) ->
+            Context.extend x ty c)
       in
-      let typed_expr = type_parsetree expr ctx' in
+      let typed_body = type_parsetree body ctx' in
 
-      (* extract parameter variable names and types *)
-      let params = List.map ~f:fst param_ty_pairs in
-      let param_tys = List.map ~f:snd param_ty_pairs in
-
-      (* shove them in an RArrow *)
-      let ty =
-        Ty_template.inferred (Ty_template.RArrow (param_tys, typed_expr.ty))
+      (* 3. test the base type of the typed function body matches that defined in the signature *)
+      let ty_final =
+        match List.rev fn_tys |> List.hd with
+        | Some t -> t
+        | _ ->
+            (* we check that fn_tys has enough elements 2 sections prior *)
+            failwith "unreachable"
       in
-      let body = Fun (params, typed_expr) in
-      { body; ty; loc }
+      if not (Ty_template.equal ty_final typed_body.ty) then
+        let t_val_str, t_inf_str =
+          Misc.proj2 Ty_template.to_string ty_final typed_body.ty
+        in
+        let msg =
+          sprintf
+            "stated type of function body '%s' doesnt match inferred type '%s'"
+            t_val_str t_inf_str
+        in
+        raise (TypeError (msg, body.loc))
+      else
+        (* 4. produced a curried version of the multi-argument function *)
+        curry param_ty_pairs typed_body pt.loc
   | PTree.Apply (e1, e2s) ->
       let typed_e1, typed_e2s =
         (type_parsetree e1 ctx, List.map ~f:(fun e -> type_parsetree e ctx) e2s)

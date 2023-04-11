@@ -11,9 +11,9 @@ and t_body =
   | Boolean of bool
   | Binop of Op.Binop.t * t * t
   | If of t * t * t
-  | LetIn of t * t * t
-  | ValIn of t * Ty_surface.t * t
-  | Fun of t list * t
+  | LetIn of Ident.t * t * t
+  | ValIn of Ident.t * Ty_surface.t * t
+  | Fun of Ident.t list * t
   | Apply of t * t list
 
 let rec to_string (pt : t) =
@@ -29,14 +29,13 @@ let rec to_string (pt : t) =
       sprintf "(if %s then %s else %s)" (to_string cond) (to_string if_t)
         (to_string if_f)
   | LetIn (name, e1, e2) ->
-      sprintf "(let %s = %s in %s)" (to_string name) (to_string e1)
-        (to_string e2)
+      sprintf "(let %s = %s in %s)" name (to_string e1) (to_string e2)
   | ValIn (name, ty, rest) ->
-      let name_str, rest_str = Misc.proj2 to_string name rest in
+      let rest_str = to_string rest in
       let ty_str = Ty_surface.to_string ty in
-      sprintf "val %s : %s in %s" name_str ty_str rest_str
+      sprintf "val %s : %s in %s" name ty_str rest_str
   | Fun (params, body) ->
-      let param_strs = String.concat " " (List.map to_string params) in
+      let param_strs = String.concat " " params in
       sprintf "(fun %s -> %s)" param_strs (to_string body)
   | Apply (f, args) ->
       let arg_strs = String.concat " " (List.map to_string args) in

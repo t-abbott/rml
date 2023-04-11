@@ -54,3 +54,4 @@ let command_to_string = function
 type program = command list
 
 let program_to_string p = List.map command_to_string p |> String.concat "\n"
+let from body ty loc = { body; ty; loc }

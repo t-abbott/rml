@@ -24,3 +24,4 @@ val command_to_string : command -> string
 type program = command list
 
 val program_to_string : program -> string
+val from : t_body -> Ty_template.t -> Location.t -> t
