@@ -1,6 +1,6 @@
 open Utils
 
-include module type of Refined_ty.Make (struct
+include module type of Liquid_ty.Make (struct
   type t = Refinement_core.t option
 
   let to_string = function

@@ -1,1 +1,1 @@
-include module type of Refined_ty.Make (Refinement_core)
+include module type of Liquid_ty.Make (Refinement_core)

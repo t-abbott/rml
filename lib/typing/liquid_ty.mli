@@ -2,6 +2,9 @@ open Refinement
 open Utils
 module Loc = Location
 
+(**
+  Constructs a liquid type    
+*)
 module Make : functor (Ref : REFINEMENT) -> sig
   type t = { body : t_body; source : Source.t }
   (** Represents the type of a term *)

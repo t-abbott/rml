@@ -3,7 +3,7 @@ module Loc = Location
 module Ref = Refinement_core
 
 (* ad-hoc maybe refined type *)
-include Refined_ty.Make (struct
+include Liquid_ty.Make (struct
   type t = Refinement_core.t option
 
   let to_string = function
