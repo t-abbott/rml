@@ -13,13 +13,8 @@ module L = Location
 
 type context = Ty_template.t Context.t
 
-let t_int = Ty_template.unrefined Base_ty.TInt ~source:Builtin
-let t_bool = Ty_template.unrefined Base_ty.TBool ~source:Builtin
-
-(* let check_annotatated_refs expr ty =
-   match check_ref_annotations expr ty with
-   | Ok () -> ()
-   | Error msg -> raise (TypeError (msg, expr.loc)) *)
+let t_int = Ty_template.t_num "v"
+let t_bool = Ty_template.t_bool "v"
 
 (**
   [check_tys_match loc t_s t_i] checks that an inferred type [t_i]
@@ -47,7 +42,7 @@ let check_tys_match loc ~ty_stated ~ty_inferred =
 let rec unfold (ty : Ty_template.t) =
   match ty.body with
   | Ty_template.RBase _ -> [ ty ]
-  | Ty_template.RArrow (_, t) -> ty :: unfold t
+  | Ty_template.RArrow (_, s, t) -> s :: unfold t
 
 (**
   [pair_args xs tys] pairs a list of parameter idents with a list
@@ -193,8 +188,7 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
       { body; ty; loc }
   | PTree.ValIn (name, ty, rest) ->
       (* add the declared type to the context *)
-      let ty_t = Ty_template.of_surface ty ctx in
-      let ctx' = Context.extend name ty_t ctx in
+      let ctx' = Context.extend name ty ctx in
 
       (* then process the rest of the tree *)
       type_parsetree rest ctx'
@@ -317,21 +311,20 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
         in
         raise (TypeError (msg, loc))
   | PTree.Annotated (expr, ty_stated) ->
-      let ty_t_stated = Ty_template.of_surface ty_stated ctx in
       let typed_expr = type_parsetree expr ctx in
 
       (* check any refinement annotation is well-formed *)
       (* ignore (check_annotatated_refs typed_expr ty_t_stated); *)
-      if not (Ty_template.equal_base typed_expr.ty ty_t_stated) then
+      if not (Ty_template.equal_base typed_expr.ty ty_stated) then
         let stated, inferred =
-          Utils.Misc.proj2 Ty_template.to_string ty_t_stated typed_expr.ty
+          Utils.Misc.proj2 Ty_template.to_string ty_stated typed_expr.ty
         in
         let msg =
           sprintf "provided type '%s' does not match inferred type '%s'" stated
             inferred
         in
         raise (TypeError (msg, loc))
-      else { typed_expr with ty = ty_t_stated }
+      else { typed_expr with ty = ty_stated }
 
 let type_command (cmd : PTree.command) (ctx : context) :
     TTree.command option * context =
@@ -341,8 +334,7 @@ let type_command (cmd : PTree.command) (ctx : context) :
       (Some (Expr ttree), ctx)
   | PTree.ValDef (name, ty) ->
       (* extend the context with the val annotation and move on *)
-      let ty_t = Ty_template.of_surface ty ctx in
-      (None, Context.extend name ty_t ctx)
+      (None, Context.extend name ty ctx)
   | PTree.LetDef (name, defn) ->
       (* test if a type has been provided in a prior [val] statement *)
       let val_ty = Context.find name ctx in
