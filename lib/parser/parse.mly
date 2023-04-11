@@ -2,6 +2,8 @@
   open Ast.Op
   open Ast.Parsetree
   open Typing
+
+  module Ty = Ty_template
 %}
 
 %token TNUM
@@ -130,16 +132,18 @@ simple_expr_unmarked:
   | LPAREN e = expr_unmarked RPAREN	
     { e }    
 
+
+(*
+  ty ::= <refinement>                   // RBase
+       | <var>:<refinement> -> <ty>     // RArrow
+ *)
 ty: mark_annot_location(ty_unmarked) { $1 }
 ty_val: mark_val_location(ty_unmarked) { $1 }
 ty_unmarked:
-  | t = ty_basic r = refinement
-    { Ty_surface.SBase (t, Some r) }
-  | t1 = ty ARROW t2 = ty
-    // todo match list of types
-    { Ty_surface.SArrow ([t1], t2)  }
-  | t = ty_basic  
-    { Ty_surface.SBase (t, None) }
+  | r = refinement 
+    { Ty_template.RBase r }
+  | x = VAR COLON s = ty ARROW t = ty
+    { Ty_template.RArrow (x, s, t) }
   | LPAREN t = ty_unmarked RPAREN
     { t }
 
@@ -149,57 +153,73 @@ ty_basic:
   | TNUM
     { Base_ty.TInt } 
 
+(*
+  refinement ::= <base ty>                      // unrefined (i.e. p=true)
+               | <var>:[<var> | <predicate>]    // refined base type
+ *)
 refinement:
-  | LBRACKET v = VAR LINE body = refinement_expr RBRACKET
-    { Refinement_surface.refinement v body }
+  | t = ty_basic
+    { Ty.R.from "v" t None }
+  | t = ty_basic LBRACKET v = VAR LINE p = predicate RBRACKET 
+    { Ty.R.from v t (Some p) }
 
 (*
-    TODO refactor true and false tokens to wrap ocaml bools like integer does
-*)
-
-refinement_expr: mark_location(refinement_expr_unmarked) { $1 }
-refinement_expr_unmarked:
-  | TRUE 
-    { Refinement_surface.boolean true }
+  predicate ::= <var> | <bool> | <int>
+              | <p> && <p>
+              | <p> || <p>
+              | <p> <intop> <p>
+              | if <p> then <p> else <p>
+ *)
+predicate: mark_location(predicate_unmarked) { $1 }
+predicate_unmarked: 
+  | TRUE
+    { Ty.R.P.Bool true }
   | FALSE 
-    { Refinement_surface.boolean false }
+    { Ty.R.P.Bool false }
   | n = NUM 
-    { Refinement_surface.number n }
-  | l = refinement_expr op = refinement_binop r = refinement_expr
-    { Refinement_surface.Binop (op, l, r) }
-  | v = VAR
-    { Refinement_surface.var v }
-  | LPAREN r = refinement_expr_unmarked RPAREN
-   { r }
+    { Ty.R.P.Int (Int.of_float n) }
+  | v = VAR 
+    { Ty.R.P.Var v }
+  | l = predicate op = predicate_interp_op r = predicate 
+    { Ty.R.P.IntOp (op, l, r) }
+  | l = predicate AND r = predicate 
+    { Ty.R.P.Conj (l, r) }
+  | l = predicate OR r = predicate 
+    { Ty.R.P.Disj (l, r) }
+  | IF cond = predicate THEN t = predicate ELSE f = predicate 
+    { Ty.R.P.IfThen (cond, t, f) }
+  | LPAREN p = predicate_unmarked RPAREN 
+    { p }
 
-%inline
-refinement_binop:
-  | LESS
-    { Refop.Binop.Less } 
-  | GREATER
-    { Refop.Binop.Greater }
+%inline 
+predicate_interp_op:
   | EQUAL
-    { Refop.Binop.Equal }
-  | AND
-    { Refop.Binop.And }
-  | OR
-    { Refop.Binop.Or }
+    { Ty.R.P.InterpOp.Equal }
+  | LESS
+    { Ty.R.P.InterpOp.Less } 
+  | GREATER
+    { Ty.R.P.InterpOp.Greater }
   | PLUS
-    { Refop.Binop.Add }
+    { Ty.R.P.InterpOp.Add }
   | MINUS 
-    { Refop.Binop.Sub }
+    { Ty.R.P.InterpOp.Sub }
+  | TIMES 
+    { Ty.R.P.InterpOp.Mult }
   | MOD 
-    { Refop.Binop.Mod }
+    { Ty.R.P.InterpOp.Mod }
 
+(* 
+  ---- utils ---- 
+ *)
 mark_location(X):
     x = X
     { Utils.Location.locate (Utils.Location.from $startpos $endpos) x }
 
 mark_annot_location(X):
     x = X 
-    { Ty_surface.annotated x (Utils.Location.from $startpos $endpos) }
+    { Ty_template.annotated x (Utils.Location.from $startpos $endpos) }
 
 mark_val_location(X):
     x = X 
-    { Ty_surface.valstmt x (Utils.Location.from $startpos $endpos) }
+    { Ty_template.valstmt x (Utils.Location.from $startpos $endpos) }
 %%

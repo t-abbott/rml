@@ -54,6 +54,12 @@ module Make : functor (Id : IDENT) -> sig
     [annotated ty] creates an annotated type from the raw type [ty]
    *)
 
+  val valstmt : t_body -> Location.t -> t
+  (**
+    [valstmt ty loc] creates a val-defined [Ty_surface.t] from
+    [ty] at source location [loc].
+   *)
+
   val flatten : t -> t list
   (**
     Flattens all the types of a function into a single list - e.g. 

@@ -37,6 +37,7 @@ functor
     let builtin ty = { body = ty; source = Builtin }
     let inferred ty = { body = ty; source = Inferred }
     let annotated ty loc = { body = ty; source = Annotation loc }
+    let valstmt ty loc = { body = ty; source = ValStmt loc }
 
     (* returns the component types of a refinement *)
     let rec flatten (ty : t) =

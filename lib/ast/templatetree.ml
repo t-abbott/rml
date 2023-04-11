@@ -4,9 +4,6 @@ open Op
 open Utils
 module PTree = Parsetree
 
-(** TODO: use this *)
-(* module Ty = Ty_template *)
-
 type t = { body : t_body; ty : Ty_template.t; loc : Location.t }
 
 and t_body =

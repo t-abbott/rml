@@ -16,5 +16,6 @@ functor
       let p = match pred with Some p -> P.to_string p | None -> "<blank>" in
       sprintf "%s[%s | %s]" v b p
 
+    let from vname base pred = { vname; base; pred }
     let equal = ( = )
   end

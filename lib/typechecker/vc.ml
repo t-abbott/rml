@@ -8,9 +8,7 @@ module P = Predicate.Make (Ident_core)
 let impl_constraint (x : Ident_core.t) (ty : Ty.t) (c : Constraint.t) :
     Constraint.t =
   ignore (x, ty, c);
-  match ty.body with
-  | Ty.RBase (_, Some _) -> failwith "not implemented"
-  | _ -> c
+  match ty.body with Ty.RBase _ -> failwith "not implemented" | _ -> c
 
 let sub (ctx : Ty.context) (t1 : Ty.t) (t2 : Ty.t) : Constraint.t =
   ignore (t1, t2, ctx);

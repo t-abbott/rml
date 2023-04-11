@@ -7,4 +7,5 @@ module Make : functor (Id : IDENT) -> sig
 
   val equal : t -> t -> bool
   val to_string : t -> string
+  val from : Id.t -> Base_ty.t -> P.t option -> t
 end
