@@ -20,7 +20,7 @@ module Make (Ty : TYPE) = struct
     | ANumber of float
     | ABoolean of bool
     | AVar of Ident_core.t
-    | ALambda of Ident_core.t list * t
+    | ALambda of Ident_core.t * t
 
   and cexpr = cexpr_body astnode
   (** A complex expression. *)
@@ -28,7 +28,7 @@ module Make (Ty : TYPE) = struct
   and cexpr_body =
     | CBinop of Binop.t * aexpr * aexpr
     | CIf of aexpr * aexpr * aexpr
-    | CApply of aexpr * aexpr list
+    | CApply of aexpr * aexpr
     | CAexpr of aexpr
 
   (**
@@ -48,7 +48,7 @@ module Make (Ty : TYPE) = struct
     | ALambda (arg, body) ->
         let ty_str = Ty.to_string ae.ty in
         let body_str = to_string body in
-        let arg_str = List.map Ident_core.to_string arg |> String.concat " " in
+        let arg_str = Ident_core.to_string arg in
         sprintf "(fun %s -> %s): %s" arg_str body_str ty_str
 
   and cexpr_to_string (ce : cexpr) =
@@ -61,9 +61,9 @@ module Make (Ty : TYPE) = struct
         let cond_str = aexpr_to_string cond in
         let if_t_str, if_f_str = Misc.proj2 aexpr_to_string if_t if_f in
         sprintf "if %s then %s else %s" cond_str if_t_str if_f_str
-    | CApply (fn, params) ->
+    | CApply (fn, param) ->
         let fn_str = aexpr_to_string fn in
-        let params_str = List.map aexpr_to_string params |> String.concat " " in
+        let params_str = aexpr_to_string param in
         sprintf "%s %s" fn_str params_str
     | CAexpr ae -> aexpr_to_string ae
 

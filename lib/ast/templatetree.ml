@@ -4,9 +4,6 @@ open Op
 open Utils
 module PTree = Parsetree
 
-(** TODO: use this *)
-(* module Ty = Ty_template *)
-
 type t = { body : t_body; ty : Ty_template.t; loc : Location.t }
 
 and t_body =
@@ -16,8 +13,8 @@ and t_body =
   | Binop of Binop.t * t * t
   | If of t * t * t
   | LetIn of Ident.t * t * t
-  | Fun of Ident.t list * t
-  | Apply of t * t list
+  | Fun of Ident.t * t
+  | Apply of t * t
 
 let rec to_string { body; ty; _ } =
   let type_str = Ty_template.to_string ty in
@@ -34,11 +31,8 @@ let rec to_string { body; ty; _ } =
     | LetIn (name, value, body) ->
         sprintf "let %s: %s = %s in %s" name type_str (to_string value)
           (to_string body)
-    | Fun (params, body) ->
-        sprintf "(%s -> %s)" (String.concat " " params) (to_string body)
-    | Apply (f, args) ->
-        let arg_strs = String.concat " " (List.map to_string args) in
-        sprintf "%s %s" (to_string f) arg_strs
+    | Fun (param, body) -> sprintf "(%s -> %s)" param (to_string body)
+    | Apply (f, arg) -> sprintf "%s %s" (to_string f) (to_string arg)
   in
   term_str
 
@@ -54,3 +48,4 @@ let command_to_string = function
 type program = command list
 
 let program_to_string p = List.map command_to_string p |> String.concat "\n"
+let from body ty loc = { body; ty; loc }

@@ -22,7 +22,7 @@ module Make : functor (Ty : TYPE) -> sig
     | ANumber of float
     | ABoolean of bool
     | AVar of Ident_core.t
-    | ALambda of Ident_core.t list * t
+    | ALambda of Ident_core.t * t
 
   and cexpr = cexpr_body astnode
   (** A complex expression. *)
@@ -30,7 +30,7 @@ module Make : functor (Ty : TYPE) -> sig
   and cexpr_body =
     | CBinop of Binop.t * aexpr * aexpr
     | CIf of aexpr * aexpr * aexpr
-    | CApply of aexpr * aexpr list
+    | CApply of aexpr * aexpr
     | CAexpr of aexpr
 
   (**

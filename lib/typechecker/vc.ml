@@ -3,15 +3,12 @@ open Ast
 open Utils
 module Ty = Ty_template
 module Tree = Lineartree
+module P = Predicate.Make (Ident_core)
 
 let impl_constraint (x : Ident_core.t) (ty : Ty.t) (c : Constraint.t) :
     Constraint.t =
-  match ty.body with
-  | Ty.RBase (base_ty, Some r) ->
-      let v = Ident_core.var r.bound_var in
-      let p = Predicate.of_ref r |> Predicate.sub v x in
-      Constraint.impl x base_ty p c
-  | _ -> c
+  ignore (x, ty, c);
+  match ty.body with Ty.RBase _ -> failwith "not implemented" | _ -> c
 
 let sub (ctx : Ty.context) (t1 : Ty.t) (t2 : Ty.t) : Constraint.t =
   ignore (t1, t2, ctx);

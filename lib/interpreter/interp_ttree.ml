@@ -6,11 +6,7 @@ open Errors
 module L = Utils.Location
 module TTEnv = Env.Make (Templatetree)
 
-let placeholder_ty =
-  let (ref : Refinement_core.t) =
-    { bound_var = "_"; expr = L.unlocated (Refinement_core.boolean true) }
-  in
-  Ty_template.builtin (Ty_template.RBase (Base_ty.TInt, Some ref))
+let placeholder_ty = Ty_template.t_bool "v"
 
 let placeholder_value =
   { body = Number 0.; ty = placeholder_ty; loc = L.Nowhere }
@@ -30,23 +26,11 @@ let rec eval expr env =
       let env' = TTEnv.extend name (eval value env) env in
       eval body env'
   | Fun _ as body -> Closure ({ placeholder_value with body }, env)
-  | Apply (f, args) -> (
-      let args' = List.map ~f:(fun e -> eval e env) args in
+  | Apply (f, arg) -> (
+      let arg' = eval arg env in
       match eval f env with
-      | Closure ({ body = Fun (params, body); _ }, closed_env) ->
-          let param_arg_pairs =
-            match List.zip params args' with
-            | Ok pairs -> pairs
-            | Unequal_lengths ->
-                unreachable
-                  ~reason:
-                    "type checking should have detected mismatched arg lengths"
-                  ~loc
-          in
-          let new_env =
-            List.fold param_arg_pairs ~init:closed_env
-              ~f:(fun env (param, arg) -> TTEnv.extend param arg env)
-          in
+      | Closure ({ body = Fun (param, body); _ }, closed_env) ->
+          let new_env = TTEnv.extend param arg' closed_env in
           eval body new_env
       | _ ->
           unreachable
@@ -69,8 +53,8 @@ and eval_bool expr env =
         ~loc:expr.loc
 
 and eval_binop (op, l, r) env =
-  let t_bool = Ty_template.unrefined Base_ty.TBool ~source:Source.Builtin in
-  let t_int = Ty_template.unrefined Base_ty.TBool ~source:Source.Builtin in
+  let t_bool = Ty_template.t_bool "v" in
+  let t_int = Ty_template.t_num "v" in
 
   match op with
   | Op.Binop.Equal ->

@@ -4,15 +4,15 @@ open Utils
 type t = t_body Location.located
 
 and t_body =
-  | Annotated of t * Ty_surface.t
+  | Annotated of t * Ty_template.t
   | Var of Ident.t
   | Number of float
   | Boolean of bool
   | Binop of Op.Binop.t * t * t
   | If of t * t * t
-  | LetIn of t * t * t
-  | ValIn of t * Ty_surface.t * t
-  | Fun of t list * t
+  | LetIn of Ident.t * t * t
+  | ValIn of Ident.t * Ty_template.t * t
+  | Fun of Ident.t list * t
   | Apply of t * t list
 
 val to_string : t -> string
@@ -24,8 +24,8 @@ type command = command_body Location.located
 
 and command_body =
   | Expr of t
-  | LetDef of Ident.t * Ty_surface.t option * t
-  | ValDef of Ident.t * Ty_surface.t
+  | LetDef of Ident.t * t
+  | ValDef of Ident.t * Ty_template.t
 
 val command_to_string : command -> string
 

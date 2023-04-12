@@ -12,8 +12,8 @@ and t_body =
   | Binop of Binop.t * t * t
   | If of t * t * t
   | LetIn of Ident.t * t * t
-  | Fun of Ident.t list * t
-  | Apply of t * t list
+  | Fun of Ident.t * t
+  | Apply of t * t
 
 val to_string : t -> string
 
@@ -24,3 +24,4 @@ val command_to_string : command -> string
 type program = command list
 
 val program_to_string : program -> string
+val from : t_body -> Ty_template.t -> Location.t -> t

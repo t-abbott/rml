@@ -5,7 +5,8 @@ module TTree = Ast.Templatetree
 
 type context = Ty_template.t Context.t
 
-val type_parsetree : PTree.t -> context -> TTree.t
+val type_parsetree :
+  ?ty_stated:Ty_template.t option -> PTree.t -> context -> TTree.t
 (**
   [type_parsetree pt ctx] builds an explicity typed [Templatetree.t] from a partially 
   typed [Parsetree.t] [pt] with respect to a typing context [ctx]

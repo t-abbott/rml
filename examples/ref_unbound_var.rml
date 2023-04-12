@@ -1,0 +1,4 @@
+val bad : x:bool[p | p] -> bool[q | q && y] ;;
+let bad = (fun x -> x && true) ;;
+
+bad true
