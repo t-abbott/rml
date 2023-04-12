@@ -290,8 +290,8 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
                   sprintf
                     "attempted to apply arguments of type '%s' to a function \
                      of type '%s'"
-                    f_ty_str
                     (String.concat ~sep:" " arg_ty_strs)
+                    f_ty_str
                 in
                 raise (TypeError (msg, loc))
         in
