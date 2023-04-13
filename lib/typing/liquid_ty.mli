@@ -71,5 +71,16 @@ module Make : functor (Id : IDENT) -> sig
     [arity ty] returns the number of arguments taken by the
     type [ty], and [0] in the case that [ty] is not a function
     type.
-   *)
+    *)
+
+  val sub : Id.t -> Id.t -> t -> t
+  (**
+    [sub v x ty] performs capture-avoiding substitution of [v] for [x] in the type [ty]     
+    *)
+
+  val sub_term : Id.t -> R.P.t_body -> t -> t
+  (**
+    [sub_term v p ty] performs capture-avoiding substitution of [v] for the term [p] in
+    predicates bound under the type [ty]
+    *)
 end

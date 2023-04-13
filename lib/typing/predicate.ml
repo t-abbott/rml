@@ -33,12 +33,19 @@ functor
       | Disj of t * t
       | IfThen of t * t * t
 
-    let var x = Var x
+    let make_intop op l r =
+      let ul = L.unlocated in
+      ul (IntOp (op, ul l, ul r))
+
+    let mk_var x = Var x
+    let mk_int i = Int i
+    let mk_bool b = Bool b
+    let make_equal = make_intop InterpOp.Equal
     let p_true : t = L.unlocated (Bool true)
     let p_false : t = L.unlocated (Bool false)
 
     let make_binop op x y : t =
-      L.unlocated (IntOp (op, L.unlocated (var x), L.unlocated (var y)))
+      L.unlocated (IntOp (op, L.unlocated (mk_var x), L.unlocated (mk_var y)))
 
     let p_add = make_binop InterpOp.Add
     let p_sub = make_binop InterpOp.Sub
@@ -50,9 +57,10 @@ functor
     let p_mod = make_binop InterpOp.Mod
 
     let p_and x y =
-      L.unlocated (Conj (L.unlocated (var x), L.unlocated (var y)))
+      L.unlocated (Conj (L.unlocated (mk_var x), L.unlocated (mk_var y)))
 
-    let p_or x y = L.unlocated (Disj (L.unlocated (var x), L.unlocated (var y)))
+    let p_or x y =
+      L.unlocated (Disj (L.unlocated (mk_var x), L.unlocated (mk_var y)))
 
     let rec to_string ({ body; _ } : t) =
       match body with
@@ -70,8 +78,8 @@ functor
           sprintf "(if %s then %s else %s)" c_str t_str f_str
 
     (**
-    Substitutes [v] for [x] in [p]
-  *)
+      Substitutes [v] for [x] in [p]
+     *)
     let rec sub v x (p : t) =
       let f = sub v x in
       let new_body =
@@ -84,4 +92,18 @@ functor
         | _ -> p.body
       in
       { p with body = new_body }
+
+    let rec sub_term v term (p : t) =
+      let f = sub_term v term in
+      let body' =
+        match p.body with
+        | Var u -> if v = u then term else Var u
+        | IntOp (op, l, r) -> IntOp (op, f l, f r)
+        | Conj (l, r) -> Conj (f l, f r)
+        | Disj (l, r) -> Disj (f l, f r)
+        | IfThen (cond, if_t, if_f) -> IfThen (f cond, f if_t, f if_f)
+        | _ -> p.body
+      in
+
+      { p with body = body' }
   end

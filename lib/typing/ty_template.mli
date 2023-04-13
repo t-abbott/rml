@@ -29,23 +29,22 @@ val apply_types : t -> t list -> t option
 
 val t_bool : ?pred:R.P.t option -> Ident.t -> t
 (**
-    Useful alias for [builtin (RBase (Base_ty.TBool, None))]
+  Useful alias for [builtin (RBase (Base_ty.TBool, None))]
 *)
 
 val t_num : ?pred:R.P.t option -> Ident.t -> t
 (**
-    builtin (RBase (Base_ty.TInt, None))    
+  builtin (RBase (Base_ty.TInt, None))    
 *)
 
-(* val lower_refinement :
-   Refinement_surface.t -> t Context.t -> Base_ty.t -> Refinement_core.t *)
+val prim_int : ?source:Source.t -> int -> t
 (**
-    [lower_refinement ref ctx] lowers [ref] to a concerete refinement [Refinement.t]
-    while performing type checking on it's definition and making sure
-    it is a predicate (i.e. it returns a bool).
-*)
+  [prim_int i] constructs a primitive [RBase] corresponding
+  to the type [int[v| v = i]]  
+  *)
 
-(* val of_surface : Ty_surface.t -> t Context.t -> t *)
+val prim_bool : ?source:Source.t -> bool -> t
 (**
-    [of_surface ty] creates a [Ty_template.t] corresponding to [ty]
-*)
+  [prim_bool b] constructs a primitive [RBase] corresponding
+  to the type [bool[v | v = b]]  
+ *)

@@ -48,4 +48,38 @@ functor
 
     let rec arity ty =
       match ty.body with RBase _ -> 0 | RArrow (_, _, t) -> 1 + arity t
+
+    let rec mk_sub fn v thing (ty : t) =
+      (let body' =
+        match ty.body with
+        | RBase r ->
+            if r.vname = v then 
+              (* [ty] binds [v] so avoid renaming it *)
+              RBase r
+            else
+              (* rename [v] in the predicate *)
+              let r' = { r with pred = Option.map (fn v thing) r.pred } in
+              RBase r'
+        | RArrow (x, s, t) ->
+            if x = v then
+              (* [ty] binds [x] from [t] onwards so only rename in [s] *)
+              RArrow (x, mk_sub fn v thing s, t)
+            else 
+              (* rename [v] in [s] and [t] *)
+              RArrow (x, mk_sub fn v thing s, mk_sub fn v thing t)
+      in
+
+      { ty with body = body' })
+      [@@ocamlformat "disable"]
+
+    (**
+      [sub v x] performs capture-avoiding substitution of [v] for [x] in [ty]
+      *)
+    let sub = mk_sub R.P.sub
+
+    (**
+      [sub_term t term ty] substitutes the variable [v] for [term] in the predicates contained
+      in [ty]
+    *)
+    let sub_term = mk_sub R.P.sub_term
   end

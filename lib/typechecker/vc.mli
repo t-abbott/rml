@@ -2,18 +2,17 @@ open Ast
 open Typing
 open Utils
 
-val impl_constraint :
-  Ident_core.t -> Ty_template.t -> Constraint.t -> Constraint.t
+val impl_constraint : Ident.t -> Ty_template.t -> Constraint.t -> Constraint.t
 (**
     [impl_constraint x t c] synthesises a constraint [c] that corresponds to the
     implication constraint such that [t] holds under [x] (if [t] is basic) implies
     that [c] holds. 
 *)
 
-val sub : Ty_template.context -> Ty_template.t -> Ty_template.t -> Constraint.t
+val sub : Ty_template.t -> Ty_template.t -> Constraint.t
 (**
-    [sub ctx t1 t2] synthesises a constraint [c] such that [c] holds implies that
-    [t1] is a subtype of [t2] with respect to the typing context [ctx].    
+    [sub t1 t2] synthesises a constraint [c] such that [c] holds implies that
+    [t1] is a subtype of [t2].    
 *)
 
 val synth : Ty_template.context -> Lineartree.t -> Constraint.t * Ty_template.t

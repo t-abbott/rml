@@ -19,6 +19,26 @@ module Make : functor (Id : IDENT) -> sig
     | Disj of t * t
     | IfThen of t * t * t
 
+  val mk_var : Id.t -> t_body
+  (**
+    [mk_var v = Var v]    
+   *)
+
+  val mk_int : int -> t_body
+  (**
+    [mk_int i = Int i]
+   *)
+
+  val mk_bool : bool -> t_body
+  (**
+    [mk_bool b = Bool b] 
+   *)
+
+  val make_equal : t_body -> t_body -> t
+  (**
+    [make_equal l r] makes a predicate asserting [l = r]        
+    *)
+
   val p_true : t
   (**
     Alias for the unlocated predicate true
@@ -45,4 +65,6 @@ module Make : functor (Id : IDENT) -> sig
   (**
         [sub v x p] substitutes [v] for [x] in [p]    
     *)
+
+  val sub_term : Id.t -> t_body -> t -> t
 end
