@@ -1,3 +1,4 @@
+open Base
 open Typing
 open Ast
 open Errors
@@ -6,6 +7,8 @@ module Tree = Lineartree
 module Ty = Ty_template
 module P = Predicate.Make (Ident)
 module C = Constraint
+
+(* ctx is a typing context, so we need to track the type of every variable we come across *)
 
 let unwrap = function Some p -> p | None -> P.p_true
 
@@ -16,6 +19,16 @@ let error = function
   | `MismatchedTypes ->
       let msg = "" in
       raise (RefinementError (msg, Location.Nowhere))
+  | `ExpectedBase loc ->
+      let msg = "" in
+      raise (RefinementError (msg, loc))
+  | `ExpectedArrow loc ->
+      let msg = "" in
+      raise (RefinementError (msg, loc))
+  | `MismatchedNames (x_expr, x_ty, loc) ->
+      ignore (x_expr, x_ty);
+      let msg = "" in
+      raise (RefinementError (msg, loc))
 
 let impl_constraint (x : Ident.t) (ty : Ty.t) (c : C.t) : Constraint.t =
   ignore (x, ty, c);
@@ -45,6 +58,7 @@ let rec sub (t1 : Ty.t) (t2 : Ty.t) : Constraint.t =
       C.conj c_i impl
   | _ -> error `MismatchedTypes
 
+(* TODO how tf do you handle binops *)
 and synth (ctx : Ty.context) (expr : Tree.t) : Constraint.t * Ty.t =
   match expr.body with
   | Tree.CExpr ce -> synth_cexpr ctx ce
@@ -104,9 +118,65 @@ and synth_aexpr (ctx : Ty.context) (aexpr : Tree.aexpr) =
       (* otherwise check that the stated type is valid *)
       (check_aexpr ctx aexpr aexpr.ty, aexpr.ty)
 
+(* checks that an expression [expr] satisfies the type [ty] *)
 and check (ctx : Ty.context) (expr : Tree.t) (ty : Ty.t) : Constraint.t =
-  ignore (ctx, expr, ty);
-  failwith "not implemented"
+  match expr.body with
+  | Tree.Let (x_id, value, body) ->
+      let x = Ident_core.to_string x_id in
 
-and check_cexpr _ _ _ = failwith "no"
-and check_aexpr _ _ _ = failwith "no"
+      (* generate vc and type for [value] *)
+      let c_value, t_value = synth_cexpr ctx value in
+
+      (* generate vc and type for [body] *)
+      let ctx' = Context.extend x t_value ctx in
+      let c_body = check ctx' body ty in
+
+      C.conj c_value (impl_constraint x t_value c_body)
+  | Tree.CExpr ce -> check_cexpr ctx ce ce.ty
+
+and check_cexpr ctx cexpr ty =
+  match cexpr.body with
+  | Tree.CBinop (_, _, _) -> failwith "binops not supported"
+  | Tree.CAexpr ae -> check_aexpr ctx ae ae.ty
+  | _ ->
+      let c_synth, s = synth_cexpr ctx cexpr in
+      let c_sub = sub s ty in
+      C.conj c_synth c_sub
+
+and check_aexpr ctx aexpr ty =
+  match aexpr.body with
+  | Tree.ALambda (arg_id, body) ->
+      let arg = Ident_core.orig arg_id in
+
+      let x, s, t =
+        match ty.body with
+        | RArrow (x, s, t) ->
+            if String.equal x arg then (x, s, t)
+            else error (`MismatchedNames (x, arg, aexpr.loc))
+        | _ -> error (`ExpectedArrow aexpr.loc)
+      in
+
+      (* jsdkf *)
+      let ctx' = Context.extend x s ctx in
+      let c = check ctx' body t in
+
+      impl_constraint x s c
+  | _ ->
+      let c_synth, s = synth_aexpr ctx aexpr in
+      let c_sub = sub s ty in
+      C.conj c_synth c_sub
+
+let check_command ctx (cmd : Tree.command) : C.t * Ty.context =
+  match cmd with
+  | Tree.LetDef (x, body) ->
+      let c = check ctx body body.ty in
+      let ctx' = Context.extend (Ident_core.to_string x) body.ty ctx in
+      (c, ctx')
+  | Tree.Expr e -> (check ctx e e.ty, ctx)
+
+let rec check_program ctx prog : C.t list =
+  match prog with
+  | cmd :: rest ->
+      let c, ctx' = check_command ctx cmd in
+      c :: check_program ctx' rest
+  | [] -> []

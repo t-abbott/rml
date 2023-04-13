@@ -18,3 +18,4 @@ let fresh =
   f
 
 let var v = Var v
+let orig = function Var v -> v | Sym _ as id -> to_string id

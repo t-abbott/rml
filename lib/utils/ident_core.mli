@@ -17,3 +17,8 @@ val var : string -> t
 (**
   Generates an [Ident.Var] from a variable name.
 *)
+
+val orig : t -> string
+(**
+  Recovers the original string used to generate an ident_core
+*)

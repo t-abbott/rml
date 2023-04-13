@@ -26,3 +26,6 @@ val check : Ty_template.context -> Lineartree.t -> Ty_template.t -> Constraint.t
     [check ctx e t] synthesises a vc [c] such that [c] whose validity implies that
     [e] checks against [t].
 *)
+
+val check_program :
+  Ty_template.context -> Lineartree.program -> Constraint.t list
