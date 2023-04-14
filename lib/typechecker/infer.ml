@@ -118,10 +118,9 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) (ctx : context) =
   | PTree.Binop (op, l, r) ->
       let ty_op = Op.Binop.signature op in
       let l', r' = (type_parsetree l ctx, type_parsetree r ctx) in
-      let body = Binop (op, l', r') in
 
       (* infer the result type *)
-      let ty =
+      let _ =
         match Ty_template.apply_types ty_op [ l'.ty; r'.ty ] with
         | Some ty -> ty
         | None ->
@@ -137,8 +136,26 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) (ctx : context) =
             raise (TypeError (msg, loc))
       in
 
-      (* convert to an equivalent  *)
-      { body; ty; loc }
+      (* desugar binops away by converting to an equivalent function application
+         [a + b] -> [(+ a) b]
+      *)
+      let op_id = Op.Binop.to_ident_core op in
+      let op_expr = TTree.(from (Var op_id) ty_op loc) in
+
+      (* apply the first argument *)
+      let ty_app_l =
+        match Ty_template.apply_types ty_op [ l'.ty ] with
+        | Some ty -> ty
+        | None -> failwith "unreachable; TODO proper error"
+      in
+      let app_l = TTree.(from (Apply (op_expr, l')) ty_app_l loc) in
+
+      let ty_app_r =
+        match Ty_template.apply_types ty_app_l [ r'.ty ] with
+        | Some ty -> ty
+        | _ -> failwith "unreachable; TODO proper error"
+      in
+      TTree.(from (Apply (app_l, r')) ty_app_r loc)
   | PTree.If (cond, ift, iff) ->
       let typed_cond = type_parsetree cond ctx in
       let typed_ift, typed_iff =

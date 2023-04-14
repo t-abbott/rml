@@ -1,6 +1,7 @@
 type t =
   | Var of string
-  | Sym of string option * int
+  | GenSym of string option * int
+  | BuiltinSym of string
       (**
   Internal representation of identifiers for once we start rewriting
   terms.

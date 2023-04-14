@@ -2,13 +2,6 @@ open Utils
 open Typing
 open Typing.Ty_template
 
-(* let t_int = unrefined Base_ty.TInt ~source:Builtin *)
-(* let t_bool = unrefined Base_ty.TBool ~source:Builtin *)
-
-(* let int_int_int = builtin (RArrow ([ t_int; t_int ], t_int))
-   let int_int_bool = builtin (RArrow ([ t_int; t_int ], t_bool))
-   let bool_bool_bool = builtin (RArrow ([ t_bool; t_bool ], t_bool)) *)
-
 module Binop = struct
   type t =
     | Equal
@@ -33,6 +26,8 @@ module Binop = struct
     | Mod -> "%"
     | And -> "&&"
     | Or -> "||"
+
+  let to_ident_core op = Ident_core.BuiltinSym (to_string op)
 
   (* useful aliases *)
   let x, y, z = ("__1", "__2", "__3")
