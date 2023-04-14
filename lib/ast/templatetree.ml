@@ -38,12 +38,12 @@ let rec to_string { body; ty; _ } =
   in
   term_str
 
-type command = Expr of t | LetDef of Ident.t * t
+type command = Expr of t | LetDef of Id.t * t
 
 let command_to_string = function
   | Expr e -> to_string e
-  | LetDef (name, body) ->
-      sprintf "let %s: %s = %s ;;" name
+  | LetDef (name_id, body) ->
+      sprintf "let %s: %s = %s ;;" (Id.to_string name_id)
         (Ty_template.to_string body.ty)
         (to_string body)
 

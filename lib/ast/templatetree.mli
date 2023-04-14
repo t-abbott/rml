@@ -17,7 +17,7 @@ and t_body =
 
 val to_string : t -> string
 
-type command = Expr of t | LetDef of Ident.t * t
+type command = Expr of t | LetDef of Ident_core.t * t
 
 val command_to_string : command -> string
 
