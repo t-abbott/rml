@@ -6,6 +6,7 @@ type t =
   terms.
 *)
 
+val equal : t -> t -> bool
 val to_string : t -> string
 
 val fresh : ?prefix:string -> unit -> t

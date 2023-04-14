@@ -2,6 +2,8 @@ open Printf
 
 type t = Var of string | Sym of string option * int
 
+let equal = ( = )
+
 let to_string = function
   | Var v -> "var_" ^ v
   | Sym (s, i) ->
