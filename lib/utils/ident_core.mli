@@ -14,9 +14,14 @@ val fresh : ?prefix:string -> unit -> t
   Generates a fresh symbol.
 *)
 
+val of_other : t -> t
+(**
+  Generates a fresh identifier from another. 
+*)
+
 val var : string -> t
 (**
-  Generates an [Ident.Var] from a variable name.
+  Generates an [Ident_core.Var] from a variable name.
 *)
 
 val orig : t -> string

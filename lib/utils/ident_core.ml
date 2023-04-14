@@ -20,4 +20,9 @@ let fresh =
   f
 
 let var v = Var v
+
+let of_other = function
+  | Var v -> fresh ~prefix:v ()
+  | s -> fresh ~prefix:(to_string s) ()
+
 let orig = function Var v -> v | Sym _ as id -> to_string id

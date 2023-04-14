@@ -6,6 +6,8 @@ module TTree = Templatetree
 
 type hole = aexpr -> t
 
+let translate_binop op l r = failwith "not implemented"
+
 let initial_hole (ty : Ty_template.t) (loc : Location.t) (ae : aexpr) : t =
   let ca_node = node_of (CAexpr ae) ty loc in
   let ce_node = node_of (CExpr ca_node) ty loc in
@@ -14,7 +16,7 @@ let initial_hole (ty : Ty_template.t) (loc : Location.t) (ae : aexpr) : t =
 let rec anf_inner (expr : TTree.t) (hole : hole) : t =
   let ty, loc = (expr.ty, expr.loc) in
   match expr.body with
-  | TTree.Var v -> node_of (AVar (Ident_core.var v)) ty loc |> hole
+  | TTree.Var v -> node_of (AVar v) ty loc |> hole
   | TTree.Number n -> node_of (ANumber n) ty loc |> hole
   | TTree.Boolean b -> node_of (ABoolean b) ty loc |> hole
   | TTree.Binop (op, l, r) ->
@@ -37,15 +39,14 @@ let rec anf_inner (expr : TTree.t) (hole : hole) : t =
                   let res = node_of (CIf (c_ae, t_ae, f_ae)) ty loc in
                   node_of (Let (res_name, res, hole res_name_node)) ty loc)))
   | TTree.LetIn (var_name, value, rest) ->
-      let new_name = Ident_core.var var_name in
+      let new_name = Ident_core.of_other var_name in
 
       anf_inner value (fun v_ae ->
           let value_node = node_of (CAexpr v_ae) ty loc in
           node_of (Let (new_name, value_node, anf_inner rest hole)) ty loc)
   | TTree.Fun (param, body) ->
-      let new_param = Ident_core.var param in
       let new_body = anf body in
-      node_of (ALambda (new_param, new_body)) ty loc |> hole
+      node_of (ALambda (param, new_body)) ty loc |> hole
   | TTree.Apply (fn, arg) ->
       let res_name = Ident_core.fresh () in
       let res_name_node = node_of (AVar res_name) ty loc in
@@ -62,8 +63,6 @@ and anf (expr : TTree.t) =
 
 let anf_command = function
   | TTree.Expr e -> Expr (anf e)
-  | TTree.LetDef (name, body) ->
-      let new_name = Ident_core.var name in
-      LetDef (new_name, anf body)
+  | TTree.LetDef (name, body) -> LetDef (name, anf body)
 
 let anf_program = List.map anf_command
