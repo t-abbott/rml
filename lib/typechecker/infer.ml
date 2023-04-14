@@ -6,13 +6,15 @@ open Typing
 open Utils
 open Errors
 open Check_refinements
-
-(* open Ref_checks *)
 module PTree = Ast.Parsetree
 module TTree = Ast.Templatetree
+module Id = Ident_core
 module L = Location
 
-type context = Ty_template.t Context.t
+(* typing context *)
+module TCtx = Context.Make (Ident_core)
+
+type context = Ty_template.t TCtx.t
 
 let t_int = Ty_template.t_num "v"
 let t_bool = Ty_template.t_bool "v"
@@ -89,7 +91,7 @@ let curry params body loc =
     ~f:(fun (x, ty) body -> TTree.from (Fun (x, body)) ty loc)
     ~init:body
 
-let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
+let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) (ctx : context) =
   let loc = pt.loc in
   match pt.body with
   | PTree.Number i ->
@@ -101,34 +103,42 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
       let ty = t_bool in
       { body; ty; loc }
   | PTree.Var v ->
+      let v_id = Id.var v in
+
       let ty =
-        match Context.find v ctx with
+        match TCtx.find v_id ctx with
         | Some ty' -> ty'
         | None ->
             (* TODO: handle this in a semantic analysis pass on the parsetree? *)
             let msg = sprintf "reference to unknown variable '%s'" v in
             raise (NameError (msg, loc))
       in
-      let body = Var v in
+      let body = Var (Id.var v) in
       { body; ty; loc }
-  | PTree.Binop (op, l, r) -> (
+  | PTree.Binop (op, l, r) ->
       let ty_op = Op.Binop.signature op in
       let l', r' = (type_parsetree l ctx, type_parsetree r ctx) in
       let body = Binop (op, l', r') in
 
-      match Ty_template.apply_types ty_op [ l'.ty; r'.ty ] with
-      | Some ty -> { body; ty; loc }
-      | None ->
-          let msg =
-            sprintf
-              "arguments of type '%s' and '%s' did not match expected type \
-               '%s' for operator '%s'"
-              (Ty_template.to_string l'.ty)
-              (Ty_template.to_string r'.ty)
-              (Ty_template.to_string ty_op)
-              (Op.Binop.to_string op)
-          in
-          raise (TypeError (msg, loc)))
+      (* infer the result type *)
+      let ty =
+        match Ty_template.apply_types ty_op [ l'.ty; r'.ty ] with
+        | Some ty -> ty
+        | None ->
+            let op_str, l_str, r_str =
+              Misc.proj3 Ty_template.to_string ty_op l'.ty r'.ty
+            in
+            let msg =
+              sprintf
+                "arguments of type '%s' and '%s' did not match expected type \
+                 '%s' for operator '%s'"
+                l_str r_str op_str (Op.Binop.to_string op)
+            in
+            raise (TypeError (msg, loc))
+      in
+
+      (* convert to an equivalent  *)
+      { body; ty; loc }
   | PTree.If (cond, ift, iff) ->
       let typed_cond = type_parsetree cond ctx in
       let typed_ift, typed_iff =
@@ -153,10 +163,12 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
         raise (TypeError (msg, loc))
       else { body; ty; loc }
   | PTree.LetIn (name, value, rest) ->
+      let name_id = Id.var name in
+
       (* check if a type for [name] as already been stated
          if so, add it to the context
       *)
-      let val_ty = Context.find name ctx in
+      let val_ty = TCtx.find name_id ctx in
 
       (* infer a type for the typed body *)
       let typed_value = type_parsetree ~ty_stated:val_ty value ctx in
@@ -180,22 +192,25 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
 
       (* add the type of [name] to the context *)
       let ty = typed_value.ty in
-      let ctx' = Context.extend name ty ctx in
+      let ctx' = TCtx.extend name_id ty ctx in
 
       (* check the inferred expression *)
       let typed_rest = type_parsetree rest ctx' in
 
-      let body = LetIn (name, typed_value, typed_rest) in
+      let body = LetIn (Id.var name, typed_value, typed_rest) in
       { body; ty; loc }
   | PTree.ValIn (name, ty, rest) ->
+      let name_id = Id.var name in
       let ty = check_ref ty in
 
       (* add the declared type to the context *)
-      let ctx' = Context.extend name ty ctx in
+      let ctx' = TCtx.extend name_id ty ctx in
 
       (* then process the rest of the tree *)
       type_parsetree rest ctx'
   | PTree.Fun (params, body) ->
+      let param_ids = List.map params ~f:Id.var in
+
       (* check that we have an expected type of the function through a valdef *)
       let val_ty =
         match ty_stated with
@@ -213,10 +228,10 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
 
       let param_ty_pairs, fn_ty_pairs =
         (* check that the number of parateters matches the number of signatures *)
-        match (pair_args params param_tys, pair_args params fn_tys) with
+        match (pair_args param_ids param_tys, pair_args param_ids fn_tys) with
         | Some p_pairs, Some fn_pairs -> (p_pairs, fn_pairs)
         | _, _ ->
-            let n_defn_params = List.length params in
+            let n_defn_params = List.length param_ids in
             let n_sig_params = List.length fn_tys - 1 in
 
             let msg =
@@ -231,7 +246,7 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) ctx =
       (* 2. then add the arguments to the context and check the type of the body *)
       let ctx' =
         List.fold param_ty_pairs ~init:ctx ~f:(fun c (x, ty) ->
-            Context.extend x ty c)
+            TCtx.extend x ty c)
       in
       let typed_body = type_parsetree body ctx' in
 
@@ -338,13 +353,16 @@ let type_command (cmd : PTree.command) (ctx : context) :
       let ttree = type_parsetree ptree ctx in
       (Some (Expr ttree), ctx)
   | PTree.ValDef (name, ty) ->
+      let name_id = Id.var name in
       let ty = check_ref ty in
 
       (* extend the context with the val annotation and move on *)
-      (None, Context.extend name ty ctx)
+      (None, TCtx.extend name_id ty ctx)
   | PTree.LetDef (name, defn) ->
+      let name_id = Id.var name in
+
       (* test if a type has been provided in a prior [val] statement *)
-      let val_ty = Context.find name ctx in
+      let val_ty = TCtx.find name_id ctx in
 
       (* infer the type of [defn] *)
       let defn_t = type_parsetree ~ty_stated:val_ty defn ctx in
@@ -353,8 +371,8 @@ let type_command (cmd : PTree.command) (ctx : context) :
       ignore (check_tys_match cmd.loc ~ty_stated:val_ty ~ty_inferred:defn_t.ty);
 
       (* otherwise the expression is well-typed and we can add it to the environment *)
-      let ctx' = Context.extend name defn_t.ty ctx in
-      (Some (LetDef (name, defn_t)), ctx')
+      let ctx' = TCtx.extend name_id defn_t.ty ctx in
+      (Some (LetDef (name_id, defn_t)), ctx')
 
 let rec type_program prog ctx =
   match prog with
