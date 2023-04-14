@@ -5,8 +5,8 @@ open Utils
 module TTree = Templatetree
 
 type hole = aexpr -> t
-
-let translate_binop op l r = failwith "not implemented"
+(*
+   let translate_binop op l r = failwith "not implemented" *)
 
 let initial_hole (ty : Ty_template.t) (loc : Location.t) (ae : aexpr) : t =
   let ca_node = node_of (CAexpr ae) ty loc in
@@ -38,12 +38,10 @@ let rec anf_inner (expr : TTree.t) (hole : hole) : t =
               anf_inner if_f (fun f_ae ->
                   let res = node_of (CIf (c_ae, t_ae, f_ae)) ty loc in
                   node_of (Let (res_name, res, hole res_name_node)) ty loc)))
-  | TTree.LetIn (var_name, value, rest) ->
-      let new_name = Ident_core.of_other var_name in
-
+  | TTree.LetIn (name, value, rest) ->
       anf_inner value (fun v_ae ->
           let value_node = node_of (CAexpr v_ae) ty loc in
-          node_of (Let (new_name, value_node, anf_inner rest hole)) ty loc)
+          node_of (Let (name, value_node, anf_inner rest hole)) ty loc)
   | TTree.Fun (param, body) ->
       let new_body = anf body in
       node_of (ALambda (param, new_body)) ty loc |> hole
