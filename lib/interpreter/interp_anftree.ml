@@ -6,18 +6,20 @@ open Errors
 open Utils
 
 module Make (Ty : TYPE) = struct
+  module Id = Ident_core
   module Tree = Anftree.Make (Ty)
-  module TEnv = Env.Make (Tree)
+  module TEnv = Env.Make (Id) (Tree)
 
   let rec eval_aexpr (ae : Tree.aexpr) env =
     match ae.body with
     | Tree.ANumber _ | Tree.ABoolean _ -> TEnv.Value (Tree.t_of_aexpr ae)
     | Tree.AVar v -> (
-        let name = Ident_core.to_string v in
-        match TEnv.find name env with
+        match TEnv.find v env with
         | Some value -> value
         | None ->
-            let msg = sprintf "reference to unknown variable %s" name in
+            let msg =
+              sprintf "reference to unknown variable %s" (Id.to_string v)
+            in
             raise (InterpError (msg, ae.loc)))
     | Tree.ALambda _ ->
         let fn = Tree.t_of_aexpr ae in
@@ -38,9 +40,7 @@ module Make (Ty : TYPE) = struct
         in
 
         (* extend the env of [fn] to contain [arg] *)
-        let new_env =
-          TEnv.extend (Ident_core.to_string param) arg' closed_env
-        in
+        let new_env = TEnv.extend param arg' closed_env in
 
         (* evaluate the body of [fn] *)
         eval fn_body new_env
@@ -142,8 +142,7 @@ module Make (Ty : TYPE) = struct
 
   and eval (expr : Tree.t) (env : TEnv.t) : TEnv.envval =
     match expr.body with
-    | Tree.Let (id, value, rest) ->
-        let name = Ident_core.to_string id in
+    | Tree.Let (name, value, rest) ->
         let res = eval_cexpr value env in
         let env' = TEnv.extend name res env in
         eval rest env'
@@ -154,7 +153,7 @@ module Make (Ty : TYPE) = struct
     | Tree.LetDef (name, defn) ->
         let var = Tree.var name defn.ty defn.loc in
         let value = eval defn env in
-        let new_env = TEnv.extend (Ident_core.to_string name) value env in
+        let new_env = TEnv.extend name value env in
         (TEnv.Value var, new_env)
     | Tree.Expr e -> (eval e env, env)
 

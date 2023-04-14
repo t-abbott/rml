@@ -4,7 +4,7 @@ open Ast
 open Ast.Templatetree
 open Errors
 module L = Utils.Location
-module TTEnv = Env.Make (Templatetree)
+module TTEnv = Env.Make (Utils.Ident_core) (Templatetree)
 
 let placeholder_ty = Ty_template.t_bool "v"
 

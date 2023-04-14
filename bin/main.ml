@@ -18,7 +18,7 @@ let format_location loc =
 let main filename =
   try
     parse_file filename
-    |> (fun p -> Infer.type_program p Utils.Context.empty)
+    |> (fun p -> Infer.type_program p [])
     |> Anf.anf_program |> Interp.ltree |> Interp.LTEnv.to_string |> ( ^ ) "\n"
     |> Stdio.print_endline
   with
