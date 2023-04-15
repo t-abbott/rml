@@ -19,16 +19,6 @@ let rec anf_inner (expr : TTree.t) (hole : hole) : t =
   | TTree.Var v -> node_of (AVar v) ty loc |> hole
   | TTree.Number n -> node_of (ANumber n) ty loc |> hole
   | TTree.Boolean b -> node_of (ABoolean b) ty loc |> hole
-  | TTree.Binop (op, l, r) ->
-      (* assign the result of [op l r] to a variable and return the variable *)
-      let res_name = Ident_core.fresh () in
-      let res_name_node = node_of (AVar res_name) ty loc in
-
-      (* convert the left and right branches *)
-      anf_inner l (fun l_ae ->
-          anf_inner r (fun r_ae ->
-              let res = node_of (CBinop (op, l_ae, r_ae)) ty loc in
-              node_of (Let (res_name, res, hole res_name_node)) ty loc))
   | TTree.If (cond, if_t, if_f) ->
       let res_name = Ident_core.fresh () in
       let res_name_node = node_of (AVar res_name) ty loc in

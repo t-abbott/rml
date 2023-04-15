@@ -8,7 +8,11 @@ module type ENV = functor (Id : IDENT) (Tree : SYNTAXTREE) -> sig
   module Ctx : module type of Context.Make (Id)
 
   type t = envval Ctx.t
-  and envval = Closure of Tree.t * t | Value of Tree.t
+
+  and envval =
+    | Closure of Tree.t * t
+    | Value of Tree.t
+    | Internal of (Tree.t -> envval) * t
 
   val to_string : envval -> string
   val empty : t

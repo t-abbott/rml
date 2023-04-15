@@ -1,6 +1,5 @@
 open Printf
 open Typing
-open Op
 open Utils
 module PTree = Parsetree
 module Id = Ident_core
@@ -11,7 +10,6 @@ and t_body =
   | Var of Id.t
   | Number of float
   | Boolean of bool
-  | Binop of Binop.t * t * t
   | If of t * t * t
   | LetIn of Id.t * t * t
   | Fun of Id.t * t
@@ -24,8 +22,6 @@ let rec to_string { body; ty; _ } =
     | Var v -> Id.to_string v
     | Number n -> Float.to_string n
     | Boolean b -> Bool.to_string b
-    | Binop (op, l, r) ->
-        sprintf "%s %s %s" (to_string l) (Binop.to_string op) (to_string r)
     | If (cond, if_t, if_f) ->
         sprintf "if %s then %s else %s" (to_string cond) (to_string if_t)
           (to_string if_f)

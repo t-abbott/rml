@@ -4,7 +4,8 @@ open Out_channel
 open Parser.Api
 open Typechecker
 open Interpreter
-open Lowering
+
+(* open Lowering *)
 open Utils
 
 let version = Utils.Version.version
@@ -19,7 +20,8 @@ let main filename =
   try
     parse_file filename
     |> (fun p -> Infer.type_program p [])
-    |> Anf.anf_program |> Interp.ltree |> Interp.LTEnv.to_string |> ( ^ ) "\n"
+    |> Interp.ttree |> Interp_ttree.TTEnv.to_string
+    (* |> Anf.anf_program |> Interp.ltree |> Interp.LTEnv.to_string |> ( ^ ) "\n" *)
     |> Stdio.print_endline
   with
   | Parser.Errors.ParseError (message, loc) ->

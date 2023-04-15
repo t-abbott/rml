@@ -15,6 +15,11 @@ val fresh : ?prefix:string -> unit -> t
   Generates a fresh symbol.
 *)
 
+val of_string : string -> t
+(**
+  Generates a symbol from a string.    
+*)
+
 val of_other : t -> t
 (**
   Generates a fresh identifier from another. 

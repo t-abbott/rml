@@ -87,11 +87,7 @@ and synth_cexpr (ctx : Ty.context) (cexpr : Tree.cexpr) : C.t * Ty.t =
         | Tree.ABoolean b -> R.P.mk_bool b
         | Tree.AVar v_core ->
             (* recover the original name of the variable being projected into a type *)
-            let v_orig =
-              match v_core with
-              | Ident_core.Var v -> v
-              | Ident_core.Sym _ -> Ident_core.to_string v_core
-            in
+            let v_orig = Ident_core.orig v_core in
             R.P.mk_var v_orig
         | Tree.ALambda _ -> failwith "can't substitute a function"
       in
@@ -136,7 +132,6 @@ and check (ctx : Ty.context) (expr : Tree.t) (ty : Ty.t) : Constraint.t =
 
 and check_cexpr ctx cexpr ty =
   match cexpr.body with
-  | Tree.CBinop (_, _, _) -> failwith "binops not supported"
   | Tree.CAexpr ae -> check_aexpr ctx ae ae.ty
   | _ ->
       let c_synth, s = synth_cexpr ctx cexpr in

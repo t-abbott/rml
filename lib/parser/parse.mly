@@ -1,5 +1,5 @@
 %{
-  open Ast.Op
+  open Typing.Op
   open Ast.Parsetree
   open Typing
 

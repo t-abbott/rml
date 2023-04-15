@@ -20,6 +20,7 @@ let fresh =
   in
   f
 
+let of_string s = fresh ~prefix:s ()
 let var v = Var v
 
 let of_other = function

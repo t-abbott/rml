@@ -1,6 +1,5 @@
 open Typing.Ty_sig
 open Utils
-open Op
 
 (**
   Creates an ANF syntax tree from a type [Ty]. 
@@ -28,7 +27,6 @@ module Make : functor (Ty : TYPE) -> sig
   (** A complex expression. *)
 
   and cexpr_body =
-    | CBinop of Binop.t * aexpr * aexpr
     | CIf of aexpr * aexpr * aexpr
     | CApply of aexpr * aexpr
     | CAexpr of aexpr

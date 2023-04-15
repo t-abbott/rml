@@ -1,6 +1,5 @@
 open Base
 open Printf
-open Ast
 open Ast.Templatetree
 open Typing
 open Utils
@@ -116,7 +115,7 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) (ctx : context) =
       let body = Var (Id.var v) in
       { body; ty; loc }
   | PTree.Binop (op, l, r) ->
-      let ty_op = Op.Binop.signature op in
+      let ty_op = Ty_template.ty_of_op op in
       let l', r' = (type_parsetree l ctx, type_parsetree r ctx) in
 
       (* infer the result type *)

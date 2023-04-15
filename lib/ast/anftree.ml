@@ -1,7 +1,6 @@
 open Typing.Ty_sig
 open Printf
 open Utils
-open Op
 
 module Make (Ty : TYPE) = struct
   type 'a astnode = { body : 'a; ty : Ty.t; loc : Location.t }
@@ -26,7 +25,6 @@ module Make (Ty : TYPE) = struct
   (** A complex expression. *)
 
   and cexpr_body =
-    | CBinop of Binop.t * aexpr * aexpr
     | CIf of aexpr * aexpr * aexpr
     | CApply of aexpr * aexpr
     | CAexpr of aexpr
@@ -53,10 +51,6 @@ module Make (Ty : TYPE) = struct
 
   and cexpr_to_string (ce : cexpr) =
     match ce.body with
-    | CBinop (op, l, r) ->
-        let op_str = Binop.to_string op in
-        let l_str, r_str = Misc.proj2 aexpr_to_string l r in
-        sprintf "%s %s %s" l_str op_str r_str
     | CIf (cond, if_t, if_f) ->
         let cond_str = aexpr_to_string cond in
         let if_t_str, if_f_str = Misc.proj2 aexpr_to_string if_t if_f in

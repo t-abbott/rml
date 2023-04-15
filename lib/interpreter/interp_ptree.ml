@@ -1,7 +1,7 @@
 open Printf
 open Base
 open Ast
-open Ast.Op
+open Typing.Op
 open Ast.Parsetree
 open Errors
 module L = Utils.Location

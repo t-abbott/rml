@@ -29,4 +29,7 @@ module type TYPE = sig
   (**
       [to_string ty] pretty-prints [ty].    
     *)
+
+  val apply_types : t -> t list -> t option
+  val ty_of_op : Op.Binop.t -> t
 end

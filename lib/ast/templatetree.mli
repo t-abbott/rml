@@ -1,5 +1,4 @@
 open Typing
-open Op
 open Utils
 module PTree = Parsetree
 
@@ -9,7 +8,6 @@ and t_body =
   | Var of Ident_core.t
   | Number of float
   | Boolean of bool
-  | Binop of Binop.t * t * t
   | If of t * t * t
   | LetIn of Ident_core.t * t * t
   | Fun of Ident_core.t * t

@@ -12,7 +12,11 @@ module type ENV = functor (Id : IDENT) (Tree : SYNTAXTREE) -> sig
   module Ctx : module type of Context.Make (Id)
 
   type t = envval Ctx.t
-  and envval = Closure of Tree.t * t | Value of Tree.t
+
+  and envval =
+    | Closure of Tree.t * t
+    | Value of Tree.t
+    | Internal of (Tree.t -> envval) * t
 
   val to_string : envval -> string
   val empty : t
@@ -29,11 +33,16 @@ functor
     module Ctx = Context.Make (Id)
 
     type t = envval Ctx.t
-    and envval = Closure of Tree.t * t | Value of Tree.t
+
+    and envval =
+      | Closure of Tree.t * t
+      | Value of Tree.t
+      | Internal of (Tree.t -> envval) * t
 
     let to_string = function
       | Value v -> Tree.to_string v
       | Closure (_, _) -> "[closure]"
+      | Internal (_, _) -> "[builtin]"
 
     let empty = empty
     let find name env = Ctx.find name env

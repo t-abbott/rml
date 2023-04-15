@@ -46,6 +46,13 @@ functor
       | RBase _ -> [ ty ]
       | RArrow (_, s, t) -> s :: flatten t
 
+    let rec apply_types f_ty arg_tys =
+      match (f_ty.body, arg_tys) with
+      | ty, [] -> Some (inferred ty)
+      | RArrow (_, s, t), x :: xs ->
+          if equal_base s x then apply_types t xs else None
+      | _ -> None
+
     let rec arity ty =
       match ty.body with RBase _ -> 0 | RArrow (_, _, t) -> 1 + arity t
 
@@ -82,4 +89,44 @@ functor
       in [ty]
     *)
     let sub_term = mk_sub R.P.sub_term
+
+    (* helpers for constructing base types *)
+    let t_bool ?(pred = None) vname =
+      builtin (RBase { vname; base = Base_ty.TBool; pred })
+
+    let t_num ?(pred = None) vname =
+      builtin (RBase { vname; base = Base_ty.TInt; pred })
+
+    (* useful aliases for binop type generation *)
+    let v = Id.of_string "v"
+    let x, y, z = Misc.proj3 Id.of_string "__1" "__2" "__3"
+
+    type ty_builder = ?pred:R.P.t option -> Id.t -> t
+
+    let mk_equal v p : R.P.t =
+      let ul = Location.unlocated in
+      let open R.P in
+      ul (IntOp (InterpOp.Equal, ul (Var v), p))
+
+    let make_binop_ty mk_s1 mk_s2 (mk_t : ty_builder) mk_p =
+      let pred = Some (mk_equal z (mk_p x y)) in
+      let t = mk_t ~pred z in
+      let s1 = mk_s1 v in
+      let s2 = mk_s2 v in
+      let g = builtin (RArrow (y, s2, t)) in
+      builtin (RArrow (x, s1, g))
+
+    let ty_of_op =
+      let open Op.Binop in
+      function
+      | Equal -> make_binop_ty t_num t_num t_bool R.P.p_equal
+      | Less -> make_binop_ty t_num t_bool t_bool R.P.p_less
+      | Greater -> make_binop_ty t_num t_num t_bool R.P.p_greater
+      | Plus -> make_binop_ty t_num t_num t_num R.P.p_add
+      | Minus -> make_binop_ty t_num t_num t_num R.P.p_sub
+      | Times -> make_binop_ty t_num t_num t_num R.P.p_mult
+      | Div -> make_binop_ty t_num t_num t_num R.P.p_div
+      | Mod -> make_binop_ty t_num t_num t_num R.P.p_mod
+      | And -> make_binop_ty t_num t_num t_num R.P.p_and
+      | Or -> make_binop_ty t_num t_num t_num R.P.p_or
   end
