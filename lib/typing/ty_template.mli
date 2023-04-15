@@ -16,27 +16,6 @@ val unrefined : ?source:Source.t -> Ident.t -> Base_ty.t -> t
 val builtin : t_body -> t
 val inferred : t_body -> t
 
-val apply_types : t -> t list -> t option
-(**
-  [apply_types ty_f ty_xs] returns the resulting type after applying the types [ty_xs] to
-  the type [ty_f].
-
-  For example, [apply_types (RArrow ([TInt], TInt)) TInt] corresponds to applying a value
-  of type [num] to a function of type [num -> num], and therefore evaluates to [TInt].
-
-  Returns [None] in the event of a type mismatch (e.g. applying a type to a base type)
-*)
-
-val t_bool : ?pred:R.P.t option -> Ident.t -> t
-(**
-  Useful alias for [builtin (RBase (Base_ty.TBool, None))]
-*)
-
-val t_num : ?pred:R.P.t option -> Ident.t -> t
-(**
-  builtin (RBase (Base_ty.TInt, None))    
-*)
-
 val prim_int : ?source:Source.t -> int -> t
 (**
   [prim_int i] constructs a primitive [RBase] corresponding

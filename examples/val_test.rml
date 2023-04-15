@@ -1,7 +1,11 @@
 val inc : x:num -> num[y | y = (x + 1)] ;; 
 let inc = (fun x -> 
+    // here we desugar the "+" in into builtin 
+    // function application
+
     val f : a:num -> num[b | b = (a + 1)] in  
     let f = (fun y -> y + 1) in
+    
     f x
 ) ;;
 

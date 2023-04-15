@@ -1,11 +1,11 @@
 open Printf
 open Base
 open Ast
-open Ast.Op
+open Typing.Op
 open Ast.Parsetree
 open Errors
 module L = Utils.Location
-module PTEnv = Env.Make (Parsetree)
+module PTEnv = Env.Make (Utils.Ident) (Parsetree)
 
 let placeholder = PTEnv.Value (L.unlocated (Number 0.))
 

@@ -3,8 +3,9 @@ open Typing
 open Ast
 open Ast.Templatetree
 open Errors
-module L = Utils.Location
-module TTEnv = Env.Make (Templatetree)
+open Utils
+module L = Location
+module TTEnv = Env.Make (Utils.Ident_core) (Templatetree)
 
 let placeholder_ty = Ty_template.t_bool "v"
 
@@ -15,11 +16,14 @@ let rec eval expr env =
   let loc = expr.loc in
   match expr.body with
   | Var v -> (
-      match TTEnv.find v env with
-      | Some value -> value
-      | _ -> unreachable ~reason:"sema should detect unbound variables" ~loc)
+      match v with
+      | BuiltinSym _ -> TTEnv.Value expr
+      | _ -> (
+          match TTEnv.find v env with
+          | Some value -> value
+          | _ -> unreachable ~reason:"sema should detect unbound variables" ~loc
+          ))
   | Number _ | Boolean _ -> Value expr
-  | Binop (op, l, r) -> eval_binop (op, l, r) env
   | If (cond, if_t, if_f) ->
       if eval_bool cond env then eval if_t env else eval if_f env
   | LetIn (name, value, body) ->
@@ -29,6 +33,17 @@ let rec eval expr env =
   | Apply (f, arg) -> (
       let arg' = eval arg env in
       match eval f env with
+      | Value { body = Var v; _ } -> (
+          (* check if we're trying to call a builtin function *)
+          match v with
+          | Utils.Ident_core.BuiltinSym s ->
+              let op = Op.Binop.of_string s in
+              let eval_fn r = eval_binop (op, arg, r) env in
+              Internal (eval_fn, env)
+          | _ -> unreachable ~reason:"" ~loc)
+      | Internal (fn, _) ->
+          (* also a builtin function *)
+          fn arg
       | Closure ({ body = Fun (param, body); _ }, closed_env) ->
           let new_env = TTEnv.extend param arg' closed_env in
           eval body new_env
@@ -52,7 +67,8 @@ and eval_bool expr env =
         ~reason:"expression should have been checked to reduce to a boolean"
         ~loc:expr.loc
 
-and eval_binop (op, l, r) env =
+and eval_binop (op, l, r) (env : TTEnv.t) =
+  let open TTEnv in
   let t_bool = Ty_template.t_bool "v" in
   let t_int = Ty_template.t_num "v" in
 

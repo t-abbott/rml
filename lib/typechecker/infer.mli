@@ -3,7 +3,7 @@ open Utils
 module PTree = Ast.Parsetree
 module TTree = Ast.Templatetree
 
-type context = Ty_template.t Context.t
+type context = Ty_template.t Context.Make(Ident_core).t
 
 val type_parsetree :
   ?ty_stated:Ty_template.t option -> PTree.t -> context -> TTree.t

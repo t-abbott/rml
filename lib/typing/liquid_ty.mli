@@ -66,6 +66,17 @@ module Make : functor (Id : IDENT) -> sig
     [num -> bool -> num] -> [[num; bool; num]]
    *)
 
+  val apply_types : t -> t list -> t option
+  (**
+     [apply_types ty_f ty_xs] returns the resulting type after applying the types [ty_xs] to
+     the type [ty_f].
+   
+     For example, [apply_types (RArrow ([TInt], TInt)) TInt] corresponds to applying a value
+     of type [num] to a function of type [num -> num], and therefore evaluates to [TInt].
+   
+     Returns [None] in the event of a type mismatch (e.g. applying a type to a base type)
+   *)
+
   val arity : t -> int
   (**
     [arity ty] returns the number of arguments taken by the
@@ -83,4 +94,8 @@ module Make : functor (Id : IDENT) -> sig
     [sub_term v p ty] performs capture-avoiding substitution of [v] for the term [p] in
     predicates bound under the type [ty]
     *)
+
+  val t_bool : ?pred:R.P.t option -> Id.t -> t
+  val t_num : ?pred:R.P.t option -> Id.t -> t
+  val ty_of_op : Op.Binop.t -> t
 end

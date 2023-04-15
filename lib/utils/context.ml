@@ -1,12 +1,22 @@
 open Base
+open Ident_sig
 
-type 'a t = (string * 'a) list
+module Make =
+functor
+  (Id : IDENT)
+  ->
+  struct
+    type 'a t = (Id.t * 'a) list
 
-(*
-  TODO: make this a functor to contexts and environments
-  can share the same code?   
+    let empty = []
+
+    let find (name : Id.t) (ctx : 'a t) =
+      List.Assoc.find ctx name ~equal:Id.equal
+
+    let extend (name : Id.t) value env = (name, value) :: env
+  end
+
+(* default context type
+   this is nasty but I'm keeping it for compat
 *)
-
-let empty = []
-let find name ctx = List.Assoc.find ctx name ~equal:String.equal
-let extend name value env = (name, value) :: env
+include Make (Ident)
