@@ -1,0 +1,5 @@
+val fail : x:num[v | v > 10] -> num[v | v = x] ;;
+let fail = (fun x -> x) ;; 
+
+// this should go wrong
+fail 0 

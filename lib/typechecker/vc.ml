@@ -48,9 +48,6 @@ let unwrap (p : Ty.R.P.t option) =
   match p with Some p -> p | None -> error `MissingRefinement
 
 let impl_constraint (x : Ident.t) (ty : Ty.t) (c : C.t) : Constraint.t =
-  (* not sure why we ignore it lol *)
-  ignore x;
-  Stdlib.print_endline ("impl constraint x: " ^ x);
   match ty.body with
   | Ty.RBase { vname; base; pred = Some p } ->
       let p' = P.sub vname x p in

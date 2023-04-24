@@ -61,25 +61,24 @@ let rec encode_constraint (ctx : sort_ctx) (c : C.t) =
   | C.Impl { x; base; p; c } ->
       let sort = sort_of_ty base in
       let ctx' = Ctx.extend x sort ctx in
-      let p_forall = encode_forall ctx' x sort p in
+      let p_expr = encode_predicate ctx' p in
       let c_expr = encode_constraint ctx' c in
-      Z3.Boolean.mk_implies z3_ctx p_forall c_expr
+      let expr = Z3.Boolean.mk_implies z3_ctx p_expr c_expr in
+      encode_forall x sort expr
 
-and encode_forall ctx x sort p =
+and encode_forall x sort expr =
   let open Z3.Quantifier in
   let x_sym = Z3.Symbol.mk_string z3_ctx x in
   let x_expr = Z3.Expr.mk_const z3_ctx x_sym sort in
-  let p_expr = encode_predicate ctx p in
-  mk_forall_const z3_ctx [ x_expr ] p_expr (Some 1) [] [] None None
+  mk_forall_const z3_ctx [ x_expr ] expr (Some 1) [] [] None None
   |> expr_of_quantifier
 
 let solve c =
   let c_expr = encode_constraint [] c in
   Stdlib.print_endline ("\nZ3 encoding:\n" ^ Z3.Expr.to_string c_expr);
 
-  let c_simple = Z3.Expr.simplify c_expr None in
-  Stdlib.print_endline ("\nsimplified to:\n" ^ Z3.Expr.to_string c_simple);
-
+  (* let c_simple = Z3.Expr.simplify c_expr None in *)
+  (* Stdlib.print_endline ("\nsimplified to:\n" ^ Z3.Expr.to_string c_simple); *)
   let solver = Z3.Solver.mk_solver_s z3_ctx logic in
   Z3.Solver.add solver [ c_expr ];
 
