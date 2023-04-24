@@ -50,8 +50,11 @@ let unwrap (p : Ty.R.P.t option) =
 let impl_constraint (x : Ident.t) (ty : Ty.t) (c : C.t) : Constraint.t =
   (* not sure why we ignore it lol *)
   ignore x;
+  Stdlib.print_endline ("impl constraint x: " ^ x);
   match ty.body with
-  | Ty.RBase { vname; base; pred = Some p } -> C.impl vname base p c
+  | Ty.RBase { vname; base; pred = Some p } ->
+      let p' = P.sub vname x p in
+      C.impl x base p' c
   | Ty.RBase { pred = None; _ } -> error `MissingRefinement
   | Ty.RArrow _ -> c
 
@@ -183,6 +186,8 @@ and check_aexpr ctx aexpr ty =
             else error (`MismatchedNames (x, arg, aexpr.loc))
         | _ -> error (`ExpectedArrow aexpr.loc)
       in
+
+      (* do I need to rename [x] for [arg] in s/c? TODO fix *)
 
       (* jsdkf *)
       let ctx' = Context.extend Ident_core.(var x |> to_string) s ctx in
