@@ -1,5 +1,8 @@
-val fail : x:num[v | v > 10] -> num[v | v = x] ;;
-let fail = (fun x -> x) ;; 
+val fail : x:num[v | v > 10] -> num[v | v > 11] ;;
+let fail = (fun x -> x + 1) ;; 
 
-// this should go wrong
-fail 0 
+// this shouldn't go wrong
+fail 11 ;;
+
+// this should
+fail 10

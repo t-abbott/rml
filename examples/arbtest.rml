@@ -1,0 +1,7 @@
+val f : x:num[v | v > 10] -> num[v | v > 20] ;; 
+let f = (fun x -> x * 2) ;; 
+
+val x : num ;; 
+let x = 40 ;;
+
+f x

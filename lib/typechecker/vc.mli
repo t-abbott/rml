@@ -28,4 +28,8 @@ val check : Ty_template.context -> Lineartree.t -> Ty_template.t -> Constraint.t
 *)
 
 val check_program :
-  Ty_template.context -> Lineartree.program -> Constraint.t list
+  Ty_template.context -> Lineartree.program -> (Constraint.t * Location.t) list
+(**
+    [check_program ctx prog] returns a list of pairs of verification conditions with
+    the location of the expression they verify.
+*)

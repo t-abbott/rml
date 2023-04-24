@@ -1,3 +1,4 @@
+open Printf
 open Utils
 module C = Constraint
 module Ty = Typing.Ty_template
@@ -75,10 +76,13 @@ and encode_forall x sort expr =
 
 let solve c =
   let c_expr = encode_constraint [] c in
-  Stdlib.print_endline ("\nZ3 encoding:\n" ^ Z3.Expr.to_string c_expr);
 
-  (* let c_simple = Z3.Expr.simplify c_expr None in *)
-  (* Stdlib.print_endline ("\nsimplified to:\n" ^ Z3.Expr.to_string c_simple); *)
+  Log.log (sprintf "got vc:\n\n%s\n" (C.to_string c));
+  Log.log (sprintf "generated encoding:\n\n%s\n" (Z3.Expr.to_string c_expr));
+  Log.log
+    (sprintf "simplified to\n\n%s\n"
+       (Z3.Expr.simplify c_expr None |> Z3.Expr.to_string));
+
   let solver = Z3.Solver.mk_solver_s z3_ctx logic in
   Z3.Solver.add solver [ c_expr ];
 

@@ -55,16 +55,23 @@ let impl_constraint (x : Ident.t) (ty : Ty.t) (c : C.t) : Constraint.t =
   | Ty.RBase { pred = None; _ } -> error `MissingRefinement
   | Ty.RArrow _ -> c
 
+(**
+  Checks that [t1 <: t2].    
+*)
 let rec sub (t1 : Ty.t) (t2 : Ty.t) : Constraint.t =
+  Log.log (sprintf "testing %s <: %s" (Ty.to_string t1) (Ty.to_string t2));
   match (t1.body, t2.body) with
   | RBase r1, RBase r2 ->
       let v1, v2 = (r1.vname, r2.vname) in
       let b = r1.base in
 
       let p1, p2 = (unwrap r1.pred, unwrap r2.pred) in
-      let p2_sub = C.pred (P.sub v2 v1 p2) in
+      let p2_sub = P.sub v2 v1 p2 in
+      let c_p2_sub = C.pred p2_sub in
+      Log.log (sprintf "v1: %s   v2: %s" v1 v2);
+      Log.log (sprintf "constructed p2_sub %s" (P.to_string p2_sub));
 
-      C.impl v1 b p1 p2_sub
+      C.impl v1 b p1 c_p2_sub
   | RArrow (x, s1, t1), RArrow (y, s2, t2) ->
       let t1' = Ty.sub x y t1 in
 
@@ -146,26 +153,23 @@ and synth_aexpr (ctx : Ty.context) (aexpr : Tree.aexpr) =
 
 (* checks that an expression [expr] satisfies the type [ty] *)
 and check (ctx : Ty.context) (expr : Tree.t) (ty : Ty.t) : Constraint.t =
-  let c_check =
-    match expr.body with
-    | Tree.Let (x_id, value, body) ->
-        let x = Ident_core.to_string x_id in
+  match expr.body with
+  | Tree.Let (x_id, value, body) ->
+      let x = Ident_core.to_string x_id in
 
-        (* generate vc and type for [value] *)
-        let c_value, t_value = synth_cexpr ctx value in
+      (* generate vc and type for [value] *)
+      let c_value, t_value = synth_cexpr ctx value in
 
-        (* generate vc and type for [body] *)
-        let ctx' = Context.extend x t_value ctx in
-        let c_body = check ctx' body ty in
+      (* generate vc and type for [body] *)
+      let ctx' = Context.extend x t_value ctx in
+      let c_body = check ctx' body ty in
 
-        C.conj c_value (impl_constraint x t_value c_body)
-    | Tree.CExpr ce -> check_cexpr ctx ce ce.ty
-  in
-  c_check
+      C.conj c_value (impl_constraint x t_value c_body)
+  | Tree.CExpr ce -> check_cexpr ctx ce ty
 
 and check_cexpr ctx cexpr ty =
   match cexpr.body with
-  | Tree.CAexpr ae -> check_aexpr ctx ae ae.ty
+  | Tree.CAexpr ae -> check_aexpr ctx ae ty
   | _ ->
       let c_synth, s = synth_cexpr ctx cexpr in
       let c_sub = sub s ty in
@@ -174,6 +178,11 @@ and check_cexpr ctx cexpr ty =
 and check_aexpr ctx aexpr ty =
   match aexpr.body with
   | Tree.ALambda (arg_id, body) ->
+      Log.log
+        (sprintf "checking that ALambda %s -> %s has type %s"
+           (Ident_core.to_string arg_id)
+           (Tree.to_string body) (Ty.to_string ty));
+
       let arg = Ident_core.orig arg_id in
 
       let x, s, t =
@@ -184,16 +193,28 @@ and check_aexpr ctx aexpr ty =
         | _ -> error (`ExpectedArrow aexpr.loc)
       in
 
-      (* do I need to rename [x] for [arg] in s/c? TODO fix *)
-
-      (* jsdkf *)
+      (* check that [body] satifies type [t] *)
       let ctx' = Context.extend Ident_core.(var x |> to_string) s ctx in
+      Log.log
+        (sprintf "extended ctx with %s: %s"
+           Ident_core.(var x |> to_string)
+           (Ty.to_string s));
+      Log.log
+        (sprintf "checking if body %s: %s has type %s" (Tree.to_string body)
+           (Ty.to_string body.ty) (Ty.to_string t));
+
       let c = check ctx' body t in
 
       impl_constraint x s c
   | _ ->
       let c_synth, s = synth_aexpr ctx aexpr in
+      Log.log
+        (sprintf "check_aexpr %s has type %s against generated type %s"
+           (Tree.aexpr_to_string aexpr)
+           (Ty.to_string ty) (Ty.to_string s));
+
       let c_sub = sub s ty in
+
       C.conj c_synth c_sub
 
 (**
@@ -214,6 +235,7 @@ let rec fill_refinements ctx (expr : Tree.t) =
 
       (* fill the types of any missing refinements in [body] *)
       let c_body, body' = fill_refinements ctx' body in
+      let body' : Tree.t = body' in
 
       ( C.conj c_value c_body,
         Tree.(node_of (Let (x, value', body')) body'.ty expr.loc) )
@@ -307,31 +329,37 @@ and fill_aexpr_refinements ctx ae =
       (* we don't need to change the type of [body] since function types must be specified *)
       (c_body, { ae with body = Tree.ALambda (arg_id, body') })
 
-let check_command ctx (cmd : Tree.command) : C.t * Ty.context =
+let check_command ctx cmd =
   match cmd with
   | Tree.LetDef (x, body) ->
       (* infer any missing refinements on body *)
       let c_inferred, body' = fill_refinements ctx body in
+      Log.log
+        (sprintf "inferred missing refinements to get:\n%s\n"
+           (Tree.command_to_string (Tree.LetDef (x, body'))));
 
-      Stdlib.print_endline
-        (sprintf "\nAfter filling missing refinements:\n%s"
-           Tree.(LetDef (x, body') |> command_to_string));
+      Log.log
+        (sprintf "\nold body type: %s    new type: %s\n" (Ty.to_string body.ty)
+           (Ty.to_string body'.ty));
+      let res_ty = if Ty.is_unrefined body.ty then body'.ty else body.ty in
 
       let c = check ctx body' body'.ty in
-      let ctx' = Context.extend (Ident_core.to_string x) body'.ty ctx in
-      (C.conj c_inferred c, ctx')
+      let ctx' = Context.extend (Ident_core.to_string x) res_ty ctx in
+
+      ((C.conj c_inferred c, body.loc), ctx')
   | Tree.Expr e ->
       let c_inferred, e' = fill_refinements ctx e in
-      Stdlib.print_endline
-        (sprintf "\nAfter filling missing refinements:\n%s" (Tree.to_string e'));
+      Log.log
+        (sprintf "inferred missing refinements to get:\n%s\n"
+           (Tree.to_string e'));
 
       let c, _ = (check ctx e' e'.ty, ctx) in
 
-      (C.conj c c_inferred, ctx)
+      ((C.conj c c_inferred, e.loc), ctx)
 
-let rec check_program ctx prog : C.t list =
+let rec check_program ctx prog : (C.t * Location.t) list =
   match prog with
   | cmd :: rest ->
-      let c, ctx' = check_command ctx cmd in
-      c :: check_program ctx' rest
+      let (vc, loc), ctx' = check_command ctx cmd in
+      (vc, loc) :: check_program ctx' rest
   | [] -> []

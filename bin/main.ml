@@ -1,6 +1,7 @@
 open Core
 open Base
 open Out_channel
+open Errors
 open Parser.Api
 open Typechecker
 open Interpreter
@@ -15,37 +16,38 @@ let format_location loc =
   | "" -> ""
   | helpfulstring -> " in " ^ helpfulstring
 
+(* hsdf *)
+let check_vcs (vc, loc) =
+  match Smt.solve vc with
+  | Smt.SAT -> ()
+  | Smt.UNSAT ->
+      let msg = "unsatisfiable refinement" in
+      raise (UnsatError (msg, loc))
+  | Smt.UNKNOWN ->
+      let msg = "unknown result to refinement" in
+      raise (UnsatError (msg, loc))
+
 let main filename =
   try
     (* parse, type, and lower to ANF *)
     let ltree =
       parse_file filename
       |> (fun p ->
-           Stdlib.print_endline
+           Log.log
              (sprintf "\n\ninput parsetree:\n%s"
                 (Ast.Parsetree.program_to_string p));
            p)
       |> (fun p -> Infer.type_program p [])
       |> Anf.anf_program
     in
-    Stdlib.print_endline "\nANF'd to:";
-    Stdlib.print_endline (Ast.Lineartree.program_to_string ltree);
+    Log.log
+      (sprintf "\nANF'd to:\n%s\n" (Ast.Lineartree.program_to_string ltree));
 
     (* generate VCs for liquid type checking *)
     let vcs = Vc.check_program [] ltree in
-    Stdlib.print_endline "\nverification conditions:";
-    Stdlib.print_endline
-      (List.map vcs ~f:Constraint.to_string |> String.concat ~sep:"\n\n");
 
     (* check vc types *)
-    List.iter vcs ~f:(fun vc ->
-        let res =
-          match Smt.solve vc with
-          | Smt.SAT -> "sat"
-          | Smt.UNSAT -> "unsat"
-          | Smt.UNKNOWN -> "unknown"
-        in
-        Stdlib.print_endline res);
+    List.iter vcs ~f:check_vcs;
 
     Interp.ltree ltree |> Interp.LTEnv.to_string |> ( ^ ) "\n"
     |> Stdio.print_endline
@@ -77,6 +79,10 @@ let main filename =
   | Typing.Refinement_errors.RefinementError (message, loc) ->
       let loc_str = format_location loc in
       eprintf "\nRefinement error: %s%s\n" message loc_str;
+      die ()
+  | UnsatError (message, loc) ->
+      let loc_str = format_location loc in
+      eprintf "\nType error: %s%s\n" message loc_str;
       die ()
 
 let filename_param =
