@@ -4,7 +4,7 @@ let inc = (fun x ->
     // function application
 
     val f : a:num -> num[b | b = (a + 1)] in  
-    let f = (fun y -> y + 1) in
+    let f = (fun a -> a + 1) in
     
     f x
 ) ;;

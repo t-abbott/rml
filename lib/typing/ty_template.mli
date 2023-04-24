@@ -13,6 +13,7 @@ val unrefined : ?source:Source.t -> Ident.t -> Base_ty.t -> t
   trivial refinement [ty[v | true]]    
 *)
 
+val is_unrefined : t -> bool
 val builtin : t_body -> t
 val inferred : t_body -> t
 

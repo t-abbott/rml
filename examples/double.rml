@@ -1,0 +1,3 @@
+val double : x:num -> num[y | y = (x + x)] ;;
+let double = (fun x -> x + x) ;; 
+double 4 

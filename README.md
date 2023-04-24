@@ -15,5 +15,4 @@ If you change any files in `.hooks/` you'll need to run `make hooks` again.
 
 ## TODO
 
-- only allow annotations on variables
-- add `//`-style comments
+- check bool and int primitive types are geerated

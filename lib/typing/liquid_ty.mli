@@ -18,6 +18,16 @@ module Make : functor (Id : IDENT) -> sig
   val to_string : t -> string
   val is_equal : t -> t -> with_refinements:bool -> bool
 
+  val hd : t -> t option
+  (**
+    [hd ty] returns the domain of [ty] if [ty] is a function and [None] if [ty] is an [RBase]
+  *)
+
+  val tl : t -> t option
+  (**
+    [tl ty] returns the range of [ty] is [ty] is a function and [None] if [ty] is an [RBase]    
+  *)
+
   val equal : t -> t -> bool
   (**
     Tests if the base types of two liquid types are equal.
@@ -66,7 +76,7 @@ module Make : functor (Id : IDENT) -> sig
     [num -> bool -> num] -> [[num; bool; num]]
    *)
 
-  val apply_types : t -> t list -> t option
+  val apply_types : ?keep_refinements:bool -> t -> t list -> t option
   (**
      [apply_types ty_f ty_xs] returns the resulting type after applying the types [ty_xs] to
      the type [ty_f].

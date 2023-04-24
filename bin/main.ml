@@ -17,9 +17,37 @@ let format_location loc =
 
 let main filename =
   try
-    parse_file filename
-    |> (fun p -> Infer.type_program p [])
-    |> Anf.anf_program |> Interp.ltree |> Interp.LTEnv.to_string |> ( ^ ) "\n"
+    (* parse, type, and lower to ANF *)
+    let ltree =
+      parse_file filename
+      |> (fun p ->
+           Stdlib.print_endline
+             (sprintf "\n\ninput parsetree:\n%s"
+                (Ast.Parsetree.program_to_string p));
+           p)
+      |> (fun p -> Infer.type_program p [])
+      |> Anf.anf_program
+    in
+    Stdlib.print_endline "\nANF'd to:";
+    Stdlib.print_endline (Ast.Lineartree.program_to_string ltree);
+
+    (* generate VCs for liquid type checking *)
+    let vcs = Vc.check_program [] ltree in
+    Stdlib.print_endline "\nverification conditions:";
+    Stdlib.print_endline
+      (List.map vcs ~f:Constraint.to_string |> String.concat ~sep:"\n\n");
+
+    (* check vc types *)
+    List.iter vcs ~f:(fun vc ->
+        let res =
+          match Smt.solve vc with
+          | Smt.SAT -> "sat"
+          | Smt.UNSAT -> "unsat"
+          | Smt.UNKNOWN -> "unknown"
+        in
+        Stdlib.print_endline res);
+
+    Interp.ltree ltree |> Interp.LTEnv.to_string |> ( ^ ) "\n"
     |> Stdio.print_endline
   with
   | Parser.Errors.ParseError (message, loc) ->

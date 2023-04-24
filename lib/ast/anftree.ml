@@ -47,7 +47,7 @@ module Make (Ty : TYPE) = struct
         let ty_str = Ty.to_string ae.ty in
         let body_str = to_string body in
         let arg_str = Ident_core.to_string arg in
-        sprintf "(fun %s -> %s): %s" arg_str body_str ty_str
+        sprintf "(fun %s -> \n%s): %s" arg_str body_str ty_str
 
   and cexpr_to_string (ce : cexpr) =
     match ce.body with
@@ -62,11 +62,11 @@ module Make (Ty : TYPE) = struct
     | CAexpr ae -> aexpr_to_string ae
 
   and to_string (e : t) =
-    let ty_str = Ty.to_string e.ty in
     match e.body with
     | Let (name, defn, rest) ->
         let name_str = Ident_core.to_string name in
         let defn_str = cexpr_to_string defn in
+        let ty_str = Ty.to_string defn.ty in
         let rest_str = to_string rest in
         sprintf "let %s: %s = %s in\n%s" name_str ty_str defn_str rest_str
     | CExpr ce ->

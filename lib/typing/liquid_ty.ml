@@ -32,6 +32,12 @@ functor
           is_equal s1 s2 ~with_refinements && is_equal t1 t2 ~with_refinements
       | _ -> false
 
+    let hd ty =
+      match ty.body with RArrow (_, s, _) -> Some s | RBase _ -> None
+
+    let tl ty =
+      match ty.body with RArrow (_, _, t) -> Some t | RBase _ -> None
+
     let equal t1 t2 = is_equal t1 t2 ~with_refinements:true
     let equal_base t1 t2 = is_equal t1 t2 ~with_refinements:false
     let is_function ty = match ty.body with RArrow _ -> true | _ -> false
@@ -40,15 +46,29 @@ functor
     let annotated ty loc = { body = ty; source = Annotation loc }
     let valstmt ty loc = { body = ty; source = ValStmt loc }
 
-    (* returns the component types of a refinement *)
+    (**
+      Strips the refinements from a type.    
+    *)
+    let rec unrefined = function
+      | RBase r -> RBase { r with pred = None }
+      | RArrow (x, s, t) ->
+          let s' = { s with body = unrefined s.body } in
+          let t' = { t with body = unrefined t.body } in
+          RArrow (x, s', t')
+
+    (** 
+        Returns the component types of a refinement 
+    *)
     let rec flatten (ty : t) =
       match ty.body with
       | RBase _ -> [ ty ]
       | RArrow (_, s, t) -> s :: flatten t
 
-    let rec apply_types f_ty arg_tys =
+    let rec apply_types ?(keep_refinements = false) f_ty arg_tys =
       match (f_ty.body, arg_tys) with
-      | ty, [] -> Some (inferred ty)
+      | ty, [] ->
+          if keep_refinements then Some (inferred ty)
+          else Some (inferred (unrefined ty))
       | RArrow (_, s, t), x :: xs ->
           if equal_base s x then apply_types t xs else None
       | _ -> None
@@ -91,14 +111,14 @@ functor
     let sub_term = mk_sub R.P.sub_term
 
     (* helpers for constructing base types *)
-    let t_bool ?(pred = None) vname =
+    let t_bool ?(pred = Some R.P.p_true) vname =
       builtin (RBase { vname; base = Base_ty.TBool; pred })
 
-    let t_num ?(pred = None) vname =
+    let t_num ?(pred = Some R.P.p_true) vname =
       builtin (RBase { vname; base = Base_ty.TInt; pred })
 
     (* useful aliases for binop type generation *)
-    let v = Id.of_string "v"
+    let arg1, arg2 = Misc.proj2 Id.of_string "__arg1" "__arg2"
     let x, y, z = Misc.proj3 Id.of_string "__1" "__2" "__3"
 
     type ty_builder = ?pred:R.P.t option -> Id.t -> t
@@ -111,8 +131,8 @@ functor
     let make_binop_ty mk_s1 mk_s2 (mk_t : ty_builder) mk_p =
       let pred = Some (mk_equal z (mk_p x y)) in
       let t = mk_t ~pred z in
-      let s1 = mk_s1 v in
-      let s2 = mk_s2 v in
+      let s1 = mk_s1 arg1 in
+      let s2 = mk_s2 arg2 in
       let g = builtin (RArrow (y, s2, t)) in
       builtin (RArrow (x, s1, g))
 

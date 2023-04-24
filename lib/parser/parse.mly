@@ -159,7 +159,7 @@ ty_basic:
  *)
 refinement:
   | t = ty_basic
-    { Ty.R.from "v" t None }
+    { Ty.R.from "__v_default" t (Some Ty.R.P.p_true) }
   | t = ty_basic LBRACKET v = VAR LINE p = predicate RBRACKET 
     { Ty.R.from v t (Some p) }
 
@@ -205,6 +205,8 @@ predicate_interp_op:
     { Ty.R.P.InterpOp.Sub }
   | TIMES 
     { Ty.R.P.InterpOp.Mult }
+  | DIV 
+    { Ty.R.P.InterpOp.Div }
   | MOD 
     { Ty.R.P.InterpOp.Mod }
 

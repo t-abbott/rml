@@ -7,10 +7,6 @@ open Errors
 open Utils
 
 let third _ _ z = z
-(*
-   module type OpSigT = sig
-     val op_signature : Op.Binop.t -> Typing.Ty_template.t
-   end *)
 
 module Make (Ty : TYPE) = struct
   module Id = Ident_core

@@ -38,6 +38,8 @@ module Make : functor (Ty : TYPE) -> sig
 
   type program = command list
 
+  val aexpr_to_string : aexpr -> string
+  val cexpr_to_string : cexpr -> string
   val to_string : t -> string
   val command_to_string : command -> string
   val program_to_string : program -> string

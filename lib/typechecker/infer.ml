@@ -143,14 +143,18 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) (ctx : context) =
 
       (* apply the first argument *)
       let ty_app_l =
-        match Ty_template.apply_types ty_op [ l'.ty ] with
+        match
+          Ty_template.apply_types ~keep_refinements:false ty_op [ l'.ty ]
+        with
         | Some ty -> ty
         | None -> failwith "unreachable; TODO proper error"
       in
       let app_l = TTree.(from (Apply (op_expr, l')) ty_app_l loc) in
 
       let ty_app_r =
-        match Ty_template.apply_types ty_app_l [ r'.ty ] with
+        match
+          Ty_template.apply_types ~keep_refinements:false ty_app_l [ r'.ty ]
+        with
         | Some ty -> ty
         | _ -> failwith "unreachable; TODO proper error"
       in
