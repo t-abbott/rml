@@ -56,7 +56,7 @@ let main filename =
       die ()
   | Parser.Errors.LexError (message, loc) ->
       let loc_str = format_location loc in
-      eprintf "\nError while lexing: %s%s\n" message loc_str;
+      eprintf "\nLexer error: %s%s\n" message loc_str;
       die ()
   | Typechecker.Errors.TypeError (message, loc) ->
       let loc_str = format_location loc in

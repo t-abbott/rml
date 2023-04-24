@@ -11,6 +11,12 @@
             { pos with pos_bol = lexbuf.lex_curr_pos;
                 pos_lnum = pos.pos_lnum + 1
             }
+
+    let error lexbuf = 
+        let loc = Utils.Location.from lexbuf.lex_start_p lexbuf.lex_curr_p in 
+        let token = Lexing.lexeme lexbuf in 
+        let msg = Printf.sprintf "unrecognised token \"%s\"" token in
+        raise (Errors.LexError (msg, loc)) 
 }
 
 let whitespace = [' ' '\t' '\r']
@@ -61,6 +67,7 @@ rule token = parse
   | '%'             { MOD }
   | var             { VAR (Lexing.lexeme lexbuf) }
   | eof             { EOF }
+  | _               { error lexbuf }
 
 and read_comment = parse
   | newline { next_line lexbuf; token lexbuf } 
