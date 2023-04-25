@@ -5,4 +5,4 @@ let fail = (fun x -> x + 1) ;;
 fail 11 ;;
 
 // this should
-fail 10
+fail 10 
