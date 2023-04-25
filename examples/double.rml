@@ -1,4 +1,19 @@
-val double : x:num -> num[y | y = x] ;;
-let double = (fun x -> x + x) ;; 
+//
+//  Good definitions:
+// 
 
-double 4 
+// this passes
+val double_good : x:num -> num[y | y = (x + x)] ;; 
+let double_good = (fun x -> x + x) ;; 
+
+// let double_good = (fun x -> 2 * x) ;; 
+
+//
+// Bad definitions:
+//
+
+// this does not
+val double_bad : x:num -> num[y | y = (x + x)] ;;
+let double_bad = (fun x -> x) ;;
+
+// let double_bad = (fun x -> x + x + x) ;; 
