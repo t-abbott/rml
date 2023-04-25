@@ -15,7 +15,7 @@ functor
       let b = Base_ty.to_string base in
       match pred with
       | Some p -> sprintf "%s[%s | %s]" b v (P.to_string p)
-      | None -> b
+      | None -> sprintf "%s[<empty>]" b
 
     let from vname base pred = { vname; base; pred }
     let equal = ( = )
