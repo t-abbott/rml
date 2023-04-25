@@ -38,6 +38,11 @@ let main filename =
                 (Ast.Parsetree.program_to_string p));
            p)
       |> (fun p -> Infer.type_program p [])
+      |> (fun p ->
+           Log.log
+             (sprintf "\n\ntemplatetree:\n%s\n"
+                (Ast.Templatetree.program_to_string p));
+           p)
       |> Anf.anf_program
     in
     Log.log
