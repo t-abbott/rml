@@ -97,7 +97,7 @@ and synth_cexpr (ctx : Ty.context) (cexpr : Tree.cexpr) : C.t * Ty.t =
       *)
       let y_imm =
         match y.body with
-        | Tree.ANumber n -> R.P.mk_int (Int.of_float n)
+        | Tree.AInteger i -> R.P.mk_int i
         | Tree.ABoolean b -> R.P.mk_bool b
         | Tree.AVar v_core ->
             (* recover the original name of the variable being projected into a type *)
@@ -131,9 +131,7 @@ and synth_aexpr (ctx : Ty.context) (aexpr : Tree.aexpr) =
                   (Ident_core.to_string v)
               in
               failwith msg))
-  | Tree.ANumber n ->
-      let i = Int.of_float n in
-      (C.c_true, Ty.prim_int i)
+  | Tree.AInteger i -> (C.c_true, Ty.prim_int i)
   | Tree.ABoolean b -> (C.c_true, Ty.prim_bool b)
   | _ ->
       (* otherwise check that the stated type is valid *)
@@ -237,7 +235,7 @@ and fill_cexpr_refinements ctx (ce : Tree.cexpr) =
       (* manually sub the refinement argument in. Is this sound? Who knows *)
       let y_imm =
         match y.body with
-        | Tree.ANumber n -> Ty.R.P.mk_int (Int.of_float n)
+        | Tree.AInteger i -> Ty.R.P.mk_int i
         | Tree.ABoolean b -> Ty.R.P.mk_bool b
         | Tree.AVar v_core ->
             (* recover the original name of the variable being projected into a type *)
@@ -269,8 +267,7 @@ and fill_aexpr_refinements ctx ae =
                   (Ident_core.to_string v)
               in
               failwith msg))
-  | Tree.ANumber n ->
-      let i = Int.of_float n in
+  | Tree.AInteger i ->
       let ty = Ty.prim_int i in
       { ae with ty }
   | Tree.ABoolean b ->

@@ -3,7 +3,7 @@
 // 
 
 // this passes
-val double_good : x:num -> num[y | y = (x + x)] ;; 
+val double_good : x:int -> int[y | y = (x + x)] ;; 
 let double_good = (fun x -> x + x) ;; 
 
 // let double_good = (fun x -> 2 * x) ;; 
@@ -13,7 +13,7 @@ let double_good = (fun x -> x + x) ;;
 //
 
 // this does not
-val double_bad : x:num -> num[y | y = (x + x)] ;;
+val double_bad : x:int -> int[y | y = (x + x)] ;;
 let double_bad = (fun x -> x) ;;
 
 // let double_bad = (fun x -> x + x + x) ;; 

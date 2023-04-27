@@ -6,7 +6,7 @@ type t = t_body Location.located
 and t_body =
   | Annotated of t * Ty_template.t
   | Var of Ident.t
-  | Number of float
+  | Integer of int
   | Boolean of bool
   | Binop of Op.Binop.t * t * t
   | If of t * t * t

@@ -8,7 +8,7 @@ type t = { body : t_body; ty : Ty_template.t; loc : Location.t }
 
 and t_body =
   | Var of Id.t
-  | Number of float
+  | Integer of int
   | Boolean of bool
   | If of t * t * t
   | LetIn of Id.t * t * t
@@ -20,7 +20,7 @@ let rec to_string { body; ty; _ } =
   let term_str =
     match body with
     | Var v -> Id.to_string v
-    | Number n -> Float.to_string n
+    | Integer i -> Int.to_string i
     | Boolean b -> Bool.to_string b
     | If (cond, if_t, if_f) ->
         sprintf "if %s then %s else %s" (to_string cond) (to_string if_t)

@@ -32,7 +32,7 @@ module Make : functor (Id : IDENT) -> sig
   (**
     Tests if the base types of two liquid types are equal.
         
-    Refinements are ignored, so comparing the terms [num[v | v > 0]], [num[v | v < 0]]
+    Refinements are ignored, so comparing the terms [int[v | v > 0]], [int[v | v < 0]]
     returns [true]. 
    *)
 
@@ -40,7 +40,7 @@ module Make : functor (Id : IDENT) -> sig
   (**
     Tests if the base types of two liquid types are equal.
   
-    Refinements are ignored, so comparing the terms [num[v | v > 0]], [num[v | v < 0]]
+    Refinements are ignored, so comparing the terms [int[v | v > 0]], [int[v | v < 0]]
     returns [true]. 
    *)
 
@@ -73,7 +73,7 @@ module Make : functor (Id : IDENT) -> sig
   val flatten : t -> t list
   (**
     Flattens all the types of a function into a single list - e.g. 
-    [num -> bool -> num] -> [[num; bool; num]]
+    [int -> bool -> int] -> [[int; bool; int]]
    *)
 
   val apply_types : ?keep_refinements:bool -> t -> t list -> t option
@@ -82,7 +82,7 @@ module Make : functor (Id : IDENT) -> sig
      the type [ty_f].
    
      For example, [apply_types (RArrow ([TInt], TInt)) TInt] corresponds to applying a value
-     of type [num] to a function of type [num -> num], and therefore evaluates to [TInt].
+     of type [int] to a function of type [int -> int], and therefore evaluates to [TInt].
    
      Returns [None] in the event of a type mismatch (e.g. applying a type to a base type)
    *)

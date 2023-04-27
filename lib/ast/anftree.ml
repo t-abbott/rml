@@ -16,7 +16,7 @@ module Make (Ty : TYPE) = struct
   (** An atomic expression. *)
 
   and aexpr_body =
-    | ANumber of float
+    | AInteger of int
     | ABoolean of bool
     | AVar of Ident_core.t
     | ALambda of Ident_core.t * t
@@ -38,9 +38,7 @@ module Make (Ty : TYPE) = struct
 
   let rec aexpr_to_string (ae : aexpr) =
     match ae.body with
-    | ANumber n ->
-        if Float.is_integer n then Int.to_string (Int.of_float n)
-        else Float.to_string n
+    | AInteger i -> Int.to_string i
     | ABoolean b -> Bool.to_string b
     | AVar v -> Ident_core.to_string v
     | ALambda (arg, body) ->
@@ -89,6 +87,6 @@ module Make (Ty : TYPE) = struct
     node_of (CAexpr ae) ae.ty ae.loc |> t_of_cexpr
 
   let t_of_bool b ty loc = t_of_aexpr (node_of (ABoolean b) ty loc)
-  let t_of_number n ty loc = t_of_aexpr (node_of (ANumber n) ty loc)
+  let t_of_number n ty loc = t_of_aexpr (node_of (AInteger n) ty loc)
   let var v ty loc = t_of_aexpr (node_of (AVar v) ty loc)
 end

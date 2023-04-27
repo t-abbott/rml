@@ -1,5 +1,5 @@
 (**
-    Represents a base type like [num], [bool], or [string].    
+    Represents a base type like [int], [bool], or [string].    
 *)
 type t = TInt | TBool
 

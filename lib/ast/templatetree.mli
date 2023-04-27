@@ -6,7 +6,7 @@ type t = { body : t_body; ty : Ty_template.t; loc : Location.t }
 
 and t_body =
   | Var of Ident_core.t
-  | Number of float
+  | Integer of int
   | Boolean of bool
   | If of t * t * t
   | LetIn of Ident_core.t * t * t

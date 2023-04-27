@@ -15,7 +15,7 @@ module Make (Ty : TYPE) = struct
 
   let rec eval_aexpr (ae : Tree.aexpr) env =
     match ae.body with
-    | Tree.ANumber _ | Tree.ABoolean _ -> TEnv.Value (Tree.t_of_aexpr ae)
+    | Tree.AInteger _ | Tree.ABoolean _ -> TEnv.Value (Tree.t_of_aexpr ae)
     | Tree.AVar v -> (
         match v with
         | BuiltinSym _ -> TEnv.Value (Tree.t_of_aexpr ae)
@@ -83,7 +83,7 @@ module Make (Ty : TYPE) = struct
             | Tree.CAexpr ae -> (
                 match ae.body with
                 | Tree.ABoolean b -> `Bool b
-                | Tree.ANumber n -> `Num n
+                | Tree.AInteger n -> `Num n
                 | Tree.AVar (Id.BuiltinSym v) -> `BuiltinVar v
                 | _ -> `Fail)
             | _ -> `Fail)
@@ -129,39 +129,39 @@ module Make (Ty : TYPE) = struct
     match op with
     | Op.Binop.Equal ->
         let x, y = (eval_number l env, eval_number r env) in
-        let body = Tree.t_of_bool (Float.( = ) x y) ty loc in
+        let body = Tree.t_of_bool (x = y) ty loc in
         TEnv.Value body
     | Op.Binop.Less ->
         let x, y = (eval_number l env, eval_number r env) in
-        let body = Tree.t_of_bool (Float.( < ) x y) ty loc in
+        let body = Tree.t_of_bool (x < y) ty loc in
         TEnv.Value body
     | Op.Binop.Greater ->
         let x, y = (eval_number l env, eval_number r env) in
-        let body = Tree.t_of_bool (Float.( > ) x y) ty loc in
+        let body = Tree.t_of_bool (x > y) ty loc in
         TEnv.Value body
     | Op.Binop.Plus ->
         let x, y = (eval_number l env, eval_number r env) in
-        let body = Tree.t_of_number (Float.( + ) x y) ty loc in
+        let body = Tree.t_of_number (x + y) ty loc in
         TEnv.Value body
     | Op.Binop.Minus ->
         let x, y = (eval_number l env, eval_number r env) in
-        let body = Tree.t_of_number (Float.( - ) x y) ty loc in
+        let body = Tree.t_of_number (x - y) ty loc in
         TEnv.Value body
     | Op.Binop.Times ->
         let x, y = (eval_number l env, eval_number r env) in
-        let body = Tree.t_of_number (Float.( * ) x y) ty loc in
+        let body = Tree.t_of_number (x * y) ty loc in
         TEnv.Value body
     | Op.Binop.Div ->
         let x, y = (eval_number l env, eval_number r env) in
-        if Float.( = ) y 0. then
+        if y = 0 then
           let msg = "attempted to divide by 0" in
           raise (InterpError (msg, loc))
         else
-          let body = Tree.t_of_number (Float.( / ) x y) ty loc in
+          let body = Tree.t_of_number (x / y) ty loc in
           TEnv.Value body
     | Op.Binop.Mod ->
         let x, y = (eval_number l env, eval_number r env) in
-        let body = Tree.t_of_number (Float.( % ) x y) ty loc in
+        let body = Tree.t_of_number (x % y) ty loc in
         TEnv.Value body
     | Op.Binop.And ->
         let p, q = (eval_bool l env, eval_bool r env) in

@@ -2,7 +2,7 @@
 // This program passes - the specification is correct.
 //
 
-val inc : x:num -> num[y | y = (x + 1)] ;; 
+val inc : x:int -> int[y | y = (x + 1)] ;; 
 let inc = (fun x -> 
     x + 1
 ) ;;

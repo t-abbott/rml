@@ -5,10 +5,10 @@
 // satisfy the type `int[v | v > 10]`.
 //
 
-val f : x:num[v | v > 10] -> num[v | v > 20] ;; 
+val f : x:int[v | v > 10] -> int[v | v > 20] ;; 
 let f = (fun x -> x * 2) ;; 
 
-val x : num ;; 
+val x : int ;; 
 let x = 40 ;;
 
 f x

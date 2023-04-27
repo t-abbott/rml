@@ -1,4 +1,5 @@
 {
+  open Base
   open Parse
   open Lexing
 
@@ -26,7 +27,7 @@ let letter = ['a'-'z' 'A'-'Z']
 let symbol = ['+' '-' '*' '/' '<' '>' '=' '!' '%']
 let digit = ['0'-'9']
 
-let decimal = '-'? digit+ ('.' digit+)?
+let number = '-'? digit+
 
 let var = (letter | '_') (letter | digit | symbol | '_')*
 
@@ -34,9 +35,9 @@ let var = (letter | '_') (letter | digit | symbol | '_')*
 rule token = parse
     whitespace      { token lexbuf }
   | '\n'            { Lexing.new_line lexbuf; token lexbuf }
-  | decimal         { NUM (Float.of_string(Lexing.lexeme lexbuf)) }
+  | number          { INT (Int.of_string (Lexing.lexeme lexbuf)) }
   | "//"            { read_comment lexbuf }
-  | "num"           { TNUM }
+  | "int"           { TINT }
   | "bool"          { TBOOL }
   | ':'             { COLON }
   | "true"          { TRUE }

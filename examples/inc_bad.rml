@@ -3,7 +3,7 @@
 // match the function body.
 //
 
-val inc : x:num -> num[y | y = (x + 1)] ;; 
+val inc : x:int -> int[y | y = (x + 1)] ;; 
 let inc = (fun x -> 
     (x * 2) + 1
 ) ;;

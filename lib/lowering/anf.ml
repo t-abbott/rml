@@ -17,7 +17,7 @@ let rec anf_inner (expr : TTree.t) (hole : hole) : t =
   let ty, loc = (expr.ty, expr.loc) in
   match expr.body with
   | TTree.Var v -> node_of (AVar v) ty loc |> hole
-  | TTree.Number n -> node_of (ANumber n) ty loc |> hole
+  | TTree.Integer n -> node_of (AInteger n) ty loc |> hole
   | TTree.Boolean b -> node_of (ABoolean b) ty loc |> hole
   | TTree.If (cond, if_t, if_f) ->
       let res_name = Ident_core.fresh () in

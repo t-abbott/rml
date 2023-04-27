@@ -6,13 +6,13 @@
   module Ty = Ty_template
 %}
 
-%token TNUM
+%token TINT
 %token TBOOL
 %token COLON
 %token ARROW
 %token <Utils.Ident.t> VAR
 
-%token <float> NUM
+%token <int> INT
 %token TRUE FALSE
 
 %token PLUS
@@ -74,8 +74,8 @@ expr: mark_location(expr_unmarked) { $1 }
 expr_unmarked:
   | e = app_expr_unmarked
     { e }
-  | MINUS n = NUM
-    { Number (-. n) }
+  | MINUS n = INT
+    { Integer (- n) }
   | e1 = expr op = expr_binop e2 = expr
     { Binop (op, e1, e2) }
   | IF e1 = expr THEN e2 = expr ELSE e3 = expr
@@ -125,8 +125,8 @@ simple_expr_unmarked:
     { Boolean true }
   | FALSE
     { Boolean false }
-  | n = NUM
-    { (Number n) }
+  | i = INT
+    { (Integer i) }
   | e = expr COLON t = ty
     { Annotated (e, t) }
   | LPAREN e = expr_unmarked RPAREN	
@@ -150,7 +150,7 @@ ty_unmarked:
 ty_basic:
   | TBOOL
     { Base_ty.TBool }
-  | TNUM
+  | TINT
     { Base_ty.TInt } 
 
 (*
@@ -176,8 +176,8 @@ predicate_unmarked:
     { Ty.R.P.Bool true }
   | FALSE 
     { Ty.R.P.Bool false }
-  | n = NUM 
-    { Ty.R.P.Int (Int.of_float n) }
+  | i = INT
+    { Ty.R.P.Int i }
   | v = VAR 
     { Ty.R.P.Var v }
   | l = predicate op = predicate_interp_op r = predicate 

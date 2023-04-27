@@ -18,7 +18,7 @@ module Make : functor (Ty : TYPE) -> sig
   (** An atomic expression. *)
 
   and aexpr_body =
-    | ANumber of float
+    | AInteger of int
     | ABoolean of bool
     | AVar of Ident_core.t
     | ALambda of Ident_core.t * t
@@ -46,6 +46,6 @@ module Make : functor (Ty : TYPE) -> sig
   val t_of_cexpr : cexpr -> t
   val t_of_aexpr : aexpr -> t
   val t_of_bool : bool -> Ty.t -> Location.t -> t
-  val t_of_number : float -> Ty.t -> Location.t -> t
+  val t_of_number : int -> Ty.t -> Location.t -> t
   val var : Ident_core.t -> Ty.t -> Location.t -> t
 end

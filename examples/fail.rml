@@ -1,4 +1,4 @@
-val fail : x:num[v | v > 10] -> num[v | v > 11] ;;
+val fail : x:int[v | v > 10] -> int[v | v > 11] ;;
 let fail = (fun x -> x + 1) ;; 
 
 // this shouldn't go wrong

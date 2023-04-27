@@ -7,12 +7,12 @@ open Errors
 module L = Utils.Location
 module PTEnv = Env.Make (Utils.Ident) (Parsetree)
 
-let placeholder = PTEnv.Value (L.unlocated (Number 0.))
+let placeholder = PTEnv.Value (L.unlocated (Integer 0))
 
 let rec eval (expr : t) env =
   match expr.body with
   | Annotated (e, _) -> eval e env
-  | Number _ | Boolean _ -> PTEnv.Value expr
+  | Integer _ | Boolean _ -> PTEnv.Value expr
   | Var v -> (
       match PTEnv.find v env with
       | Some value -> value
@@ -57,7 +57,7 @@ let rec eval (expr : t) env =
 
 and eval_number expr env =
   match eval expr env with
-  | Value { body = Number i; _ } -> i
+  | Value { body = Integer i; _ } -> i
   | _ ->
       let msg = "Expected expression to reduce to a number" in
       raise (InterpError (msg, expr.loc))
@@ -73,32 +73,32 @@ and eval_binop (op, l, r) env =
   match op with
   | Binop.Equal ->
       let x, y = (eval_number l env, eval_number r env) in
-      Value (L.unlocated (Boolean (Float.( = ) x y)))
+      Value (L.unlocated (Boolean (Int.( = ) x y)))
   | Binop.Less ->
       let x, y = (eval_number l env, eval_number r env) in
-      Value (L.unlocated (Boolean (Float.( < ) x y)))
+      Value (L.unlocated (Boolean (Int.( < ) x y)))
   | Binop.Greater ->
       let x, y = (eval_number l env, eval_number r env) in
-      Value (L.unlocated (Boolean (Float.( > ) x y)))
+      Value (L.unlocated (Boolean (Int.( > ) x y)))
   | Binop.Plus ->
       let x, y = (eval_number l env, eval_number r env) in
-      Value (L.unlocated (Number (x +. y)))
+      Value (L.unlocated (Integer (x + y)))
   | Binop.Minus ->
       let x, y = (eval_number l env, eval_number r env) in
-      Value (L.unlocated (Number (x -. y)))
+      Value (L.unlocated (Integer (x - y)))
   | Binop.Times ->
       let x, y = (eval_number l env, eval_number r env) in
-      Value (L.unlocated (Number (x *. y)))
+      Value (L.unlocated (Integer (x * y)))
   | Binop.Div -> (
       let x, y = (eval_number l env, eval_number r env) in
       match y with
-      | 0. ->
+      | 0 ->
           let msg = "Attempted to divide by 0" in
           raise (InterpError (msg, r.loc))
-      | _ -> Value (L.unlocated (Number (x /. y))))
+      | _ -> Value (L.unlocated (Integer (x / y))))
   | Binop.Mod ->
       let x, y = (eval_number l env, eval_number r env) in
-      Value (L.unlocated (Number (x %. y)))
+      Value (L.unlocated (Integer (x % y)))
   | Binop.And ->
       let x, y = (eval_bool l env, eval_bool r env) in
       Value (L.unlocated (Boolean (x && y)))
@@ -111,7 +111,7 @@ let eval_cmd (cmd : command) env =
   | Expr e -> (eval e env, env)
   | LetDef (name, body) ->
       let env' = PTEnv.extend name (eval body env) env in
-      (Value (L.unlocated (Number 0.)), env')
+      (Value (L.unlocated (Integer 0)), env')
   | ValDef _ -> (placeholder, env)
 
 let rec run prog env =

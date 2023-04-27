@@ -3,7 +3,7 @@
 // halve in RML.
 //
 
-val halve : x:num[v | (v % 2) = 0] -> num[y | y = (x / 2)] ;; 
+val halve : x:int[v | (v % 2) = 0] -> int[y | y = (x / 2)] ;; 
 let halve = (fun x -> x / 2) ;;
 
 // ok
