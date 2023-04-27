@@ -29,7 +29,9 @@ let to_string = function
       let filestring =
         match loc.filename with Some name -> name | None -> "[unknown]"
       in
-      (* if loc.line_start = loc.line_end then  *)
-      sprintf "file \"%s\" line %d character %d-%d" filestring loc.line_start
-        loc.char_start loc.char_end
-(* else *)
+      if loc.line_start = loc.line_end then
+        sprintf "file \"%s\" line %d character %d-%d" filestring loc.line_start
+          loc.char_start loc.char_end
+      else
+        sprintf "file \"%s\" line %d character %d to line %d character %d"
+          filestring loc.line_start loc.char_start loc.line_end loc.char_end

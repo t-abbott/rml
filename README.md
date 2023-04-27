@@ -43,6 +43,24 @@ Alternatively build and execute RML at the same time by running:
 dune exec rml <file>
 ```
 
+For example, running 
+
+```
+dune exec rml examples/inc.rml
+```
+
+should produce the output `5`, whereas running
+
+```
+dune exec rml examples/inc_bad.rml
+```
+
+should fail with the following liquid type error:
+
+```
+Liquid type error: unsatisfiable refinement in file "inc_bad.rml" line 7 character 10-1
+```
+
 ## Project structure
 
 - `bin` contains the entry point of the program in `main.ml` 
