@@ -58,7 +58,7 @@ dune exec rml examples/inc_bad.rml
 should fail with the following liquid type error:
 
 ```
-Liquid type error: unsatisfiable refinement in file "inc_bad.rml" line 7 character 10-1
+Liquid type error: unsatisfiable refinement in file "examples/ok/inc_bad.rml" line 7 character 10 to line 9 character 1
 ```
 
 ## Project structure
