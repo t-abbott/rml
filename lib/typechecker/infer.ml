@@ -71,15 +71,12 @@ let apply_arg_types fn_tys args : (Ty_template.t * t) list =
   let res_tys =
     match List.tl fn_tys with
     | Some tl -> tl
-    | None ->
-        let msg = "TODO error message" in
-        failwith msg
+    | None -> failwith "unreachable - function contains at least 2 types"
   in
   match List.zip res_tys args with
   | Ok pairs -> pairs
   | Unequal_lengths ->
-      let msg = "TODO error message" in
-      failwith msg
+      failwith "unreachable - is checked before the function is called"
 
 (**
   [curry xs e loc] creates a curried function with the body
@@ -108,7 +105,6 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) (ctx : context) =
         match TCtx.find v_id ctx with
         | Some ty' -> ty'
         | None ->
-            (* TODO: handle this in a semantic analysis pass on the parsetree? *)
             let msg = sprintf "reference to unknown variable '%s'" v in
             raise (NameError (msg, loc))
       in
@@ -147,7 +143,7 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) (ctx : context) =
           Ty_template.apply_types ~keep_refinements:false ty_op [ l'.ty ]
         with
         | Some ty -> ty
-        | None -> failwith "unreachable; TODO proper error"
+        | None -> failwith "unreachable - checked elsewhere"
       in
       let app_l = TTree.(from (Apply (op_expr, l')) ty_app_l loc) in
 
@@ -156,7 +152,7 @@ let rec type_parsetree ?(ty_stated = None) (pt : PTree.t) (ctx : context) =
           Ty_template.apply_types ~keep_refinements:false ty_app_l [ r'.ty ]
         with
         | Some ty -> ty
-        | _ -> failwith "unreachable; TODO proper error"
+        | _ -> failwith "unreachable - checked elsewhere"
       in
       TTree.(from (Apply (app_l, r')) ty_app_r loc)
   | PTree.If (cond, ift, iff) ->

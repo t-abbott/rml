@@ -122,4 +122,7 @@ let rec run prog env =
   | cmd :: rest ->
       let new_env = snd (eval_cmd cmd env) in
       run rest new_env
-  | [] -> failwith "TODO figure out how to do nothing"
+  | [] ->
+      raise
+        (InterpError
+           ("attempted to execute an empty program", Utils.Location.Nowhere))

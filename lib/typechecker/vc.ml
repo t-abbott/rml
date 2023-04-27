@@ -9,15 +9,8 @@ module Ty = Ty_template
 module P = Predicate.Make (Ident)
 module C = Constraint
 
-(*
-  NOTE:
-    - cycle when checking if statements   
-    - how to resolve? look at chapter 2
-    - fill_cexpr_refinements is probably wrong. I don't know how to handle if statements
-*)
-
 (**
-  TODO figure out how to track the location an error happened at    
+  TODO figure out how to track the specific token location an error happened at    
 *)
 let error = function
   | `MismatchedTypes ->
@@ -79,7 +72,6 @@ let rec sub (t1 : Ty.t) (t2 : Ty.t) : Constraint.t =
       C.conj c_i impl
   | _ -> error `MismatchedTypes
 
-(* TODO how tf do you handle binops *)
 and synth (ctx : Ty.context) (expr : Tree.t) : Constraint.t * Ty.t =
   match expr.body with
   | Tree.CExpr ce -> synth_cexpr ctx ce
@@ -140,7 +132,6 @@ and synth_aexpr (ctx : Ty.context) (aexpr : Tree.aexpr) =
               in
               failwith msg))
   | Tree.ANumber n ->
-      (* TODO turn floats back into ints *)
       let i = Int.of_float n in
       (C.c_true, Ty.prim_int i)
   | Tree.ABoolean b -> (C.c_true, Ty.prim_bool b)
@@ -223,7 +214,6 @@ let rec fill_refinements ctx (expr : Tree.t) =
       Tree.(node_of (CExpr ce') ce'.ty ce.loc)
 
 and fill_cexpr_refinements ctx (ce : Tree.cexpr) =
-  (* TODO - this is WRONG I think. the refinements should match right? idk how else to square it.*)
   match ce.body with
   | Tree.CIf (cond, if_t, if_f) ->
       let cond', if_t', if_f' =

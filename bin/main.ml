@@ -87,7 +87,7 @@ let main filename =
       die ()
   | UnsatError (message, loc) ->
       let loc_str = format_location loc in
-      eprintf "\nType error: %s%s\n" message loc_str;
+      eprintf "\nLiquid type error: %s%s\n" message loc_str;
       die ()
 
 let filename_param =

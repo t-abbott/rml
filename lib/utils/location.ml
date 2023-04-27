@@ -15,7 +15,6 @@ type 'a located = { loc : t; body : 'a }
 let locate loc body = { loc; body }
 let unlocated body = { loc = Nowhere; body }
 
-(* TODO: check for multi-line spans  *)
 let from start_pos end_pos =
   let line_start = start_pos.Lexing.pos_lnum in
   let line_end = end_pos.Lexing.pos_lnum in
