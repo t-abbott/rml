@@ -1,4 +1,0 @@
-val halve : x:num[v | (v % 2) = 0] -> num[y | y = (x / 2)] ;; 
-let halve = (fun x -> x / 2) ;;
-
-halve 4 

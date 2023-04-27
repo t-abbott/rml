@@ -1,6 +1,0 @@
-let add =
-    (fun (x: num) ->
-        (fun (y: num) -> x + y))
-;;
-
-(add 4) 5 ;;

@@ -1,0 +1,8 @@
+//
+// This program has a syntax error on line 6
+//
+
+val f : bool ;; 
+let f = (fun x 54) ;;
+
+f ;; 

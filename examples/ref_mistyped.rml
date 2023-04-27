@@ -1,4 +1,0 @@
-val f : x:num -> num[v | v] ;;
-let f = (fun x -> x) ;; 
-
-f 4

@@ -1,0 +1,13 @@
+//
+// The following program shows how to specifify the function
+// halve in RML.
+//
+
+val halve : x:num[v | (v % 2) = 0] -> num[y | y = (x / 2)] ;; 
+let halve = (fun x -> x / 2) ;;
+
+// ok
+halve 2 ;;
+
+// bad
+halve 11

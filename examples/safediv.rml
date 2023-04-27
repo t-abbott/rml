@@ -1,4 +1,0 @@
-val safediv : y:num[v | v != 0] -> num[v | v = (x / y)] ;;
-let savediv = (fun y -> 10 / y) ;; 
-
-safediv 2

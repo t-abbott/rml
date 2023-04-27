@@ -1,4 +1,0 @@
-val f : x:num -> num ;;
-let f = (fun x -> x + 4) ;;
-
-f true ;; 

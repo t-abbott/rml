@@ -1,0 +1,8 @@
+//
+// The following program shows base type checking in action.
+//
+
+val f : x:num -> num ;; 
+let f = (fun x -> x) ;; 
+
+f true

@@ -1,4 +1,10 @@
-val inc : x:num[v | v > 0] -> num[y | y = (x + 1)] ;; 
-let inc = (fun x -> ((x * 2) - x) + 1) ;;
+//
+// This program passes - the specification is correct.
+//
 
-inc 2
+val inc : x:num -> num[y | y = (x + 1)] ;; 
+let inc = (fun x -> 
+    x + 1
+) ;;
+
+inc 4

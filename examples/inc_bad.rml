@@ -1,0 +1,11 @@
+//
+// This program fails as the specification `y = (x + 1)` doesn't
+// match the function body.
+//
+
+val inc : x:num -> num[y | y = (x + 1)] ;; 
+let inc = (fun x -> 
+    (x * 2) + 1
+) ;;
+
+inc 4
