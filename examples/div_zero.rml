@@ -1,3 +1,0 @@
-let byzero = (fun (x: num) -> x / 0) ;; 
-
-byzero 4 

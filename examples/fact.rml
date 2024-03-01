@@ -1,8 +1,0 @@
-let fact = (fun (x: num) -> 
-    if x < 1 then
-        0
-    else
-        x * (fact (x - 1))
-) ;;
-
-fact 6 ;; 

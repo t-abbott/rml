@@ -1,0 +1,14 @@
+//
+// In this example we override the type of `x` to `int` and
+// force it to behave as an unrefined number. The program fails
+// because `x`, which represents an arbitrary integer, doesn't
+// satisfy the type `int[v | v > 10]`.
+//
+
+val f : x:int[v | v > 10] -> int[v | v > 20] ;; 
+let f = (fun x -> x * 2) ;; 
+
+val x : int ;; 
+let x = 40 ;;
+
+f x

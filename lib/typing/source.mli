@@ -10,3 +10,5 @@ type t =
       (** the type was annotated by the programmer in-line *)
   | ValStmt of Location.t
       (** the type was annotated by the programmer in a [val] statement  *)
+
+val to_string : t -> string

@@ -1,3 +1,0 @@
-let halve = (fun (x: num[x | (x % 2) = 0]) -> x / 2) ;;
-
-halve 4

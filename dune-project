@@ -16,4 +16,4 @@
 (package
  (name rml)
  (synopsis "A functional programming language with refinement types")
- (depends ocaml dune))
+ (depends ocaml dune z3))

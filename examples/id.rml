@@ -1,0 +1,4 @@
+val id : x:int -> int[y | y = x] ;; 
+let id = (fun x -> x) ;;
+
+id 10 

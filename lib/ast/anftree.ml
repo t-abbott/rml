@@ -1,7 +1,6 @@
 open Typing.Ty_sig
 open Printf
 open Utils
-open Op
 
 module Make (Ty : TYPE) = struct
   type 'a astnode = { body : 'a; ty : Ty.t; loc : Location.t }
@@ -17,18 +16,17 @@ module Make (Ty : TYPE) = struct
   (** An atomic expression. *)
 
   and aexpr_body =
-    | ANumber of float
+    | AInteger of int
     | ABoolean of bool
     | AVar of Ident_core.t
-    | ALambda of Ident_core.t list * t
+    | ALambda of Ident_core.t * t
 
   and cexpr = cexpr_body astnode
   (** A complex expression. *)
 
   and cexpr_body =
-    | CBinop of Binop.t * aexpr * aexpr
     | CIf of aexpr * aexpr * aexpr
-    | CApply of aexpr * aexpr list
+    | CApply of aexpr * aexpr
     | CAexpr of aexpr
 
   (**
@@ -40,39 +38,33 @@ module Make (Ty : TYPE) = struct
 
   let rec aexpr_to_string (ae : aexpr) =
     match ae.body with
-    | ANumber n ->
-        if Float.is_integer n then Int.to_string (Int.of_float n)
-        else Float.to_string n
+    | AInteger i -> Int.to_string i
     | ABoolean b -> Bool.to_string b
     | AVar v -> Ident_core.to_string v
     | ALambda (arg, body) ->
         let ty_str = Ty.to_string ae.ty in
         let body_str = to_string body in
-        let arg_str = List.map Ident_core.to_string arg |> String.concat " " in
-        sprintf "(fun %s -> %s): %s" arg_str body_str ty_str
+        let arg_str = Ident_core.to_string arg in
+        sprintf "(fun %s -> \n%s): %s" arg_str body_str ty_str
 
   and cexpr_to_string (ce : cexpr) =
     match ce.body with
-    | CBinop (op, l, r) ->
-        let op_str = Binop.to_string op in
-        let l_str, r_str = Misc.proj2 aexpr_to_string l r in
-        sprintf "%s %s %s" l_str op_str r_str
     | CIf (cond, if_t, if_f) ->
         let cond_str = aexpr_to_string cond in
         let if_t_str, if_f_str = Misc.proj2 aexpr_to_string if_t if_f in
         sprintf "if %s then %s else %s" cond_str if_t_str if_f_str
-    | CApply (fn, params) ->
+    | CApply (fn, param) ->
         let fn_str = aexpr_to_string fn in
-        let params_str = List.map aexpr_to_string params |> String.concat " " in
+        let params_str = aexpr_to_string param in
         sprintf "%s %s" fn_str params_str
     | CAexpr ae -> aexpr_to_string ae
 
   and to_string (e : t) =
-    let ty_str = Ty.to_string e.ty in
     match e.body with
     | Let (name, defn, rest) ->
         let name_str = Ident_core.to_string name in
         let defn_str = cexpr_to_string defn in
+        let ty_str = Ty.to_string defn.ty in
         let rest_str = to_string rest in
         sprintf "let %s: %s = %s in\n%s" name_str ty_str defn_str rest_str
     | CExpr ce ->
@@ -95,6 +87,6 @@ module Make (Ty : TYPE) = struct
     node_of (CAexpr ae) ae.ty ae.loc |> t_of_cexpr
 
   let t_of_bool b ty loc = t_of_aexpr (node_of (ABoolean b) ty loc)
-  let t_of_number n ty loc = t_of_aexpr (node_of (ANumber n) ty loc)
+  let t_of_number n ty loc = t_of_aexpr (node_of (AInteger n) ty loc)
   let var v ty loc = t_of_aexpr (node_of (AVar v) ty loc)
 end

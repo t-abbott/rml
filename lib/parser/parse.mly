@@ -1,16 +1,18 @@
 %{
-  open Ast.Op
+  open Typing.Op
   open Ast.Parsetree
   open Typing
+
+  module Ty = Ty_template
 %}
 
-%token TNUM
+%token TINT
 %token TBOOL
 %token COLON
 %token ARROW
-%token <Ast.Ident.t> VAR
+%token <Utils.Ident.t> VAR
 
-%token <float> NUM
+%token <int> INT
 %token TRUE FALSE
 
 %token PLUS
@@ -24,7 +26,7 @@
 %token IF THEN ELSE
 %token FUN
 %token LPAREN RPAREN
-%token LET IN
+%token LET VAL IN
 
 %token LINE
 %token LBRACKET RBRACKET
@@ -58,10 +60,10 @@ file:
 
 topdef: mark_location(topdef_unmarked) { $1 }
 topdef_unmarked:   
-  | LET x = VAR COLON t = ty EQUAL e = expr
-    { LetDef (x, Some t, e) }
   | LET x = VAR EQUAL e = expr
-    { LetDef (x, None, e) }
+    { LetDef (x, e) }
+  | VAL x = VAR COLON t = ty_val
+    { ValDef (x, t)}
 
 topexpr: mark_location(topexpr_unmarked) { $1 }
 topexpr_unmarked:
@@ -72,16 +74,18 @@ expr: mark_location(expr_unmarked) { $1 }
 expr_unmarked:
   | e = app_expr_unmarked
     { e }
-  | MINUS n = NUM
-    { Number (-. n) }
+  | MINUS n = INT
+    { Integer (- n) }
   | e1 = expr op = expr_binop e2 = expr
     { Binop (op, e1, e2) }
   | IF e1 = expr THEN e2 = expr ELSE e3 = expr
     { If (e1, e2, e3) }
-  | FUN arg = expr ARROW body = expr 
+  | FUN arg = VAR ARROW body = expr 
     { Fun ([arg], body) }
-  | LET name = expr EQUAL e1 = expr IN e2 = expr
+  | LET name = VAR EQUAL e1 = expr IN e2 = expr
     { LetIn (name, e1, e2) }
+  | VAL name = VAR COLON t = ty_val IN e2 = expr 
+    { ValIn (name, t, e2) }
 
 %inline
 expr_binop:
@@ -121,80 +125,103 @@ simple_expr_unmarked:
     { Boolean true }
   | FALSE
     { Boolean false }
-  | n = NUM
-    { (Number n) }
+  | i = INT
+    { (Integer i) }
   | e = expr COLON t = ty
     { Annotated (e, t) }
   | LPAREN e = expr_unmarked RPAREN	
     { e }    
 
-ty: mark_type_location(ty_unmarked) { $1 }
+
+(*
+  ty ::= <refinement>                   // RBase
+       | <var>:<refinement> -> <ty>     // RArrow
+ *)
+ty: mark_annot_location(ty_unmarked) { $1 }
+ty_val: mark_val_location(ty_unmarked) { $1 }
 ty_unmarked:
-  | t = ty_basic r = refinement
-    { Ty_surface.SBase (t, Some r) }
-  | t1 = ty ARROW t2 = ty
-    // todo match list of types
-    { Ty_surface.SArrow ([t1], t2)  }
-  | t = ty_basic  
-    { Ty_surface.SBase (t, None) }
+  | r = refinement 
+    { Ty_template.RBase r }
+  | x = VAR COLON s = ty ARROW t = ty
+    { Ty_template.RArrow (x, s, t) }
   | LPAREN t = ty_unmarked RPAREN
     { t }
 
 ty_basic:
   | TBOOL
     { Base_ty.TBool }
-  | TNUM
+  | TINT
     { Base_ty.TInt } 
 
+(*
+  refinement ::= <base ty>                      // unrefined (i.e. p=true)
+               | <var>:[<var> | <predicate>]    // refined base type
+ *)
 refinement:
-  | LBRACKET v = VAR LINE body = refinement_expr RBRACKET
-    { Refinement_surface.refinement v body }
+  | t = ty_basic
+    { Ty.R.from "__v_default" t (Some Ty.R.P.p_true) }
+  | t = ty_basic LBRACKET v = VAR LINE p = predicate RBRACKET 
+    { Ty.R.from v t (Some p) }
 
 (*
-    TODO refactor true and false tokens to wrap ocaml bools like integer does
-*)
-
-refinement_expr: mark_location(refinement_expr_unmarked) { $1 }
-refinement_expr_unmarked:
-  | TRUE 
-    { Refinement_surface.boolean true }
+  predicate ::= <var> | <bool> | <int>
+              | <p> && <p>
+              | <p> || <p>
+              | <p> <intop> <p>
+              | if <p> then <p> else <p>
+ *)
+predicate: mark_location(predicate_unmarked) { $1 }
+predicate_unmarked: 
+  | TRUE
+    { Ty.R.P.Bool true }
   | FALSE 
-    { Refinement_surface.boolean false }
-  | n = NUM 
-    { Refinement_surface.number n }
-  | l = refinement_expr op = refinement_binop r = refinement_expr
-    { Refinement_surface.Binop (op, l, r) }
-  | v = VAR
-    { Refinement_surface.var v }
-  | LPAREN r = refinement_expr_unmarked RPAREN
-   { r }
+    { Ty.R.P.Bool false }
+  | i = INT
+    { Ty.R.P.Int i }
+  | v = VAR 
+    { Ty.R.P.Var v }
+  | l = predicate op = predicate_interp_op r = predicate 
+    { Ty.R.P.IntOp (op, l, r) }
+  | l = predicate AND r = predicate 
+    { Ty.R.P.Conj (l, r) }
+  | l = predicate OR r = predicate 
+    { Ty.R.P.Disj (l, r) }
+  | IF cond = predicate THEN t = predicate ELSE f = predicate 
+    { Ty.R.P.IfThen (cond, t, f) }
+  | LPAREN p = predicate_unmarked RPAREN 
+    { p }
 
-%inline
-refinement_binop:
-  | LESS
-    { Refop.Binop.Less } 
-  | GREATER
-    { Refop.Binop.Greater }
+%inline 
+predicate_interp_op:
   | EQUAL
-    { Refop.Binop.Equal }
-  | AND
-    { Refop.Binop.And }
-  | OR
-    { Refop.Binop.Or }
+    { Ty.R.P.InterpOp.Equal }
+  | LESS
+    { Ty.R.P.InterpOp.Less } 
+  | GREATER
+    { Ty.R.P.InterpOp.Greater }
   | PLUS
-    { Refop.Binop.Add }
+    { Ty.R.P.InterpOp.Add }
   | MINUS 
-    { Refop.Binop.Sub }
+    { Ty.R.P.InterpOp.Sub }
+  | TIMES 
+    { Ty.R.P.InterpOp.Mult }
+  | DIV 
+    { Ty.R.P.InterpOp.Div }
   | MOD 
-    { Refop.Binop.Mod }
+    { Ty.R.P.InterpOp.Mod }
 
+(* 
+  ---- utils ---- 
+ *)
 mark_location(X):
     x = X
     { Utils.Location.locate (Utils.Location.from $startpos $endpos) x }
 
-// TODO: avoid this
-mark_type_location(X):
+mark_annot_location(X):
     x = X 
-    { Ty_surface.annotated x (Utils.Location.from $startpos $endpos) }
+    { Ty_template.annotated x (Utils.Location.from $startpos $endpos) }
 
+mark_val_location(X):
+    x = X 
+    { Ty_template.valstmt x (Utils.Location.from $startpos $endpos) }
 %%

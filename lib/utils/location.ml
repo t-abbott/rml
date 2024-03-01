@@ -15,7 +15,6 @@ type 'a located = { loc : t; body : 'a }
 let locate loc body = { loc; body }
 let unlocated body = { loc = Nowhere; body }
 
-(* TODO: check for multi-line spans  *)
 let from start_pos end_pos =
   let line_start = start_pos.Lexing.pos_lnum in
   let line_end = end_pos.Lexing.pos_lnum in
@@ -30,5 +29,9 @@ let to_string = function
       let filestring =
         match loc.filename with Some name -> name | None -> "[unknown]"
       in
-      sprintf "file \"%s\" line %d character %d-%d" filestring loc.line_start
-        loc.char_start loc.char_end
+      if loc.line_start = loc.line_end then
+        sprintf "file \"%s\" line %d character %d-%d" filestring loc.line_start
+          loc.char_start loc.char_end
+      else
+        sprintf "file \"%s\" line %d character %d to line %d character %d"
+          filestring loc.line_start loc.char_start loc.line_end loc.char_end

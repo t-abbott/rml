@@ -1,0 +1,8 @@
+val fail : x:int[v | v > 10] -> int[v | v > 11] ;;
+let fail = (fun x -> x + 1) ;; 
+
+// this shouldn't go wrong
+fail 11 ;;
+
+// this should
+fail 10 

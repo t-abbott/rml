@@ -1,3 +1,10 @@
-let inc = (fun (x: num) -> x + 1) ;;
+//
+// This program passes - the specification is correct.
+//
 
-inc 0.1 ;; 
+val inc : x:int -> int[y | y = (x + 1)] ;; 
+let inc = (fun x -> 
+    x + 1
+) ;;
+
+inc 4

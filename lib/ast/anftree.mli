@@ -1,6 +1,5 @@
 open Typing.Ty_sig
 open Utils
-open Op
 
 (**
   Creates an ANF syntax tree from a type [Ty]. 
@@ -19,18 +18,17 @@ module Make : functor (Ty : TYPE) -> sig
   (** An atomic expression. *)
 
   and aexpr_body =
-    | ANumber of float
+    | AInteger of int
     | ABoolean of bool
     | AVar of Ident_core.t
-    | ALambda of Ident_core.t list * t
+    | ALambda of Ident_core.t * t
 
   and cexpr = cexpr_body astnode
   (** A complex expression. *)
 
   and cexpr_body =
-    | CBinop of Binop.t * aexpr * aexpr
     | CIf of aexpr * aexpr * aexpr
-    | CApply of aexpr * aexpr list
+    | CApply of aexpr * aexpr
     | CAexpr of aexpr
 
   (**
@@ -40,12 +38,14 @@ module Make : functor (Ty : TYPE) -> sig
 
   type program = command list
 
+  val aexpr_to_string : aexpr -> string
+  val cexpr_to_string : cexpr -> string
   val to_string : t -> string
   val command_to_string : command -> string
   val program_to_string : program -> string
   val t_of_cexpr : cexpr -> t
   val t_of_aexpr : aexpr -> t
   val t_of_bool : bool -> Ty.t -> Location.t -> t
-  val t_of_number : float -> Ty.t -> Location.t -> t
+  val t_of_number : int -> Ty.t -> Location.t -> t
   val var : Ident_core.t -> Ty.t -> Location.t -> t
 end

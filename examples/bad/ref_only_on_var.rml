@@ -1,9 +1,0 @@
-let f_good = (fun (x: num[x | x > 1]) -> 
-    let y: num[y | y > x] = x + 1 in 
-    y
-) ;;
-
-let f_bad = (fun (x: num[x | x > 1]) -> 
-    let y = ((x + 1) : num[y | y > x]) in 
-    y
-) ;;

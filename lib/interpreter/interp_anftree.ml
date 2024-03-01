@@ -1,55 +1,76 @@
 open Base
 open Printf
 open Ast
+open Typing
 open Typing.Ty_sig
 open Errors
+open Utils
+
+let third _ _ z = z
 
 module Make (Ty : TYPE) = struct
+  module Id = Ident_core
   module Tree = Anftree.Make (Ty)
-  module TEnv = Env.Make (Tree)
+  module TEnv = Env.Make (Id) (Tree)
 
   let rec eval_aexpr (ae : Tree.aexpr) env =
     match ae.body with
-    | Tree.ANumber _ | Tree.ABoolean _ -> TEnv.Value (Tree.t_of_aexpr ae)
+    | Tree.AInteger _ | Tree.ABoolean _ -> TEnv.Value (Tree.t_of_aexpr ae)
     | Tree.AVar v -> (
-        let name = Ident_core.to_string v in
-        match TEnv.find name env with
-        | Some value -> value
-        | None ->
-            let msg = sprintf "reference to unknown variable %s" name in
-            raise (InterpError (msg, ae.loc)))
+        match v with
+        | BuiltinSym _ -> TEnv.Value (Tree.t_of_aexpr ae)
+        | _ -> (
+            match TEnv.find v env with
+            | Some value -> value
+            | None ->
+                let msg =
+                  sprintf "reference to unknown variable %s" (Id.to_string v)
+                in
+                raise (InterpError (msg, ae.loc))))
     | Tree.ALambda _ ->
         let fn = Tree.t_of_aexpr ae in
         TEnv.Closure (fn, env)
 
   and eval_cexpr (ce : Tree.cexpr) env =
     match ce.body with
-    | Tree.CBinop (op, l, r) ->
-        eval_binop (op, Tree.t_of_aexpr l, Tree.t_of_aexpr r) env ce.ty ce.loc
     | Tree.CIf (cond, if_t, if_f) ->
         if eval_bool (Tree.t_of_aexpr cond) env then eval_aexpr if_t env
         else eval_aexpr if_f env
-    | Tree.CApply (fn, args) ->
-        let args' = List.map ~f:(fun arg -> eval_aexpr arg env) args in
-        let params, fn_body, closed_env =
-          eval_closure (Tree.t_of_aexpr fn) env
-        in
+    | Tree.CApply (fn, arg) -> (
+        (* evalaute [fn] and [arg] down to redexes *)
+        let arg' = eval_aexpr arg env in
 
-        (* pair up parameters with the values they've been
-           passed
-        *)
-        let param_arg_pairs =
-          match List.zip params args' with
-          | Ok pairs -> pairs
-          | Unequal_lengths ->
-              let msg = "" in
-              unreachable ~reason:msg ~loc:ce.loc
-        in
-        let new_env =
-          List.fold param_arg_pairs ~init:closed_env ~f:(fun env (param, arg) ->
-              TEnv.extend (Ident_core.to_string param) arg env)
-        in
-        eval fn_body new_env
+        (* if fn a builtin var then produce an internal
+           if fn an interal then evaluate it with arg
+           otherwise evaluate the function *)
+        match eval_closure (Tree.t_of_aexpr fn) env with
+        | `BuiltinVar v ->
+            let op = Op.Binop.of_string v in
+
+            (* create a function that applies the operator to two inputs *)
+            let op_fn (r : Tree.t_body Tree.astnode) =
+              let op_ty = Ty.ty_of_op op in
+              let res_ty =
+                match Ty.apply_types op_ty [ arg.ty; r.ty ] with
+                | Some ty -> ty
+                | None ->
+                    unreachable
+                      ~reason:
+                        "typechecking should have ensured app is over valid \
+                         types"
+                      ~loc:r.loc
+              in
+              eval_binop (op, Tree.t_of_aexpr arg, r) env res_ty ce.loc
+            in
+
+            TEnv.Internal (op_fn, env)
+        | `Internal (fn, _) -> fn (Tree.t_of_aexpr arg)
+        | `Closure (param, fn_body, closed_env) ->
+            (* extend the env of [fn] to contain [arg] *)
+            let new_env = TEnv.extend param arg' closed_env in
+
+            (* evaluate the body of [fn] *)
+            eval fn_body new_env)
     | Tree.CAexpr ae -> eval_aexpr ae env
 
   and eval_const (expr : Tree.t) (env : TEnv.t) =
@@ -62,7 +83,8 @@ module Make (Ty : TYPE) = struct
             | Tree.CAexpr ae -> (
                 match ae.body with
                 | Tree.ABoolean b -> `Bool b
-                | Tree.ANumber n -> `Num n
+                | Tree.AInteger n -> `Num n
+                | Tree.AVar (Id.BuiltinSym v) -> `BuiltinVar v
                 | _ -> `Fail)
             | _ -> `Fail)
         | Tree.Let (_, _, _) -> `Fail)
@@ -77,6 +99,7 @@ module Make (Ty : TYPE) = struct
                 | _ -> `Fail)
             | _ -> `Fail)
         | _ -> `Fail)
+    | TEnv.Internal (fn, env) -> `Internal (fn, env)
 
   and eval_bool expr env =
     match eval_const expr env with
@@ -93,49 +116,52 @@ module Make (Ty : TYPE) = struct
         unreachable ~reason:msg ~loc:expr.loc
 
   and eval_closure expr env =
-    match eval_const expr env with
-    | `Closure (params, body, closed_env) -> (params, body, closed_env)
+    let res = eval_const expr env in
+    match res with
+    | `Closure c -> `Closure c
+    | `BuiltinVar b -> `BuiltinVar b
+    | `Internal fn -> `Internal fn
     | _ ->
         let msg = "expected expression to reduce to a function closure" in
         unreachable ~reason:msg ~loc:expr.loc
 
-  and eval_binop (op, l, r) env ty loc =
+  and eval_binop (op, l, r) env (ty : Ty.t) loc =
     match op with
     | Op.Binop.Equal ->
         let x, y = (eval_number l env, eval_number r env) in
-        let body = Tree.t_of_bool (Float.( = ) x y) ty loc in
+        let body = Tree.t_of_bool (x = y) ty loc in
         TEnv.Value body
     | Op.Binop.Less ->
         let x, y = (eval_number l env, eval_number r env) in
-        let body = Tree.t_of_bool (Float.( < ) x y) ty loc in
+        let body = Tree.t_of_bool (x < y) ty loc in
         TEnv.Value body
     | Op.Binop.Greater ->
         let x, y = (eval_number l env, eval_number r env) in
-        let body = Tree.t_of_bool (Float.( > ) x y) ty loc in
+        let body = Tree.t_of_bool (x > y) ty loc in
         TEnv.Value body
     | Op.Binop.Plus ->
         let x, y = (eval_number l env, eval_number r env) in
-        let body = Tree.t_of_number (Float.( + ) x y) ty loc in
+        let body = Tree.t_of_number (x + y) ty loc in
         TEnv.Value body
     | Op.Binop.Minus ->
         let x, y = (eval_number l env, eval_number r env) in
-        let body = Tree.t_of_number (Float.( - ) x y) ty loc in
+        let body = Tree.t_of_number (x - y) ty loc in
         TEnv.Value body
     | Op.Binop.Times ->
         let x, y = (eval_number l env, eval_number r env) in
-        let body = Tree.t_of_number (Float.( * ) x y) ty loc in
+        let body = Tree.t_of_number (x * y) ty loc in
         TEnv.Value body
     | Op.Binop.Div ->
         let x, y = (eval_number l env, eval_number r env) in
-        if Float.( = ) y 0. then
+        if y = 0 then
           let msg = "attempted to divide by 0" in
           raise (InterpError (msg, loc))
         else
-          let body = Tree.t_of_number (Float.( / ) x y) ty loc in
+          let body = Tree.t_of_number (x / y) ty loc in
           TEnv.Value body
     | Op.Binop.Mod ->
         let x, y = (eval_number l env, eval_number r env) in
-        let body = Tree.t_of_number (Float.( % ) x y) ty loc in
+        let body = Tree.t_of_number (x % y) ty loc in
         TEnv.Value body
     | Op.Binop.And ->
         let p, q = (eval_bool l env, eval_bool r env) in
@@ -148,8 +174,7 @@ module Make (Ty : TYPE) = struct
 
   and eval (expr : Tree.t) (env : TEnv.t) : TEnv.envval =
     match expr.body with
-    | Tree.Let (id, value, rest) ->
-        let name = Ident_core.to_string id in
+    | Tree.Let (name, value, rest) ->
         let res = eval_cexpr value env in
         let env' = TEnv.extend name res env in
         eval rest env'
@@ -160,7 +185,7 @@ module Make (Ty : TYPE) = struct
     | Tree.LetDef (name, defn) ->
         let var = Tree.var name defn.ty defn.loc in
         let value = eval defn env in
-        let new_env = TEnv.extend (Ident_core.to_string name) value env in
+        let new_env = TEnv.extend name value env in
         (TEnv.Value var, new_env)
     | Tree.Expr e -> (eval e env, env)
 

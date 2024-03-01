@@ -1,16 +1,18 @@
 open Printf
 open Base
 open Ast
-open Ast.Op
+open Typing.Op
 open Ast.Parsetree
-module L = Utils.Location
 open Errors
-module PTEnv = Env.Make (Parsetree)
+module L = Utils.Location
+module PTEnv = Env.Make (Utils.Ident) (Parsetree)
+
+let placeholder = PTEnv.Value (L.unlocated (Integer 0))
 
 let rec eval (expr : t) env =
   match expr.body with
   | Annotated (e, _) -> eval e env
-  | Number _ | Boolean _ -> PTEnv.Value expr
+  | Integer _ | Boolean _ -> PTEnv.Value expr
   | Var v -> (
       match PTEnv.find v env with
       | Some value -> value
@@ -20,44 +22,17 @@ let rec eval (expr : t) env =
   | Binop (op, l, r) -> eval_binop (op, l, r) env
   | If (cond, if_t, if_f) ->
       if eval_bool cond env then eval if_t env else eval if_f env
-  | LetIn (namebinding, boundval, body) ->
-      let name =
-        match namebinding.body with
-        | Var v -> v
-        | Annotated ({ body = Var v; _ }, _) -> v
-        | _ ->
-            let msg =
-              sprintf "let must bind a variable, got %s" (to_string namebinding)
-            in
-            raise (InterpError (msg, expr.loc))
-      in
+  | LetIn (name, boundval, body) ->
       let e = eval boundval env in
       eval body (PTEnv.extend name e env)
+  | ValIn _ -> placeholder
   | Fun _ as f -> Closure (L.unlocated f, env)
   | Apply (f, args) -> (
-      (*
-        In the parsetree we allow the argument [x] in the term [(fun x -> ...)]
-        to be of type [Parsetree.t] since that makes parsing easier. Doing this
-        forces us to add a few extra checks when interpreting, though. We do a similar 
-        thing with the bound variable in [let] expressions.
-      *)
-      let extract_param (p : t) : Ident.t =
-        match p.body with
-        | Var v -> v
-        | Annotated ({ body = Var v; _ }, _) -> v
-        | _ ->
-            let msg =
-              sprintf "function argument must be a variable, got '%s'"
-                (to_string p)
-            in
-            raise (InterpError (msg, p.loc))
-      in
       let args' = List.map ~f:(fun expr -> eval expr env) args in
       match eval f env with
       | Closure ({ body = Fun (params, body); _ }, bound_env) ->
-          let params' = List.map ~f:extract_param params in
           let param_arg_pairs =
-            match List.zip params' args' with
+            match List.zip params args' with
             | Ok pairs -> pairs
             | Unequal_lengths ->
                 let n_params = List.length params in
@@ -82,7 +57,7 @@ let rec eval (expr : t) env =
 
 and eval_number expr env =
   match eval expr env with
-  | Value { body = Number i; _ } -> i
+  | Value { body = Integer i; _ } -> i
   | _ ->
       let msg = "Expected expression to reduce to a number" in
       raise (InterpError (msg, expr.loc))
@@ -98,32 +73,32 @@ and eval_binop (op, l, r) env =
   match op with
   | Binop.Equal ->
       let x, y = (eval_number l env, eval_number r env) in
-      Value (L.unlocated (Boolean (Float.( = ) x y)))
+      Value (L.unlocated (Boolean (Int.( = ) x y)))
   | Binop.Less ->
       let x, y = (eval_number l env, eval_number r env) in
-      Value (L.unlocated (Boolean (Float.( < ) x y)))
+      Value (L.unlocated (Boolean (Int.( < ) x y)))
   | Binop.Greater ->
       let x, y = (eval_number l env, eval_number r env) in
-      Value (L.unlocated (Boolean (Float.( > ) x y)))
+      Value (L.unlocated (Boolean (Int.( > ) x y)))
   | Binop.Plus ->
       let x, y = (eval_number l env, eval_number r env) in
-      Value (L.unlocated (Number (x +. y)))
+      Value (L.unlocated (Integer (x + y)))
   | Binop.Minus ->
       let x, y = (eval_number l env, eval_number r env) in
-      Value (L.unlocated (Number (x -. y)))
+      Value (L.unlocated (Integer (x - y)))
   | Binop.Times ->
       let x, y = (eval_number l env, eval_number r env) in
-      Value (L.unlocated (Number (x *. y)))
+      Value (L.unlocated (Integer (x * y)))
   | Binop.Div -> (
       let x, y = (eval_number l env, eval_number r env) in
       match y with
-      | 0. ->
+      | 0 ->
           let msg = "Attempted to divide by 0" in
           raise (InterpError (msg, r.loc))
-      | _ -> Value (L.unlocated (Number (x /. y))))
+      | _ -> Value (L.unlocated (Integer (x / y))))
   | Binop.Mod ->
       let x, y = (eval_number l env, eval_number r env) in
-      Value (L.unlocated (Number (x %. y)))
+      Value (L.unlocated (Integer (x % y)))
   | Binop.And ->
       let x, y = (eval_bool l env, eval_bool r env) in
       Value (L.unlocated (Boolean (x && y)))
@@ -134,9 +109,10 @@ and eval_binop (op, l, r) env =
 let eval_cmd (cmd : command) env =
   match cmd.body with
   | Expr e -> (eval e env, env)
-  | LetDef (name, _, body) ->
+  | LetDef (name, body) ->
       let env' = PTEnv.extend name (eval body env) env in
-      (Value (L.unlocated (Number 0.)), env')
+      (Value (L.unlocated (Integer 0)), env')
+  | ValDef _ -> (placeholder, env)
 
 let rec run prog env =
   match prog with
@@ -146,4 +122,7 @@ let rec run prog env =
   | cmd :: rest ->
       let new_env = snd (eval_cmd cmd env) in
       run rest new_env
-  | [] -> failwith "TODO figure out how to do nothing"
+  | [] ->
+      raise
+        (InterpError
+           ("attempted to execute an empty program", Utils.Location.Nowhere))

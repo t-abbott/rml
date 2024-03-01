@@ -1,10 +1,9 @@
 # `lib/`
 
-- `types/` - Contains `Ty`, the type module
-- `ast/` - Contains the definition of ASTs for different
-    stages of the compiler
-- `parsing/` - The parser
-- `typechecker/` - The typechecker
-- `interpreter/` - Interpreters for the various ASTs
-- `utils/` - Common functions/types used by the other modules 
-
+- `ast/` - contains AST types
+- `interpreter/` - contains interpreter for each AST
+- `lowering/` - contains code for ANF lowering
+- `parser/` - contains the lexer and parser
+- `typechecker/` - contains code for base and liquid type checking
+- `typing/` - contains type definitions
+- `utils/` - contains shared utility programs
